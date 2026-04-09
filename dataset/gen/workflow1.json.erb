@@ -1,0 +1,178 @@
+{
+  "prompt": {
+    "1": {
+      "inputs": {
+        "sampler_name": "euler"
+      },
+      "class_type": "KSamplerSelect",
+      "_meta": {
+        "title": "Kサンプラー選択"
+      }
+    },
+    "2": {
+      "inputs": {
+        "steps": 20,
+        "width": 1024,
+        "height": 1024
+      },
+      "class_type": "Flux2Scheduler",
+      "_meta": {
+        "title": "Flux2Scheduler"
+      }
+    },
+    "5": {
+      "inputs": {
+        "samples": [
+          "37",
+          0
+        ],
+        "vae": [
+          "10",
+          0
+        ]
+      },
+      "class_type": "VAEDecode",
+      "_meta": {
+        "title": "VAEデコード"
+      }
+    },
+    "6": {
+      "inputs": {
+        "noise_seed": <%= seed %>
+      },
+      "class_type": "RandomNoise",
+      "_meta": {
+        "title": "ランダムノイズ"
+      }
+    },
+    "7": {
+      "inputs": {
+        "clip_name": "qwen_3_4b.safetensors",
+        "type": "flux2",
+        "device": "default"
+      },
+      "class_type": "CLIPLoader",
+      "_meta": {
+        "title": "CLIPを読み込む"
+      }
+    },
+    "10": {
+      "inputs": {
+        "vae_name": "flux2-vae.safetensors"
+      },
+      "class_type": "VAELoader",
+      "_meta": {
+        "title": "VAEを読み込む"
+      }
+    },
+    "22": {
+      "inputs": {
+        "unet_name": "flux-2-klein-4b.safetensors",
+        "weight_dtype": "default"
+      },
+      "class_type": "UNETLoader",
+      "_meta": {
+        "title": "拡散モデルを読み込む"
+      }
+    },
+    "32": {
+      "inputs": {
+        "text": <%= prompt.dump %>,
+        "clip": [
+          "7",
+          0
+        ]
+      },
+      "class_type": "CLIPTextEncode",
+      "_meta": {
+        "title": "CLIP Text Encode (Positive Prompt)"
+      }
+    },
+    "33": {
+      "inputs": {
+        "text": "photorealistic, live action, 3d render, cgi, realistic background, mixed media, photo background, paper texture, canvas texture, watercolor, gouache, oil painting, painterly, sketch, rough line, messy line, pencil, charcoal, crayon, blur, soft focus, depth of field, bokeh, grain, noise, halftone, text, logo, watermark, caption, label, border, frame, harsh shadows, deep shadows, heavy shadow, strong shadow, solid black shadow, black fill shadow, high contrast lighting, dramatic lighting, low-key lighting, cel shading, toon shading, comic shading, cast shadow, contact shadow, silhouette",
+        "clip": [
+          "7",
+          0
+        ]
+      },
+      "class_type": "CLIPTextEncode",
+      "_meta": {
+        "title": "CLIP Text Encode (Negative Prompt)"
+      }
+    },
+    "34": {
+      "inputs": {
+        "cfg": 5,
+        "model": [
+          "22",
+          0
+        ],
+        "positive": [
+          "32",
+          0
+        ],
+        "negative": [
+          "33",
+          0
+        ]
+      },
+      "class_type": "CFGGuider",
+      "_meta": {
+        "title": "CFGガイダー"
+      }
+    },
+    "36": {
+      "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+      },
+      "class_type": "EmptyFlux2LatentImage",
+      "_meta": {
+        "title": "Empty Flux 2 Latent"
+      }
+    },
+    "37": {
+      "inputs": {
+        "noise": [
+          "6",
+          0
+        ],
+        "guider": [
+          "34",
+          0
+        ],
+        "sampler": [
+          "1",
+          0
+        ],
+        "sigmas": [
+          "2",
+          0
+        ],
+        "latent_image": [
+          "36",
+          0
+        ]
+      },
+      "class_type": "SamplerCustomAdvanced",
+      "_meta": {
+        "title": "カスタムサンプラー（高度）"
+      }
+    },
+    "48": {
+      "inputs": {
+        "filename_prefix": <%= filename.dump %>,
+        "images": [
+          "5",
+          0
+        ]
+      },
+      "class_type": "SaveImage",
+      "_meta": {
+        "title": "画像を保存"
+      }
+    }
+  }
+}

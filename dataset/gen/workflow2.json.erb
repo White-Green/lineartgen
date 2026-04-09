@@ -1,0 +1,235 @@
+{
+  "prompt": {
+    "1": {
+      "inputs": {
+        "image": <%= image_filename.dump %>
+      },
+      "class_type": "LoadImage",
+      "_meta": {
+        "title": "画像を読み込む"
+      }
+    },
+    "20": {
+      "inputs": {
+        "sampler_name": "euler"
+      },
+      "class_type": "KSamplerSelect",
+      "_meta": {
+        "title": "Kサンプラー選択"
+      }
+    },
+    "21": {
+      "inputs": {
+        "steps": 20,
+        "width": 1024,
+        "height": 1024
+      },
+      "class_type": "Flux2Scheduler",
+      "_meta": {
+        "title": "Flux2Scheduler"
+      }
+    },
+    "22": {
+      "inputs": {
+        "cfg": 5,
+        "model": [
+          "31",
+          0
+        ],
+        "positive": [
+          "35",
+          0
+        ],
+        "negative": [
+          "36",
+          0
+        ]
+      },
+      "class_type": "CFGGuider",
+      "_meta": {
+        "title": "CFGガイダー"
+      }
+    },
+    "23": {
+      "inputs": {
+        "noise": [
+          "25",
+          0
+        ],
+        "guider": [
+          "22",
+          0
+        ],
+        "sampler": [
+          "20",
+          0
+        ],
+        "sigmas": [
+          "21",
+          0
+        ],
+        "latent_image": [
+          "30",
+          0
+        ]
+      },
+      "class_type": "SamplerCustomAdvanced",
+      "_meta": {
+        "title": "カスタムサンプラー（高度）"
+      }
+    },
+    "24": {
+      "inputs": {
+        "samples": [
+          "23",
+          0
+        ],
+        "vae": [
+          "29",
+          0
+        ]
+      },
+      "class_type": "VAEDecode",
+      "_meta": {
+        "title": "VAEデコード"
+      }
+    },
+    "25": {
+      "inputs": {
+        "noise_seed": <%= seed %>
+      },
+      "class_type": "RandomNoise",
+      "_meta": {
+        "title": "ランダムノイズ"
+      }
+    },
+    "26": {
+      "inputs": {
+        "clip_name": "qwen_3_4b.safetensors",
+        "type": "flux2",
+        "device": "default"
+      },
+      "class_type": "CLIPLoader",
+      "_meta": {
+        "title": "CLIPを読み込む"
+      }
+    },
+    "27": {
+      "inputs": {
+        "text": "入力画像から線画のみを過不足なく取り出して線を強調したイラスト、入力画像に瞳や文字、線以外の塗りつぶし部分が存在する場合はそれら瞳や文字や塗りつぶしも線以外は白色で塗られている、背景が単色の場合は白色にする、イラスト全体を通して統一された視認性の高いハイクオリティな黒色の線、黒に近い色で塗られている部分や他の箇所よりも太い線は絵としての表現に必要最低限の線画と塗りに分離して、塗りは白色に置換する",
+        "clip": [
+          "26",
+          0
+        ]
+      },
+      "class_type": "CLIPTextEncode",
+      "_meta": {
+        "title": "CLIP Text Encode (Positive Prompt)"
+      }
+    },
+    "28": {
+      "inputs": {
+        "text": "黒と白以外の色、塗りつぶし、黒く塗られた瞳、塗りつぶされた太い文字、影、ハッチング、細い線、黒い背景、黒での塗りつぶし、低クオリティな線、グラデーション",
+        "clip": [
+          "26",
+          0
+        ]
+      },
+      "class_type": "CLIPTextEncode",
+      "_meta": {
+        "title": "CLIP Text Encode (Negative Prompt)"
+      }
+    },
+    "29": {
+      "inputs": {
+        "vae_name": "flux2-vae.safetensors"
+      },
+      "class_type": "VAELoader",
+      "_meta": {
+        "title": "VAEを読み込む"
+      }
+    },
+    "30": {
+      "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+      },
+      "class_type": "EmptyFlux2LatentImage",
+      "_meta": {
+        "title": "Empty Flux 2 Latent"
+      }
+    },
+    "31": {
+      "inputs": {
+        "unet_name": "flux-2-klein-4b.safetensors",
+        "weight_dtype": "default"
+      },
+      "class_type": "UNETLoader",
+      "_meta": {
+        "title": "拡散モデルを読み込む"
+      }
+    },
+    "35": {
+      "inputs": {
+        "conditioning": [
+          "27",
+          0
+        ],
+        "latent": [
+          "52",
+          0
+        ]
+      },
+      "class_type": "ReferenceLatent",
+      "_meta": {
+        "title": "参照潜在変数"
+      }
+    },
+    "36": {
+      "inputs": {
+        "conditioning": [
+          "28",
+          0
+        ],
+        "latent": [
+          "52",
+          0
+        ]
+      },
+      "class_type": "ReferenceLatent",
+      "_meta": {
+        "title": "参照潜在変数"
+      }
+    },
+    "52": {
+      "inputs": {
+        "pixels": [
+          "1",
+          0
+        ],
+        "vae": [
+          "29",
+          0
+        ]
+      },
+      "class_type": "VAEEncode",
+      "_meta": {
+        "title": "VAEエンコード"
+      }
+    },
+    "56": {
+      "inputs": {
+        "filename_prefix": <%= filename.dump %>,
+        "images": [
+          "24",
+          0
+        ]
+      },
+      "class_type": "SaveImage",
+      "_meta": {
+        "title": "画像を保存"
+      }
+    }
+  }
+}
