@@ -1,4 +1,7 @@
 /*
 !/dataset
+!/src
 !/.gitignore
+!/Cargo.lock
+!/Cargo.toml
 !/mise.toml
