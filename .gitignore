@@ -5,3 +5,5 @@
 !/Cargo.lock
 !/Cargo.toml
 !/mise.toml
+!/rustfmt.toml
+!/taplo.toml

@@ -1,6 +1,11 @@
 [package]
+edition = "2024"
 name = "lineartgen"
 version = "0.1.0"
-edition = "2024"
 
 [dependencies]
+burn = { features = ["wgpu"], version = "0.20.1" }
+image = { default-features = false, features = [
+  "jpeg",
+  "png",
+], version = "0.25.10" }

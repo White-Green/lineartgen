@@ -2,9 +2,9 @@
 ruby = "4.0"
 
 [env]
-COMFYUI_ROOT_DIR = "/home/whitegreen/ComfyUI"
 COMFYUI_API_HOST = "localhost"
 COMFYUI_API_PORT = "8188"
+COMFYUI_ROOT_DIR = "/home/whitegreen/ComfyUI"
 
 [tasks."dataset:gen1"]
 depends = ["dataset:gen:prepare"]
