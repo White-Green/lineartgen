@@ -4,7 +4,16 @@ name = "lineartgen"
 version = "0.1.0"
 
 [dependencies]
-burn = { features = ["std", "tui", "train", "vision", "wgpu", "fusion", "dataset", "autodiff"], default-features = false, version = "0.21.0" }
+burn = { default-features = false, features = [
+  "autodiff",
+  "dataset",
+  "fusion",
+  "std",
+  "train",
+  "tui",
+  "vision",
+  "wgpu",
+], version = "0.21.0" }
 clap = { features = ["derive"], version = "4.5.51" }
 image = { default-features = false, features = [
   "jpeg",
