@@ -1,4 +1,4 @@
-use crate::{BurnBackend, LineArtTensor};
+use crate::{BurnBackend, LineartTensor};
 use burn::tensor::{Tensor, TensorData};
 use image::codecs::png::PngEncoder;
 use image::{ColorType, ImageBuffer, ImageEncoder, Luma};
@@ -8,7 +8,15 @@ pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + S
 
 const IMAGE_SCALE: f32 = 1.1;
 
-pub fn read_line_art_image(mut reader: impl Read) -> Result<LineArtTensor> {
+pub fn read_lineart_image(mut reader: impl Read) -> Result<LineartTensor> {
+    let (values, height, width) = read_lineart_values(&mut reader)?;
+
+    let device = Default::default();
+    let data = TensorData::new(values, [height, width]);
+    Ok(Tensor::<BurnBackend, 2>::from_data(data, &device))
+}
+
+pub fn read_lineart_values(mut reader: impl Read) -> Result<(Vec<f32>, usize, usize)> {
     let mut bytes = Vec::new();
     reader.read_to_end(&mut bytes)?;
 
@@ -22,12 +30,10 @@ pub fn read_line_art_image(mut reader: impl Read) -> Result<LineArtTensor> {
         })
         .collect::<Vec<_>>();
 
-    let device = Default::default();
-    let data = TensorData::new(values, [height as usize, width as usize]);
-    Ok(Tensor::<BurnBackend, 2>::from_data(data, &device))
+    Ok((values, height as usize, width as usize))
 }
 
-pub fn write_line_art_image(tensor: LineArtTensor, writer: impl Write) -> Result<()> {
+pub fn write_lineart_image(tensor: LineartTensor, writer: impl Write) -> Result<()> {
     let data = tensor.try_into_data()?;
     let shape = data.shape.clone();
     if shape.len() != 2 {
