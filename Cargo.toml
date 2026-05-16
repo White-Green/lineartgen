@@ -12,10 +12,11 @@ burn = { default-features = false, features = [
   "train",
   "tui",
   "vision",
-  "wgpu",
+  "wgpu","flex",
 ], version = "0.21.0" }
 clap = { features = ["derive"], version = "4.5.51" }
 image = { default-features = false, features = [
   "jpeg",
   "png",
 ], version = "0.25.10" }
+serde = { version = "1.0.228" ,features=["derive"]}
