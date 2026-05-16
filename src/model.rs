@@ -2,6 +2,7 @@ use crate::model::u_net::{UNet, UNetConfig};
 use burn::config::Config;
 use burn::module::Module;
 use burn::tensor::backend::Backend;
+use burn::tensor::module::adaptive_avg_pool2d;
 use burn::tensor::{Tensor, TensorCreationOptions};
 use std::iter;
 
@@ -34,7 +35,7 @@ impl<B: Backend> DiffusionModel<B> {
             .take_while(move |&size| minimum_input_size[0] <= size[0] && minimum_input_size[1] <= size[1])
     }
 
-    pub fn forward(&self, input: Vec<Tensor<B, 4>>, _noise_level: Tensor<B, 4>) -> Tensor<B, 4> {
+    pub fn forward(&self, input: Vec<Tensor<B, 4>>, noise_level: Tensor<B, 4>) -> Tensor<B, 4> {
         assert!(
             input
                 .iter()
@@ -42,6 +43,7 @@ impl<B: Backend> DiffusionModel<B> {
                 .map(|[_, _, w, h]| [w, h])
                 .eq(self.input_sizes([input[0].dims()[2], input[0].dims()[3]]))
         );
+        let noise_levels = tensor_pyramid(self.input_sizes([input[0].dims()[2], input[0].dims()[3]]), noise_level);
         let [batches, _, w, h] = input.last().unwrap().dims();
         let [empty_h, empty_w] = self.u_net.expected_insert_size([w, h]);
         let mut a = Tensor::full(
@@ -52,9 +54,23 @@ impl<B: Backend> DiffusionModel<B> {
                 dtype: Some(input[0].dtype()),
             },
         );
-        for input in input.into_iter().rev() {
-            a = self.u_net.forward(input, a);
+        for (input, noise_level) in input.into_iter().zip(noise_levels.into_iter()).rev() {
+            a = self.u_net.forward(input, noise_level, a);
         }
         a
     }
+}
+
+fn tensor_pyramid<B: Backend>(sizes: impl Iterator<Item = [usize; 2]>, tensor: Tensor<B, 4>) -> Vec<Tensor<B, 4>> {
+    let [_, _, height, width] = tensor.dims();
+
+    sizes
+        .map(|size| {
+            if size == [height, width] {
+                tensor.clone()
+            } else {
+                adaptive_avg_pool2d(tensor.clone(), size)
+            }
+        })
+        .collect()
 }

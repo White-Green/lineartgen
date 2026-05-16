@@ -35,6 +35,10 @@ pub struct UNetConfig {
     pub sizes: Vec<UNetStepConfig>,
     #[config(default = "1")]
     pub insert_channels: usize,
+    #[config(default = "2")]
+    pub input_channels: usize,
+    #[config(default = "1")]
+    pub output_channels: usize,
     #[config(default = "3")]
     pub final_kernel_size: usize,
 }
@@ -61,7 +65,7 @@ impl UNetConfig {
             .sizes
             .iter()
             .scan(
-                (1, 1),
+                (self.input_channels, 1),
                 |(channels, size),
                  &UNetStepConfig {
                      encoder_kernel_size,
@@ -127,10 +131,14 @@ impl UNetConfig {
                 },
             )
             .collect();
-        let decoder_output_channels = self.sizes[0].transposed_channels_mul.round() as usize;
-        let final_conv = Conv2dConfig::new([1 + decoder_output_channels, 1], [self.final_kernel_size; 2])
-            .with_padding(PaddingConfig2d::Same)
-            .init(device);
+        let decoder_output_channels =
+            (self.input_channels as f64 * self.sizes[0].transposed_channels_mul).round() as usize;
+        let final_conv = Conv2dConfig::new(
+            [self.input_channels + decoder_output_channels, self.output_channels],
+            [self.final_kernel_size; 2],
+        )
+        .with_padding(PaddingConfig2d::Same)
+        .init(device);
 
         UNet {
             encoders,
@@ -163,11 +171,13 @@ impl<B: Backend> UNet<B> {
         [input_size[0] / shrink_rate, input_size[1] / shrink_rate]
     }
 
-    pub fn forward(&self, input: Tensor<B, 4>, insert: Tensor<B, 4>) -> Tensor<B, 4> {
+    pub fn forward(&self, input: Tensor<B, 4>, noise_level: Tensor<B, 4>, insert: Tensor<B, 4>) -> Tensor<B, 4> {
         assert_eq!(input.dims()[2].next_power_of_two(), input.dims()[2]);
         assert_eq!(input.dims()[3].next_power_of_two(), input.dims()[3]);
         assert_eq!(input.dims()[1], 1);
-        let mut x = input.clone();
+        assert_eq!(noise_level.dims(), input.dims());
+        let conditioned_input = Tensor::cat(vec![input, noise_level], 1);
+        let mut x = conditioned_input.clone();
         let mut skips = Vec::with_capacity(self.encoders.len());
 
         for encoder in self.encoders.iter() {
@@ -176,8 +186,8 @@ impl<B: Backend> UNet<B> {
             x = encoder.pool.forward(c);
             skips.push(x.clone());
             assert_eq!(x.dims()[1], encoder.output_channels);
-            assert_eq!(x.dims()[2] * encoder.shrink_rate, input.dims()[2]);
-            assert_eq!(x.dims()[3] * encoder.shrink_rate, input.dims()[3]);
+            assert_eq!(x.dims()[2] * encoder.shrink_rate, conditioned_input.dims()[2]);
+            assert_eq!(x.dims()[3] * encoder.shrink_rate, conditioned_input.dims()[3]);
         }
 
         for (index, decoder) in self.decoders.iter().enumerate() {
@@ -197,8 +207,12 @@ impl<B: Backend> UNet<B> {
             x = relu(decoder.forward(cat));
         }
 
-        let result = Tensor::clamp(self.final_conv.forward(Tensor::cat(vec![input, x], 1)), -1.0, 1.0);
-        assert_eq!(result.dims()[1], 1);
+        let result = Tensor::clamp(
+            self.final_conv.forward(Tensor::cat(vec![conditioned_input, x], 1)),
+            -1.0,
+            1.0,
+        );
+        assert_eq!(result.dims()[1], self.final_conv.weight.dims()[0]);
         result
     }
 }
@@ -212,10 +226,11 @@ mod tests {
         let device = Default::default();
         let model = UNetConfig::new().init::<burn::backend::Flex>(&device);
         let input = Tensor::<_, 4>::zeros([1, 1, 1024, 1024], &device);
+        let noise_level = Tensor::<_, 4>::zeros([1, 1, 1024, 1024], &device);
         let [insert_height, insert_width] = model.expected_insert_size([1024, 1024]);
         let insert = Tensor::<_, 4>::zeros([1, 1, insert_height, insert_width], &device);
 
-        let output = model.forward(input, insert);
+        let output = model.forward(input, noise_level, insert);
 
         assert_eq!(output.dims(), [1, 1, 1024, 1024]);
     }

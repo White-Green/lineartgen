@@ -118,11 +118,7 @@ impl<B: Backend> InferenceStep for DiffusionModel<B> {
 fn diffusion_step<B: Backend>(model: &DiffusionModel<B>, clean: Tensor<B, 4>) -> RegressionOutput<B> {
     let [batch_size, _, height, width] = clean.dims();
     let device = clean.device();
-    let noise_level = Tensor::<B, 4>::random(
-        [batch_size, 1, height, width],
-        Distribution::Uniform(1.0e-5, 1.0),
-        &device,
-    );
+    let noise_level = uniform_image_noise_level(batch_size, height, width, &device);
 
     let clean_scales = clean_pyramid(model, clean);
     let noise_level_scales = tensor_pyramid(model, noise_level.clone());
@@ -159,6 +155,17 @@ fn diffusion_step<B: Backend>(model: &DiffusionModel<B>, clean: Tensor<B, 4>) ->
         flatten_for_regression(predicted_v),
         flatten_for_regression(target_v),
     )
+}
+
+fn uniform_image_noise_level<B: Backend>(
+    batch_size: usize,
+    height: usize,
+    width: usize,
+    device: &B::Device,
+) -> Tensor<B, 4> {
+    Tensor::<B, 4>::random([batch_size, 1, 1, 1], Distribution::Uniform(1.0e-5, 1.0), device)
+        .repeat_dim(2, height)
+        .repeat_dim(3, width)
 }
 
 fn clean_pyramid<B: Backend>(model: &DiffusionModel<B>, clean: Tensor<B, 4>) -> Vec<Tensor<B, 4>> {
@@ -338,5 +345,16 @@ mod tests {
         let matched = match_noise_to_clean_batch(clean, noise);
 
         assert_eq!(matched.into_data().into_vec::<f32>().unwrap(), vec![1.0, 9.0, 21.0]);
+    }
+
+    #[test]
+    fn uniform_image_noise_level_uses_one_value_per_image() {
+        let device = Default::default();
+        let noise_level = uniform_image_noise_level::<burn::backend::Flex>(2, 3, 4, &device);
+        let data = noise_level.into_data().into_vec::<f32>().unwrap();
+
+        assert_eq!(data.len(), 2 * 3 * 4);
+        assert!(data[0..12].iter().all(|value| *value == data[0]));
+        assert!(data[12..24].iter().all(|value| *value == data[12]));
     }
 }
