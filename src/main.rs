@@ -33,6 +33,8 @@ enum Command {
 
 #[derive(Args, Debug)]
 struct TrainArgs {
+    #[arg(long, value_name = "PATH")]
+    config: Option<PathBuf>,
     #[arg(long, value_name = "EPOCH")]
     resume: Option<NonZeroUsize>,
 }
@@ -42,8 +44,13 @@ fn main() -> Result<()> {
 
     match cli.command {
         Some(Command::Train(args)) => {
-            let mut config = train::TrainingConfig::new();
-            config.resume_epoch = args.resume.map(NonZeroUsize::get);
+            let mut config = match args.config {
+                Some(path) => train::load_training_config(path)?,
+                None => train::TrainingConfig::new(),
+            };
+            if let Some(resume) = args.resume {
+                config.resume_epoch = Some(resume.get());
+            }
             train::train_diffusion_with_config(config)
         }
         Some(Command::Roundtrip) | None => roundtrip_images(),
