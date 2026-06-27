@@ -1,11 +1,13 @@
 use burn::config::Config;
 use burn::module::Module;
 use burn::nn::PaddingConfig2d;
-use burn::nn::conv::{Conv2d, Conv2dConfig, ConvTranspose2d, ConvTranspose2dConfig};
+use burn::nn::conv::{Conv2d, Conv2dConfig};
 use burn::nn::pool::{MaxPool2d, MaxPool2dConfig};
 use burn::tensor::Tensor;
 use burn::tensor::activation::relu;
 use burn::tensor::backend::Backend;
+use burn::tensor::module::interpolate;
+use burn::tensor::ops::{InterpolateMode, InterpolateOptions};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -31,7 +33,7 @@ impl Default for UNetStepConfig {
 
 #[derive(Config, Debug)]
 pub struct UNetConfig {
-    #[config(default = "vec![UNetStepConfig::default(); 7]")]
+    #[config(default = "vec![UNetStepConfig::default(); 4]")]
     pub sizes: Vec<UNetStepConfig>,
     #[config(default = "1")]
     pub insert_channels: usize,
@@ -45,7 +47,7 @@ pub struct UNetConfig {
 
 #[derive(Module, Debug)]
 struct UNetEncoder<B: Backend> {
-    conv: Conv2d<B>,
+    conv: DepthwisePointwiseConv<B>,
     pool: MaxPool2d,
     input_channels: usize,
     output_channels: usize,
@@ -53,10 +55,22 @@ struct UNetEncoder<B: Backend> {
 }
 
 #[derive(Module, Debug)]
+struct UNetDecoder<B: Backend> {
+    conv: DepthwisePointwiseConv<B>,
+    pool_size: usize,
+}
+
+#[derive(Module, Debug)]
+struct DepthwisePointwiseConv<B: Backend> {
+    depthwise: Conv2d<B>,
+    pointwise: Conv2d<B>,
+}
+
+#[derive(Module, Debug)]
 pub struct UNet<B: Backend> {
     encoders: Vec<UNetEncoder<B>>,
-    decoders: Vec<ConvTranspose2d<B>>,
-    final_conv: Conv2d<B>,
+    decoders: Vec<UNetDecoder<B>>,
+    final_conv: DepthwisePointwiseConv<B>,
 }
 
 impl UNetConfig {
@@ -64,23 +78,31 @@ impl UNetConfig {
         let encoders = self
             .sizes
             .iter()
+            .enumerate()
             .scan(
                 (self.input_channels, 1),
                 |(channels, size),
-                 &UNetStepConfig {
-                     encoder_kernel_size,
-                     pool_size,
-                     down_channels_mul,
-                     ..
-                 }| {
+                 (
+                    depth,
+                    &UNetStepConfig {
+                        encoder_kernel_size,
+                        pool_size,
+                        down_channels_mul,
+                        ..
+                    },
+                )| {
                     let input_channels = *channels;
-                    *channels = (*channels as f64 * down_channels_mul).round() as usize;
-                    let output_channels = *channels;
-                    let conv = Conv2dConfig::new([input_channels, output_channels], [encoder_kernel_size; 2])
-                        .with_padding(PaddingConfig2d::Same)
-                        .init(device);
+                    let conv_output_channels = (*channels as f64 * down_channels_mul).round() as usize;
+                    let output_channels = if depth == 0 {
+                        conv_output_channels + self.insert_channels
+                    } else {
+                        conv_output_channels
+                    };
+                    let conv =
+                        DepthwisePointwiseConv::new(input_channels, conv_output_channels, encoder_kernel_size, device);
                     let pool = MaxPool2dConfig::new([pool_size; 2]).init();
                     *size *= pool_size;
+                    *channels = output_channels;
                     Some(UNetEncoder {
                         conv,
                         pool,
@@ -94,57 +116,60 @@ impl UNetConfig {
         let decoders = self
             .sizes
             .iter()
-            .enumerate()
             .rev()
             .zip(encoders.iter().rev())
             .scan(
                 0,
                 |channels,
                  (
-                    (
-                        depth,
-                        &UNetStepConfig {
-                            decoder_kernel_size,
-                            pool_size,
-                            transposed_channels_mul,
-                            ..
-                        },
-                    ),
+                    &UNetStepConfig {
+                        decoder_kernel_size,
+                        pool_size,
+                        transposed_channels_mul,
+                        ..
+                    },
                     encoder,
                 )| {
-                    let input_channels = if depth == 0 {
-                        *channels + self.insert_channels + encoder.output_channels
-                    } else {
-                        *channels + encoder.output_channels
-                    };
+                    let input_channels = *channels + encoder.output_channels;
                     let output_channels = (encoder.input_channels as f64 * transposed_channels_mul).round() as usize;
-                    let padding = decoder_kernel_size.saturating_sub(pool_size).div_ceil(2);
-                    let padding_out = pool_size + 2 * padding - decoder_kernel_size;
                     *channels = output_channels;
-                    Some(
-                        ConvTranspose2dConfig::new([input_channels, output_channels], [decoder_kernel_size; 2])
-                            .with_stride([pool_size; 2])
-                            .with_padding([padding; 2])
-                            .with_padding_out([padding_out; 2])
-                            .init(device),
-                    )
+                    let conv =
+                        DepthwisePointwiseConv::new(input_channels, output_channels, decoder_kernel_size, device);
+                    Some(UNetDecoder { conv, pool_size })
                 },
             )
             .collect();
         let decoder_output_channels =
             (self.input_channels as f64 * self.sizes[0].transposed_channels_mul).round() as usize;
-        let final_conv = Conv2dConfig::new(
-            [self.input_channels + decoder_output_channels, self.output_channels],
-            [self.final_kernel_size; 2],
-        )
-        .with_padding(PaddingConfig2d::Same)
-        .init(device);
+        let final_conv = DepthwisePointwiseConv::new(
+            self.input_channels + decoder_output_channels,
+            self.output_channels,
+            self.final_kernel_size,
+            device,
+        );
 
         UNet {
             encoders,
             decoders,
             final_conv,
         }
+    }
+}
+
+impl<B: Backend> DepthwisePointwiseConv<B> {
+    fn new(input_channels: usize, output_channels: usize, kernel_size: usize, device: &B::Device) -> Self {
+        let depthwise = Conv2dConfig {
+            groups: input_channels,
+            ..Conv2dConfig::new([input_channels, input_channels], [kernel_size; 2]).with_padding(PaddingConfig2d::Same)
+        }
+        .init(device);
+        let pointwise = Conv2dConfig::new([input_channels, output_channels], [1; 2]).init(device);
+
+        Self { depthwise, pointwise }
+    }
+
+    fn forward(&self, input: Tensor<B, 4>) -> Tensor<B, 4> {
+        relu(self.pointwise.forward(relu(self.depthwise.forward(input))))
     }
 }
 
@@ -180,10 +205,16 @@ impl<B: Backend> UNet<B> {
         let mut x = conditioned_input.clone();
         let mut skips = Vec::with_capacity(self.encoders.len());
 
-        for encoder in self.encoders.iter() {
+        for (index, encoder) in self.encoders.iter().enumerate() {
             assert_eq!(x.dims()[1], encoder.input_channels);
-            let c = relu(encoder.conv.forward(x));
+            let c = encoder.conv.forward(x);
             x = encoder.pool.forward(c);
+            if index == 0 {
+                assert_eq!(insert.dims()[0], x.dims()[0]);
+                assert_eq!(insert.dims()[2], x.dims()[2]);
+                assert_eq!(insert.dims()[3], x.dims()[3]);
+                x = Tensor::cat(vec![x, insert.clone()], 1);
+            }
             skips.push(x.clone());
             assert_eq!(x.dims()[1], encoder.output_channels);
             assert_eq!(x.dims()[2] * encoder.shrink_rate, conditioned_input.dims()[2]);
@@ -192,19 +223,21 @@ impl<B: Backend> UNet<B> {
 
         for (index, decoder) in self.decoders.iter().enumerate() {
             let skip = skips.pop().expect("UNet decoder count should match encoder count");
-            let is_last = index + 1 == self.decoders.len();
 
             let mut stacks = Vec::new();
             stacks.push(skip);
-            if is_last {
-                stacks.push(insert.clone());
-            }
             if index != 0 {
                 stacks.push(x);
             }
 
             let cat = Tensor::cat(stacks, 1);
-            x = relu(decoder.forward(cat));
+            let [_, _, height, width] = cat.dims();
+            let upsampled = interpolate(
+                cat,
+                [height * decoder.pool_size, width * decoder.pool_size],
+                InterpolateOptions::new(InterpolateMode::Nearest),
+            );
+            x = decoder.conv.forward(upsampled);
         }
 
         let result = Tensor::clamp(
@@ -212,7 +245,7 @@ impl<B: Backend> UNet<B> {
             -1.0,
             1.0,
         );
-        assert_eq!(result.dims()[1], self.final_conv.weight.dims()[0]);
+        assert_eq!(result.dims()[1], 1);
         result
     }
 }
@@ -236,11 +269,36 @@ mod tests {
     }
 
     #[test]
+    fn depthwise_pointwise_conv_changes_channels_without_changing_size() {
+        let device = Default::default();
+        let conv = DepthwisePointwiseConv::new(4, 6, 3, &device);
+        let input = Tensor::<burn::backend::Flex, 4>::zeros([2, 4, 16, 16], &device);
+
+        let output = conv.forward(input);
+
+        assert_eq!(output.dims(), [2, 6, 16, 16]);
+    }
+
+    #[test]
+    fn default_unet_forwards_single_minimum_size_image() {
+        let device = Default::default();
+        let model = UNetConfig::new().init::<burn::backend::Flex>(&device);
+        let input = Tensor::<_, 4>::zeros([1, 1, 128, 128], &device);
+        let noise_level = Tensor::<_, 4>::zeros([1, 1, 128, 128], &device);
+        let [insert_height, insert_width] = model.expected_insert_size([128, 128]);
+        let insert = Tensor::<_, 4>::zeros([1, 1, insert_height, insert_width], &device);
+
+        let output = model.forward(input, noise_level, insert);
+
+        assert_eq!(output.dims(), [1, 1, 128, 128]);
+    }
+
+    #[test]
     fn default_unet_reports_input_and_insert_sizes() {
         let device = Default::default();
         let model = UNetConfig::new().init::<burn::backend::Flex>(&device);
 
-        assert_eq!(model.minimum_input_size(), [128, 128]);
+        assert_eq!(model.minimum_input_size(), [16, 16]);
         assert_eq!(model.expected_insert_size([1024, 1024]), [512, 512]);
     }
 }

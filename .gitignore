@@ -4,6 +4,7 @@
 !/.gitignore
 !/Cargo.lock
 !/Cargo.toml
+!/profile_lineartgen_training.sh
 !/mise.toml
 !/rustfmt.toml
 !/taplo.toml

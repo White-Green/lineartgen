@@ -12,7 +12,8 @@ burn = { default-features = false, features = [
   "train",
   "tui",
   "vision",
-  "wgpu","flex",
+  "vulkan",
+  "flex",
 ], version = "0.21.0" }
 clap = { features = ["derive"], version = "4.5.51" }
 image = { default-features = false, features = [

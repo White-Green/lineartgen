@@ -12,7 +12,7 @@ mod image_io;
 mod model;
 mod train;
 
-pub type BurnBackend = burn::backend::Wgpu;
+pub type BurnBackend = burn::backend::Vulkan;
 pub type LineartTensor = burn::tensor::Tensor<BurnBackend, 2>;
 
 const INPUT_DIR: &str = "dataset/images";
