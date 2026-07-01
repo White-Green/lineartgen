@@ -21,8 +21,7 @@ pub struct LineartLossConfig {
     #[config(default = "0.0")]
     pub density_weight: f64,
     /// Sobelカーネルの畳み込み結果を比較
-    #[config(default = "0.0")]
-    // #[config(default = "0.0")]
+    #[config(default = "1.0")]
     pub edge_weight: f64,
     /// 正解線の近傍外に出た黒を罰する
     // #[config(default = "0.10")]
@@ -30,13 +29,13 @@ pub struct LineartLossConfig {
     pub speckle_weight: f64,
     /// 灰色っぽい中間値を罰する
     // #[config(default = "0.05")]
-    #[config(default = "0.05")]
+    #[config(default = "0.0")]
     pub contrast_weight: f64,
     /// 正解を参照せず、黒画素が近傍の黒supportを持つようにする
-    #[config(default = "0.1")]
+    #[config(default = "0.0")]
     pub support_weight: f64,
     /// 正解を参照せず、黒画素が線状の方向supportを持つようにする
-    #[config(default = "0.1")]
+    #[config(default = "0.0")]
     pub direction_weight: f64,
 }
 
@@ -55,6 +54,10 @@ pub struct DiffusionModel<B: Backend> {
     noise_pool_size: Option<usize>,
     #[module(skip)]
     lineart_loss: LineartLossConfig,
+    #[module(skip)]
+    recursive_training_insert: bool,
+    #[module(skip)]
+    scale_loss_multiplier: f64,
 }
 
 impl DiffusionModelConfig {
@@ -68,6 +71,8 @@ impl DiffusionModelConfig {
             micro_batch_size: 32,
             noise_pool_size: None,
             lineart_loss: LineartLossConfig::new(),
+            recursive_training_insert: false,
+            scale_loss_multiplier: 1.0,
         }
     }
 }
@@ -99,6 +104,20 @@ impl<B: Backend> DiffusionModel<B> {
         self
     }
 
+    pub fn with_recursive_training_insert(mut self, recursive_training_insert: bool) -> Self {
+        self.recursive_training_insert = recursive_training_insert;
+        self
+    }
+
+    pub fn with_scale_loss_multiplier(mut self, scale_loss_multiplier: f64) -> Self {
+        assert!(
+            scale_loss_multiplier.is_finite() && scale_loss_multiplier >= 0.0,
+            "scale_loss_multiplier must be finite and non-negative"
+        );
+        self.scale_loss_multiplier = scale_loss_multiplier;
+        self
+    }
+
     pub fn sample_noise_levels(&self) -> &[f32] {
         &self.sample_noise_levels
     }
@@ -123,6 +142,14 @@ impl<B: Backend> DiffusionModel<B> {
         &self.lineart_loss
     }
 
+    pub fn recursive_training_insert(&self) -> bool {
+        self.recursive_training_insert
+    }
+
+    pub fn scale_loss_multiplier(&self) -> f64 {
+        self.scale_loss_multiplier
+    }
+
     pub fn input_sizes(&self, base_size: [usize; 2]) -> impl Iterator<Item = [usize; 2]> {
         assert_eq!(base_size[0].next_power_of_two(), base_size[0]);
         assert_eq!(base_size[1].next_power_of_two(), base_size[1]);
@@ -132,6 +159,13 @@ impl<B: Backend> DiffusionModel<B> {
     }
 
     pub fn forward(&self, input: Vec<Tensor<B, 4>>, noise_level: Tensor<B, 4>) -> Tensor<B, 4> {
+        self.forward_recursive(input, noise_level)
+            .into_iter()
+            .next()
+            .expect("at least one scale is required")
+    }
+
+    pub fn forward_recursive(&self, input: Vec<Tensor<B, 4>>, noise_level: Tensor<B, 4>) -> Vec<Tensor<B, 4>> {
         assert!(
             input
                 .iter()
@@ -150,10 +184,26 @@ impl<B: Backend> DiffusionModel<B> {
                 dtype: Some(input[0].dtype()),
             },
         );
+        let mut outputs = Vec::with_capacity(input.len());
         for (input, noise_level) in input.into_iter().zip(noise_levels.into_iter()).rev() {
             a = self.u_net.forward(input, noise_level, a);
+            outputs.push(a.clone());
         }
-        a
+        outputs.reverse();
+        outputs
+    }
+
+    pub fn forward_training(
+        &self,
+        input: Vec<Tensor<B, 4>>,
+        noise_level: Tensor<B, 4>,
+        clean: Vec<Tensor<B, 4>>,
+    ) -> Vec<Tensor<B, 4>> {
+        if self.recursive_training_insert {
+            self.forward_recursive(input, noise_level)
+        } else {
+            self.forward_teacher_forced(input, noise_level, clean)
+        }
     }
 
     pub fn forward_teacher_forced(
@@ -235,6 +285,23 @@ mod tests {
         let clean = tensor_pyramid(model.input_sizes([1024, 1024]), input);
 
         let outputs = model.forward_teacher_forced(inputs, noise_level, clean);
+
+        let expected_sizes = model.input_sizes([1024, 1024]).collect::<Vec<_>>();
+        assert_eq!(outputs.len(), expected_sizes.len());
+        for (output, [height, width]) in outputs.iter().zip(expected_sizes) {
+            assert_eq!(output.dims(), [1, 1, height, width]);
+        }
+    }
+
+    #[test]
+    fn recursive_forward_returns_all_scales_for_default_model() {
+        let device = Default::default();
+        let model = DiffusionModelConfig::new().init::<burn::backend::Flex>(&device);
+        let input = Tensor::<_, 4>::zeros([1, 1, 1024, 1024], &device);
+        let noise_level = Tensor::<_, 4>::zeros([1, 1, 1024, 1024], &device);
+        let inputs = tensor_pyramid(model.input_sizes([1024, 1024]), input);
+
+        let outputs = model.forward_recursive(inputs, noise_level);
 
         let expected_sizes = model.input_sizes([1024, 1024]).collect::<Vec<_>>();
         assert_eq!(outputs.len(), expected_sizes.len());

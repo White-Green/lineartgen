@@ -69,6 +69,10 @@ pub struct TrainingConfig {
     pub balance_loss_by_tone: bool,
     #[config(default = "LineartLossConfig::new()")]
     pub lineart_loss: LineartLossConfig,
+    #[config(default = "true")]
+    pub recursive_training_insert: bool,
+    #[config(default = "0.0")]
+    pub scale_loss_multiplier: f64,
 }
 
 pub fn load_training_config(path: impl AsRef<Path>) -> AppResult<TrainingConfig> {
@@ -166,6 +170,10 @@ pub fn train_diffusion_with_config(config: TrainingConfig) -> AppResult<()> {
         config.micro_batch_size > 0,
         "micro_batch_size must be greater than zero"
     );
+    assert!(
+        config.scale_loss_multiplier.is_finite() && config.scale_loss_multiplier >= 0.0,
+        "scale_loss_multiplier must be finite and non-negative"
+    );
     if let Some(noise_pool_size) = config.noise_pool_size {
         assert!(
             noise_pool_size >= config.batch_size,
@@ -224,7 +232,9 @@ pub fn train_diffusion_with_config(config: TrainingConfig) -> AppResult<()> {
         .with_sample_denoising_steps(sample_denoising_steps)
         .with_balance_loss_by_tone(config.balance_loss_by_tone)
         .with_training_batching(config.micro_batch_size, config.noise_pool_size)
-        .with_lineart_loss_config(config.lineart_loss.clone());
+        .with_lineart_loss_config(config.lineart_loss.clone())
+        .with_recursive_training_insert(config.recursive_training_insert)
+        .with_scale_loss_multiplier(config.scale_loss_multiplier);
     let optimizer = config.optimizer.init::<TrainBackend, DiffusionModel<TrainBackend>>();
     let learner = Learner::new(model, optimizer, scaled_learning_rate(&config));
 
@@ -491,8 +501,9 @@ fn matched_diffusion_output<B: Backend>(
     let matched_noises = narrow_scales(&matched.matched_noises, start, batch_size);
     let noise_level = matched.noise_level.clone().narrow(0, start, batch_size);
     let predicted_clean_scales =
-        model.forward_teacher_forced(noisy_scales.clone(), noise_level.clone(), clean_scales.clone());
+        model.forward_training(noisy_scales.clone(), noise_level.clone(), clean_scales.clone());
     let mut losses = Vec::with_capacity(clean_scales.len());
+    let mut scale_weight_sum = 0.0;
     let mut predicted_v_original = None;
     let mut target_v_original = None;
 
@@ -503,6 +514,7 @@ fn matched_diffusion_output<B: Backend>(
         .zip(clean_scales.iter().cloned().zip(noise_level_scales.into_iter()))
         .enumerate()
     {
+        let scale_weight = scale_loss_weight(scale_index, model.scale_loss_multiplier());
         let signal_scale = (noise_level.clone().neg() + 1.0).sqrt();
         let noise_scale = noise_level.clone().sqrt();
         let predicted_v = (signal_scale.clone() * noisy - predicted_clean.clone()) / noise_scale.clone();
@@ -516,10 +528,11 @@ fn matched_diffusion_output<B: Backend>(
         if lineart_loss_enabled(model.lineart_loss_config()) {
             let lineart_loss =
                 lineart_image_loss(predicted_clean, clean, noise_level.clone(), model.lineart_loss_config());
-            losses.push(regression_loss + lineart_loss);
+            losses.push((regression_loss + lineart_loss) * scale_weight);
         } else {
-            losses.push(regression_loss);
+            losses.push(regression_loss * scale_weight);
         }
+        scale_weight_sum += scale_weight;
 
         if scale_index == 0 {
             predicted_v_original = Some(predicted_v);
@@ -527,12 +540,11 @@ fn matched_diffusion_output<B: Backend>(
         }
     }
 
-    let scale_count = losses.len();
     let loss = losses
         .into_iter()
         .reduce(|total, loss| total + loss)
         .expect("at least one scale is required")
-        / scale_count as f64;
+        / scale_weight_sum;
     let predicted_v = predicted_v_original.expect("original scale output should exist");
     let target_v = target_v_original.expect("original scale target should exist");
 
@@ -541,6 +553,10 @@ fn matched_diffusion_output<B: Backend>(
         flatten_for_regression(predicted_v),
         flatten_for_regression(target_v),
     )
+}
+
+fn scale_loss_weight(scale_index: usize, scale_loss_multiplier: f64) -> f64 {
+    scale_loss_multiplier.powi(scale_index as i32)
 }
 
 fn narrow_scales<B: Backend>(scales: &[Tensor<B, 4>], start: usize, batch_size: usize) -> Vec<Tensor<B, 4>> {
@@ -1339,6 +1355,14 @@ mod tests {
         let learning_rate = scaled_learning_rate(&config);
 
         assert!((learning_rate - 1.0e-4 * 128.0_f64.sqrt()).abs() < 1.0e-12);
+    }
+
+    #[test]
+    fn scale_loss_weight_uses_multiplier_per_smaller_scale() {
+        assert_eq!(scale_loss_weight(0, 0.25), 1.0);
+        assert_eq!(scale_loss_weight(1, 0.25), 0.25);
+        assert_eq!(scale_loss_weight(2, 0.25), 0.0625);
+        assert_eq!(scale_loss_weight(3, 2.0), 8.0);
     }
 
     #[test]

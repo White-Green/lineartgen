@@ -47,7 +47,7 @@ pub struct UNetConfig {
 
 #[derive(Module, Debug)]
 struct UNetEncoder<B: Backend> {
-    conv: DepthwisePointwiseConv<B>,
+    conv: SingleConv<B>,
     pool: MaxPool2d,
     input_channels: usize,
     output_channels: usize,
@@ -56,21 +56,20 @@ struct UNetEncoder<B: Backend> {
 
 #[derive(Module, Debug)]
 struct UNetDecoder<B: Backend> {
-    conv: DepthwisePointwiseConv<B>,
+    conv: SingleConv<B>,
     pool_size: usize,
 }
 
 #[derive(Module, Debug)]
-struct DepthwisePointwiseConv<B: Backend> {
-    depthwise: Conv2d<B>,
-    pointwise: Conv2d<B>,
+struct SingleConv<B: Backend> {
+    conv: Conv2d<B>,
 }
 
 #[derive(Module, Debug)]
 pub struct UNet<B: Backend> {
     encoders: Vec<UNetEncoder<B>>,
     decoders: Vec<UNetDecoder<B>>,
-    final_conv: DepthwisePointwiseConv<B>,
+    final_conv: SingleConv<B>,
 }
 
 impl UNetConfig {
@@ -98,8 +97,7 @@ impl UNetConfig {
                     } else {
                         conv_output_channels
                     };
-                    let conv =
-                        DepthwisePointwiseConv::new(input_channels, conv_output_channels, encoder_kernel_size, device);
+                    let conv = SingleConv::new(input_channels, conv_output_channels, encoder_kernel_size, device);
                     let pool = MaxPool2dConfig::new([pool_size; 2]).init();
                     *size *= pool_size;
                     *channels = output_channels;
@@ -133,15 +131,14 @@ impl UNetConfig {
                     let input_channels = *channels + encoder.output_channels;
                     let output_channels = (encoder.input_channels as f64 * transposed_channels_mul).round() as usize;
                     *channels = output_channels;
-                    let conv =
-                        DepthwisePointwiseConv::new(input_channels, output_channels, decoder_kernel_size, device);
+                    let conv = SingleConv::new(input_channels, output_channels, decoder_kernel_size, device);
                     Some(UNetDecoder { conv, pool_size })
                 },
             )
             .collect();
         let decoder_output_channels =
             (self.input_channels as f64 * self.sizes[0].transposed_channels_mul).round() as usize;
-        let final_conv = DepthwisePointwiseConv::new(
+        let final_conv = SingleConv::new(
             self.input_channels + decoder_output_channels,
             self.output_channels,
             self.final_kernel_size,
@@ -156,20 +153,21 @@ impl UNetConfig {
     }
 }
 
-impl<B: Backend> DepthwisePointwiseConv<B> {
+impl<B: Backend> SingleConv<B> {
     fn new(input_channels: usize, output_channels: usize, kernel_size: usize, device: &B::Device) -> Self {
-        let depthwise = Conv2dConfig {
-            groups: input_channels,
-            ..Conv2dConfig::new([input_channels, input_channels], [kernel_size; 2]).with_padding(PaddingConfig2d::Same)
-        }
-        .init(device);
-        let pointwise = Conv2dConfig::new([input_channels, output_channels], [1; 2]).init(device);
+        let conv = Conv2dConfig::new([input_channels, output_channels], [kernel_size; 2])
+            .with_padding(PaddingConfig2d::Same)
+            .init(device);
 
-        Self { depthwise, pointwise }
+        Self { conv }
     }
 
     fn forward(&self, input: Tensor<B, 4>) -> Tensor<B, 4> {
-        relu(self.pointwise.forward(relu(self.depthwise.forward(input))))
+        relu(self.conv.forward(input))
+    }
+
+    fn forward_linear(&self, input: Tensor<B, 4>) -> Tensor<B, 4> {
+        self.conv.forward(input)
     }
 }
 
@@ -241,7 +239,8 @@ impl<B: Backend> UNet<B> {
         }
 
         let result = Tensor::clamp(
-            self.final_conv.forward(Tensor::cat(vec![conditioned_input, x], 1)),
+            self.final_conv
+                .forward_linear(Tensor::cat(vec![conditioned_input, x], 1)),
             -1.0,
             1.0,
         );
@@ -253,6 +252,8 @@ impl<B: Backend> UNet<B> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use burn::module::Param;
+    use burn::tensor::TensorData;
 
     #[test]
     fn default_unet_forwards_single_1024_image() {
@@ -269,14 +270,29 @@ mod tests {
     }
 
     #[test]
-    fn depthwise_pointwise_conv_changes_channels_without_changing_size() {
+    fn single_conv_changes_channels_without_changing_size() {
         let device = Default::default();
-        let conv = DepthwisePointwiseConv::new(4, 6, 3, &device);
+        let conv = SingleConv::new(4, 6, 3, &device);
         let input = Tensor::<burn::backend::Flex, 4>::zeros([2, 4, 16, 16], &device);
 
         let output = conv.forward(input);
 
         assert_eq!(output.dims(), [2, 6, 16, 16]);
+    }
+
+    #[test]
+    fn single_conv_linear_forward_allows_negative_output() {
+        let device = Default::default();
+        let mut conv = SingleConv::new(1, 1, 3, &device);
+        conv.conv.weight = Param::from_data(TensorData::new(vec![0.0; 9], [1, 1, 3, 3]), &device);
+        conv.conv.bias = Some(Param::from_data(TensorData::new(vec![-0.5], [1]), &device));
+        let input = Tensor::<burn::backend::Flex, 4>::zeros([1, 1, 4, 4], &device);
+
+        let activated = conv.forward(input.clone()).into_data().into_vec::<f32>().unwrap();
+        let linear = conv.forward_linear(input).into_data().into_vec::<f32>().unwrap();
+
+        assert!(activated.iter().all(|value| value.abs() < 1.0e-6));
+        assert!(linear.iter().all(|value| (*value + 0.5).abs() < 1.0e-6));
     }
 
     #[test]
