@@ -1,12 +1,11 @@
 use crate::BurnBackend;
 use crate::data::{LineartBatch, LineartDataset, lineart_dataloader};
 use crate::image_io::Result as AppResult;
-use crate::model::{DiffusionModel, DiffusionModelConfig, LineartLossConfig};
+use crate::model::{DiffusionModel, DiffusionModelConfig, LineartLossConfig, NoiseLevelConfig};
 use burn::backend::{Autodiff, Flex};
 use burn::config::Config;
 use burn::data::dataset::Dataset;
 use burn::data::dataset::transform::SelectionDataset;
-use burn::nn::loss::{MseLoss, Reduction};
 use burn::optim::{AdamWConfig, GradientsAccumulator, GradientsParams};
 use burn::record::CompactRecorder;
 use burn::tensor::activation::relu;
@@ -28,6 +27,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 type TrainBackend = Autodiff<BurnBackend>;
+const MIN_NOISE_FOR_V_LOSS: f64 = 1.0e-3;
 
 #[derive(Config, Debug)]
 pub struct TrainingConfig {
@@ -39,7 +39,7 @@ pub struct TrainingConfig {
     pub dataset_dir: String,
     #[config(default = "\"tmp/training\".to_string()")]
     pub artifact_dir: String,
-    #[config(default = "1000")]
+    #[config(default = "3000")]
     pub num_epochs: usize,
     #[config(default = "128")]
     pub batch_size: usize,
@@ -69,6 +69,8 @@ pub struct TrainingConfig {
     pub balance_loss_by_tone: bool,
     #[config(default = "LineartLossConfig::new()")]
     pub lineart_loss: LineartLossConfig,
+    #[config(default = "NoiseLevelConfig::new()")]
+    pub noise_level: NoiseLevelConfig,
     #[config(default = "true")]
     pub recursive_training_insert: bool,
     #[config(default = "0.0")]
@@ -86,6 +88,7 @@ pub fn load_training_config(path: impl AsRef<Path>) -> AppResult<TrainingConfig>
 #[derive(Debug)]
 pub struct SampleOutput<B: Backend> {
     noise_level: f32,
+    filename: String,
     image: Tensor<B, 2>,
 }
 
@@ -126,7 +129,7 @@ impl Adaptor<SampleExportInput> for DiffusionOutput<Flex> {
                 .samples
                 .iter()
                 .map(|sample| SampleExportImage {
-                    noise_level: sample.noise_level,
+                    filename: sample.filename.clone(),
                     image: sample.image.clone(),
                 })
                 .collect(),
@@ -151,6 +154,7 @@ impl<B: Backend> ItemLazy for DiffusionOutput<B> {
             .into_iter()
             .map(|sample| SampleOutput {
                 noise_level: sample.noise_level,
+                filename: sample.filename,
                 image: Tensor::from_data(sample.image.into_data(), device),
             })
             .collect();
@@ -174,6 +178,7 @@ pub fn train_diffusion_with_config(config: TrainingConfig) -> AppResult<()> {
         config.scale_loss_multiplier.is_finite() && config.scale_loss_multiplier >= 0.0,
         "scale_loss_multiplier must be finite and non-negative"
     );
+    config.noise_level.validate();
     if let Some(noise_pool_size) = config.noise_pool_size {
         assert!(
             noise_pool_size >= config.batch_size,
@@ -234,7 +239,8 @@ pub fn train_diffusion_with_config(config: TrainingConfig) -> AppResult<()> {
         .with_training_batching(config.micro_batch_size, config.noise_pool_size)
         .with_lineart_loss_config(config.lineart_loss.clone())
         .with_recursive_training_insert(config.recursive_training_insert)
-        .with_scale_loss_multiplier(config.scale_loss_multiplier);
+        .with_scale_loss_multiplier(config.scale_loss_multiplier)
+        .with_noise_level_config(config.noise_level.clone());
     let optimizer = config.optimizer.init::<TrainBackend, DiffusionModel<TrainBackend>>();
     let learner = Learner::new(model, optimizer, scaled_learning_rate(&config));
 
@@ -285,7 +291,7 @@ fn scaled_learning_rate(config: &TrainingConfig) -> f64 {
 
 #[derive(Clone)]
 struct SampleExportImage {
-    noise_level: f32,
+    filename: String,
     image: Tensor<Flex, 2>,
 }
 
@@ -332,7 +338,7 @@ impl Metric for SampleExportMetric {
             }
 
             for sample in input.samples.iter() {
-                let path = epoch_dir.join(format!("{}.png", format_noise_level(sample.noise_level)));
+                let path = epoch_dir.join(format!("{}.png", sample.filename));
                 if let Err(err) = write_sample_image(sample.image.clone(), &path) {
                     return SerializedEntry::new(
                         format!("sample export failed: {err}"),
@@ -439,9 +445,9 @@ fn matched_diffusion_batch<B: Backend>(
     clean: Tensor<B, 4>,
     noise_pool_size: usize,
 ) -> MatchedDiffusionBatch<B> {
-    let [batch_size, _, height, width] = clean.dims();
+    let [batch_size, _, _, _] = clean.dims();
     let device = clean.device();
-    let noise_level = uniform_image_noise_level(batch_size, height, width, &device);
+    let noise_level = random_image_noise_level(clean.clone(), model.noise_level_config());
     let noise_pool_size = if noise_pool_size == 0 {
         batch_size
     } else {
@@ -449,13 +455,6 @@ fn matched_diffusion_batch<B: Backend>(
     };
 
     let clean_scales = clean_pyramid(model, clean);
-    let matching_clean_cost = low_frequency_cost_tensor(
-        clean_scales
-            .last()
-            .expect("at least one clean scale is required")
-            .clone()
-            .detach(),
-    );
     let noise_level_scales = tensor_pyramid(model, noise_level.clone());
     let mut noisy_scales = Vec::with_capacity(clean_scales.len());
     let mut matched_noises = Vec::with_capacity(clean_scales.len());
@@ -469,7 +468,8 @@ fn matched_diffusion_batch<B: Backend>(
             Distribution::Normal(0.0, 1.0),
             &device,
         );
-        let noise = match_noise_pool_to_clean_cost(matching_clean_cost.clone(), noise);
+        let noise =
+            match_noise_pool_to_clean_cost(clean_scale.clone().detach(), noise_level_scale.clone().detach(), noise);
         let noisy = q_sample(
             clean_scale.clone(),
             noise.clone(),
@@ -515,28 +515,26 @@ fn matched_diffusion_output<B: Backend>(
         .enumerate()
     {
         let scale_weight = scale_loss_weight(scale_index, model.scale_loss_multiplier());
-        let signal_scale = (noise_level.clone().neg() + 1.0).sqrt();
-        let noise_scale = noise_level.clone().sqrt();
-        let predicted_v = (signal_scale.clone() * noisy - predicted_clean.clone()) / noise_scale.clone();
-        let target_v = signal_scale * noise - noise_scale * clean.clone();
-        let regression_loss = v_loss(
-            predicted_v.clone(),
-            target_v.clone(),
+        let regression = diffusion_regression_loss(
+            predicted_clean.clone(),
+            noisy,
+            noise,
             clean.clone(),
+            noise_level.clone(),
             model.balance_loss_by_tone(),
         );
         if lineart_loss_enabled(model.lineart_loss_config()) {
             let lineart_loss =
                 lineart_image_loss(predicted_clean, clean, noise_level.clone(), model.lineart_loss_config());
-            losses.push((regression_loss + lineart_loss) * scale_weight);
+            losses.push((regression.loss + lineart_loss) * scale_weight);
         } else {
-            losses.push(regression_loss * scale_weight);
+            losses.push(regression.loss * scale_weight);
         }
         scale_weight_sum += scale_weight;
 
         if scale_index == 0 {
-            predicted_v_original = Some(predicted_v);
-            target_v_original = Some(target_v);
+            predicted_v_original = Some(regression.output);
+            target_v_original = Some(regression.target);
         }
     }
 
@@ -566,18 +564,33 @@ fn narrow_scales<B: Backend>(scales: &[Tensor<B, 4>], start: usize, batch_size: 
         .collect()
 }
 
-fn v_loss<B: Backend>(
-    predicted_v: Tensor<B, 4>,
-    target_v: Tensor<B, 4>,
-    clean_target: Tensor<B, 4>,
-    balance_loss_by_tone: bool,
-) -> Tensor<B, 1> {
-    if !balance_loss_by_tone {
-        return MseLoss::new().forward(predicted_v, target_v, Reduction::Mean);
-    }
+struct RegressionLossOutput<B: Backend> {
+    loss: Tensor<B, 1>,
+    output: Tensor<B, 4>,
+    target: Tensor<B, 4>,
+}
 
-    let squared_error = (predicted_v - target_v).square();
-    (squared_error * balanced_tone_weights(clean_target)).mean()
+fn diffusion_regression_loss<B: Backend>(
+    predicted_clean: Tensor<B, 4>,
+    _noisy: Tensor<B, 4>,
+    _noise: Tensor<B, 4>,
+    clean: Tensor<B, 4>,
+    noise_level: Tensor<B, 4>,
+    balance_loss_by_tone: bool,
+) -> RegressionLossOutput<B> {
+    let loss_scale = Tensor::clamp(noise_level, MIN_NOISE_FOR_V_LOSS, 1.0);
+    let x_error = (predicted_clean.clone() - clean.clone()).square();
+    let squared_error = x_error / loss_scale.clone();
+    let loss = if balance_loss_by_tone {
+        (squared_error * balanced_tone_weights(clean.clone())).mean()
+    } else {
+        squared_error.mean()
+    };
+    let metric_scale = loss_scale.sqrt();
+    let output = predicted_clean / metric_scale.clone();
+    let target = clean / metric_scale;
+
+    RegressionLossOutput { loss, output, target }
 }
 
 fn balanced_tone_weights<B: Backend>(clean_target: Tensor<B, 4>) -> Tensor<B, 4> {
@@ -903,15 +916,223 @@ fn weighted_mean<B: Backend>(loss_map: Tensor<B, 4>, noise_weight: Tensor<B, 4>)
     (loss_map * noise_weight).mean()
 }
 
-fn uniform_image_noise_level<B: Backend>(
-    batch_size: usize,
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum NoiseLevelPattern {
+    Full,
+    Band,
+    Rectangle,
+    RegionLineClean,
+}
+
+#[derive(Clone, Copy)]
+enum BandSide {
+    Left,
+    Right,
+    Top,
+    Bottom,
+}
+
+#[derive(Clone, Copy)]
+enum NoiseRegion {
+    Band {
+        side: BandSide,
+        span: usize,
+    },
+    Rectangle {
+        y_start: usize,
+        x_start: usize,
+        height: usize,
+        width: usize,
+    },
+}
+
+const NOISE_RANDOMS_PER_IMAGE: usize = 8;
+
+fn random_image_noise_level<B: Backend>(clean: Tensor<B, 4>, config: &NoiseLevelConfig) -> Tensor<B, 4> {
+    let [batch_size, _, _, _] = clean.dims();
+    let device = clean.device();
+    let random_values = Tensor::<B, 2>::random(
+        [batch_size, NOISE_RANDOMS_PER_IMAGE],
+        Distribution::Uniform(0.0, 1.0),
+        &device,
+    )
+    .into_data()
+    .into_vec::<f32>()
+    .unwrap();
+
+    image_noise_level_from_random_values(clean, config, &random_values)
+}
+
+fn image_noise_level_from_random_values<B: Backend>(
+    clean: Tensor<B, 4>,
+    config: &NoiseLevelConfig,
+    random_values: &[f32],
+) -> Tensor<B, 4> {
+    config.validate();
+    let [batch_size, channels, height, width] = clean.dims();
+    assert_eq!(channels, 1);
+    assert_eq!(random_values.len(), batch_size * NOISE_RANDOMS_PER_IMAGE);
+    let device = clean.device();
+    let mut noise_values = vec![0.0; batch_size * height * width];
+    let mut region_line_clean_values = vec![0.0; batch_size * height * width];
+
+    for batch in 0..batch_size {
+        let random = &random_values[batch * NOISE_RANDOMS_PER_IMAGE..(batch + 1) * NOISE_RANDOMS_PER_IMAGE];
+        let base_noise = 1.0e-5 + random[0] * (1.0 - 1.0e-5);
+        let pattern = choose_noise_level_pattern(config, random[1]);
+
+        match pattern {
+            NoiseLevelPattern::Full => fill_image(&mut noise_values, batch, height, width, base_noise),
+            NoiseLevelPattern::Band => {
+                let region = band_region(height, width, random[2], random[3]);
+                fill_region(&mut noise_values, batch, height, width, region, base_noise);
+            }
+            NoiseLevelPattern::Rectangle => {
+                let region = rectangle_region(height, width, random[2], random[3], random[4], random[5]);
+                fill_region(&mut noise_values, batch, height, width, region, base_noise);
+            }
+            NoiseLevelPattern::RegionLineClean => {
+                fill_image(&mut noise_values, batch, height, width, base_noise);
+                let region = if random[6] < 0.5 {
+                    band_region(height, width, random[2], random[3])
+                } else {
+                    rectangle_region(height, width, random[2], random[3], random[4], random[5])
+                };
+                fill_region(&mut region_line_clean_values, batch, height, width, region, 1.0);
+            }
+        }
+    }
+
+    let noise_level = Tensor::<B, 4>::from_data(TensorData::new(noise_values, [batch_size, 1, height, width]), &device);
+    let region_line_clean = Tensor::<B, 4>::from_data(
+        TensorData::new(region_line_clean_values, [batch_size, 1, height, width]),
+        &device,
+    );
+    let line =
+        Tensor::<B, 4>::zeros([batch_size, 1, height, width], &device).mask_fill(clean.detach().lower_elem(1.0), 1.0);
+    let clean_mask = region_line_clean * line;
+
+    noise_level * (clean_mask.neg() + 1.0)
+}
+
+fn choose_noise_level_pattern(config: &NoiseLevelConfig, random: f32) -> NoiseLevelPattern {
+    let mut threshold = random as f64 * config.total_weight();
+    if threshold < config.full_weight {
+        return NoiseLevelPattern::Full;
+    }
+    threshold -= config.full_weight;
+    if threshold < config.band_weight {
+        return NoiseLevelPattern::Band;
+    }
+    threshold -= config.band_weight;
+    if threshold < config.rectangle_weight {
+        return NoiseLevelPattern::Rectangle;
+    }
+    NoiseLevelPattern::RegionLineClean
+}
+
+fn band_region(height: usize, width: usize, side_random: f32, span_random: f32) -> NoiseRegion {
+    let side = match (side_random * 4.0).floor() as usize {
+        0 => BandSide::Left,
+        1 => BandSide::Right,
+        2 => BandSide::Top,
+        _ => BandSide::Bottom,
+    };
+    let axis_size = match side {
+        BandSide::Left | BandSide::Right => width,
+        BandSide::Top | BandSide::Bottom => height,
+    };
+    let span = random_span(axis_size, span_random);
+
+    NoiseRegion::Band { side, span }
+}
+
+fn rectangle_region(
     height: usize,
     width: usize,
-    device: &B::Device,
-) -> Tensor<B, 4> {
-    Tensor::<B, 4>::random([batch_size, 1, 1, 1], Distribution::Uniform(1.0e-5, 1.0), device)
-        .repeat_dim(2, height)
-        .repeat_dim(3, width)
+    width_random: f32,
+    height_random: f32,
+    x_random: f32,
+    y_random: f32,
+) -> NoiseRegion {
+    let rectangle_width = random_span(width, width_random);
+    let rectangle_height = random_span(height, height_random);
+    let x_start = random_start(width, rectangle_width, x_random);
+    let y_start = random_start(height, rectangle_height, y_random);
+
+    NoiseRegion::Rectangle {
+        y_start,
+        x_start,
+        height: rectangle_height,
+        width: rectangle_width,
+    }
+}
+
+fn random_span(size: usize, random: f32) -> usize {
+    let fraction = 0.25 + random * 0.5;
+    ((size as f32 * fraction).round() as usize).clamp(1, size)
+}
+
+fn random_start(size: usize, span: usize, random: f32) -> usize {
+    let max_start = size.saturating_sub(span);
+    ((max_start + 1) as f32 * random).floor().min(max_start as f32) as usize
+}
+
+fn fill_image(values: &mut [f32], batch: usize, height: usize, width: usize, value: f32) {
+    for y in 0..height {
+        for x in 0..width {
+            values[noise_value_index(batch, height, width, y, x)] = value;
+        }
+    }
+}
+
+fn fill_region(values: &mut [f32], batch: usize, height: usize, width: usize, region: NoiseRegion, value: f32) {
+    match region {
+        NoiseRegion::Band { side, span } => match side {
+            BandSide::Left => fill_rectangle(values, batch, height, width, 0, 0, height, span, value),
+            BandSide::Right => fill_rectangle(values, batch, height, width, 0, width - span, height, span, value),
+            BandSide::Top => fill_rectangle(values, batch, height, width, 0, 0, span, width, value),
+            BandSide::Bottom => fill_rectangle(values, batch, height, width, height - span, 0, span, width, value),
+        },
+        NoiseRegion::Rectangle {
+            y_start,
+            x_start,
+            height: region_height,
+            width: region_width,
+        } => fill_rectangle(
+            values,
+            batch,
+            height,
+            width,
+            y_start,
+            x_start,
+            region_height,
+            region_width,
+            value,
+        ),
+    }
+}
+
+fn fill_rectangle(
+    values: &mut [f32],
+    batch: usize,
+    image_height: usize,
+    image_width: usize,
+    y_start: usize,
+    x_start: usize,
+    height: usize,
+    width: usize,
+    value: f32,
+) {
+    for y in y_start..y_start + height {
+        for x in x_start..x_start + width {
+            values[noise_value_index(batch, image_height, image_width, y, x)] = value;
+        }
+    }
+}
+
+fn noise_value_index(batch: usize, height: usize, width: usize, y: usize, x: usize) -> usize {
+    (batch * height + y) * width + x
 }
 
 fn clean_pyramid<B: Backend>(model: &DiffusionModel<B>, clean: Tensor<B, 4>) -> Vec<Tensor<B, 4>> {
@@ -941,53 +1162,169 @@ fn sample_outputs<B: Backend>(
 ) -> Vec<SampleOutput<B>> {
     let clean = clean.narrow(0, 0, 1);
     let noise = clean.random_like(Distribution::Normal(0.0, 1.0));
-    let [_, _, height, width] = clean.dims();
     let device = clean.device();
+    let mut outputs = Vec::new();
+    let sample_kinds = [
+        SampleNoiseKind::Full,
+        SampleNoiseKind::Band,
+        SampleNoiseKind::Rectangle,
+        SampleNoiseKind::RegionLineClean,
+    ];
 
-    noise_levels
-        .iter()
-        .map(|&noise_level| {
-            let noise_level = noise_level.clamp(0.0, 1.0);
-            let noise_level_tensor = Tensor::<B, 4>::full([1, 1, height, width], noise_level, &device);
+    for &noise_level in noise_levels {
+        let noise_level = noise_level.clamp(0.0, 1.0);
+        for kind in sample_kinds {
+            let filename = sample_filename(kind, noise_level);
+            let noise_level_tensor = fixed_sample_noise_level(clean.clone(), noise_level, kind, &device);
             let signal_scale = (noise_level_tensor.clone().neg() + 1.0).sqrt();
             let noise_scale = noise_level_tensor.clone().sqrt();
             let noisy = q_sample(clean.clone(), noise.clone(), signal_scale, noise_scale);
-            let image = denoise_sample(model, noisy, noise_level, denoising_steps).squeeze::<2>();
 
-            SampleOutput { noise_level, image }
-        })
-        .collect()
+            let image = denoise_sample(model, noisy, noise_level_tensor, noise_level, denoising_steps).squeeze::<2>();
+
+            outputs.push(SampleOutput {
+                noise_level,
+                filename,
+                image,
+            });
+        }
+    }
+
+    outputs
+}
+
+#[derive(Clone, Copy)]
+enum SampleNoiseKind {
+    Full,
+    Band,
+    Rectangle,
+    RegionLineClean,
+}
+
+fn sample_filename(kind: SampleNoiseKind, noise_level: f32) -> String {
+    let noise_level = format_noise_level(noise_level);
+    match kind {
+        SampleNoiseKind::Full => noise_level,
+        SampleNoiseKind::Band => format!("band-{noise_level}"),
+        SampleNoiseKind::Rectangle => format!("rectangle-{noise_level}"),
+        SampleNoiseKind::RegionLineClean => format!("region-line-clean-{noise_level}"),
+    }
+}
+
+fn fixed_sample_noise_level<B: Backend>(
+    clean: Tensor<B, 4>,
+    noise_level: f32,
+    kind: SampleNoiseKind,
+    device: &B::Device,
+) -> Tensor<B, 4> {
+    let [batch_size, channels, height, width] = clean.dims();
+    assert_eq!(batch_size, 1);
+    assert_eq!(channels, 1);
+    let mut noise_values = vec![0.0; height * width];
+    let mut region_line_clean_values = vec![0.0; height * width];
+
+    match kind {
+        SampleNoiseKind::Full => fill_image(&mut noise_values, 0, height, width, noise_level),
+        SampleNoiseKind::Band => {
+            let region = NoiseRegion::Band {
+                side: BandSide::Right,
+                span: width.div_ceil(2),
+            };
+            fill_region(&mut noise_values, 0, height, width, region, noise_level);
+        }
+        SampleNoiseKind::Rectangle => {
+            let region = centered_rectangle_region(height, width);
+            fill_region(&mut noise_values, 0, height, width, region, noise_level);
+        }
+        SampleNoiseKind::RegionLineClean => {
+            fill_image(&mut noise_values, 0, height, width, noise_level);
+            fill_region(
+                &mut region_line_clean_values,
+                0,
+                height,
+                width,
+                centered_rectangle_region(height, width),
+                1.0,
+            );
+        }
+    }
+
+    let noise_level = Tensor::<B, 4>::from_data(TensorData::new(noise_values, [1, 1, height, width]), device);
+    let region_line_clean =
+        Tensor::<B, 4>::from_data(TensorData::new(region_line_clean_values, [1, 1, height, width]), device);
+    let line = Tensor::<B, 4>::zeros([1, 1, height, width], device).mask_fill(clean.detach().lower_elem(1.0), 1.0);
+    let clean_mask = region_line_clean * line;
+
+    noise_level * (clean_mask.neg() + 1.0)
+}
+
+fn centered_rectangle_region(height: usize, width: usize) -> NoiseRegion {
+    let region_height = height.div_ceil(2);
+    let region_width = width.div_ceil(2);
+
+    NoiseRegion::Rectangle {
+        y_start: (height - region_height) / 2,
+        x_start: (width - region_width) / 2,
+        height: region_height,
+        width: region_width,
+    }
 }
 
 fn denoise_sample<B: Backend>(
     model: &DiffusionModel<B>,
     mut sample: Tensor<B, 4>,
+    start_noise_level_tensor: Tensor<B, 4>,
     start_noise_level: f32,
     denoising_steps: usize,
 ) -> Tensor<B, 4> {
-    let [_, _, height, width] = sample.dims();
-    let device = sample.device();
     let schedule = denoising_schedule(start_noise_level, denoising_steps);
 
     for window in schedule.windows(2) {
         let noise_level = window[0];
         let next_noise_level = window[1];
-        let noise_level_tensor = Tensor::<B, 4>::full([1, 1, height, width], noise_level, &device);
-        let predicted_clean = model.forward(tensor_pyramid(model, sample.clone()), noise_level_tensor);
-
-        if next_noise_level <= 0.0 || noise_level <= 1.0e-5 {
-            sample = predicted_clean;
+        let noise_level_factor = if start_noise_level <= 1.0e-5 {
+            0.0
         } else {
-            let signal_scale = (1.0 - noise_level).sqrt();
-            let noise_scale = noise_level.sqrt();
-            let next_signal_scale = (1.0 - next_noise_level).sqrt();
-            let next_noise_scale = next_noise_level.sqrt();
-            let predicted_noise = (sample - predicted_clean.clone() * signal_scale) / noise_scale;
-            sample = predicted_clean * next_signal_scale + predicted_noise * next_noise_scale;
-        }
+            noise_level / start_noise_level
+        };
+        let next_noise_level_factor = if start_noise_level <= 1.0e-5 {
+            0.0
+        } else {
+            next_noise_level / start_noise_level
+        };
+        let noise_level_tensor = start_noise_level_tensor.clone() * noise_level_factor;
+        let predicted_clean = model.forward(tensor_pyramid(model, sample.clone()), noise_level_tensor);
+        sample = denoise_next_sample(
+            sample,
+            predicted_clean,
+            start_noise_level_tensor.clone(),
+            noise_level_factor,
+            next_noise_level_factor,
+        );
     }
 
     sample
+}
+
+fn denoise_next_sample<B: Backend>(
+    sample: Tensor<B, 4>,
+    predicted_clean: Tensor<B, 4>,
+    start_noise_level_tensor: Tensor<B, 4>,
+    noise_level_factor: f32,
+    next_noise_level_factor: f32,
+) -> Tensor<B, 4> {
+    let current_noise_level = start_noise_level_tensor.clone() * noise_level_factor;
+    let next_noise_level = start_noise_level_tensor * next_noise_level_factor;
+    let signal_scale = (current_noise_level.neg() + 1.0).sqrt();
+    let next_signal_scale = (next_noise_level.neg() + 1.0).sqrt();
+    let noise_ratio = if noise_level_factor <= 0.0 {
+        0.0
+    } else {
+        (next_noise_level_factor / noise_level_factor).clamp(0.0, 1.0).sqrt() as f64
+    };
+    let predicted_clean_weight = next_signal_scale - signal_scale * noise_ratio;
+
+    sample * noise_ratio + predicted_clean * predicted_clean_weight
 }
 
 fn denoising_schedule(start_noise_level: f32, denoising_steps: usize) -> Vec<f32> {
@@ -1049,16 +1386,21 @@ fn write_sample_image(tensor: Tensor<Flex, 2>, path: &Path) -> AppResult<()> {
     Ok(())
 }
 
-fn match_noise_pool_to_clean_cost<B: Backend>(clean_cost: Tensor<B, 4>, noise: Tensor<B, 4>) -> Tensor<B, 4> {
-    let clean_dims = clean_cost.dims();
+fn match_noise_pool_to_clean_cost<B: Backend>(
+    clean: Tensor<B, 4>,
+    noise_level: Tensor<B, 4>,
+    noise: Tensor<B, 4>,
+) -> Tensor<B, 4> {
+    let clean_dims = clean.dims();
     let noise_dims = noise.dims();
 
     let batch_size = clean_dims[0];
     let noise_pool_size = noise_dims[0];
     assert_eq!(clean_dims[1], noise_dims[1]);
+    assert_eq!(noise_level.dims(), clean_dims);
     assert!(noise_pool_size >= batch_size);
 
-    let costs = pairwise_l2_costs(clean_cost.detach(), noise.clone().detach());
+    let costs = pairwise_masked_noise_costs(clean.detach(), noise_level.detach(), noise.clone().detach());
     let assignment = min_cost_assignment(&costs, batch_size, noise_pool_size)
         .into_iter()
         .map(|index| index as i32)
@@ -1080,15 +1422,26 @@ fn low_frequency_cost_tensor<B: Backend>(tensor: Tensor<B, 4>) -> Tensor<B, 4> {
     }
 }
 
-fn pairwise_l2_costs<B: Backend>(clean_cost: Tensor<B, 4>, noise: Tensor<B, 4>) -> Vec<f64> {
-    let [clean_count, _, cost_height, cost_width] = clean_cost.dims();
+fn pairwise_masked_noise_costs<B: Backend>(
+    clean: Tensor<B, 4>,
+    noise_level: Tensor<B, 4>,
+    noise: Tensor<B, 4>,
+) -> Vec<f64> {
+    let [clean_count, _, _, _] = clean.dims();
     let [noise_count, _, _, _] = noise.dims();
     let mut costs = vec![0.0; clean_count * noise_count];
+    let signal_scale = (noise_level.clone().neg() + 1.0).sqrt();
+    let noise_scale = noise_level.sqrt();
 
     for noise_index in 0..noise_count {
-        let noise_cost = resize_cost_tensor(noise.clone().narrow(0, noise_index, 1), [cost_height, cost_width]);
-        let noise_costs = (clean_cost.clone() - noise_cost)
-            .square()
+        let noise_candidate = noise.clone().narrow(0, noise_index, 1);
+        let noisy = q_sample(
+            clean.clone(),
+            noise_candidate,
+            signal_scale.clone(),
+            noise_scale.clone(),
+        );
+        let noise_costs = low_frequency_cost_tensor((clean.clone() - noisy).square())
             .sum_dims(&[1, 2, 3])
             .into_data()
             .into_vec::<f32>()
@@ -1100,16 +1453,6 @@ fn pairwise_l2_costs<B: Backend>(clean_cost: Tensor<B, 4>, noise: Tensor<B, 4>) 
     }
 
     costs
-}
-
-fn resize_cost_tensor<B: Backend>(tensor: Tensor<B, 4>, cost_size: [usize; 2]) -> Tensor<B, 4> {
-    let [_, _, height, width] = tensor.dims();
-
-    if cost_size == [height, width] {
-        tensor
-    } else {
-        adaptive_avg_pool2d(tensor, cost_size)
-    }
 }
 
 fn min_cost_assignment(costs: &[f64], row_count: usize, col_count: usize) -> Vec<usize> {
@@ -1214,12 +1557,13 @@ mod tests {
     #[test]
     fn match_noise_pool_to_clean_cost_reorders_noise_by_l2_cost() {
         let device = Default::default();
-        let clean_cost =
+        let clean =
             Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![0.0, 10.0, 20.0], [3, 1, 1, 1]), &device);
+        let noise_level = Tensor::<burn::backend::Flex, 4>::ones([3, 1, 1, 1], &device);
         let noise =
             Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![21.0, 1.0, 9.0], [3, 1, 1, 1]), &device);
 
-        let matched = match_noise_pool_to_clean_cost(clean_cost, noise);
+        let matched = match_noise_pool_to_clean_cost(clean, noise_level, noise);
 
         assert_eq!(matched.into_data().into_vec::<f32>().unwrap(), vec![1.0, 9.0, 21.0]);
     }
@@ -1227,14 +1571,15 @@ mod tests {
     #[test]
     fn match_noise_pool_to_clean_cost_selects_from_larger_pool() {
         let device = Default::default();
-        let clean_cost =
+        let clean =
             Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![0.0, 20.0], [2, 1, 1, 1]), &device);
+        let noise_level = Tensor::<burn::backend::Flex, 4>::ones([2, 1, 1, 1], &device);
         let noise = Tensor::<burn::backend::Flex, 4>::from_data(
             TensorData::new(vec![100.0, 19.0, -1.0, 50.0], [4, 1, 1, 1]),
             &device,
         );
 
-        let matched = match_noise_pool_to_clean_cost(clean_cost, noise);
+        let matched = match_noise_pool_to_clean_cost(clean, noise_level, noise);
 
         assert_eq!(matched.into_data().into_vec::<f32>().unwrap(), vec![-1.0, 19.0]);
     }
@@ -1242,8 +1587,9 @@ mod tests {
     #[test]
     fn match_noise_pool_to_clean_cost_downsamples_noise_for_costs() {
         let device = Default::default();
-        let clean_cost =
+        let clean =
             Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![0.0, 10.0], [2, 1, 1, 1]), &device);
+        let noise_level = Tensor::<burn::backend::Flex, 4>::ones([2, 1, 1, 1], &device);
         let noise = Tensor::<burn::backend::Flex, 4>::from_data(
             TensorData::new(
                 vec![
@@ -1256,12 +1602,28 @@ mod tests {
             &device,
         );
 
-        let matched = match_noise_pool_to_clean_cost(clean_cost, noise);
+        let matched = match_noise_pool_to_clean_cost(clean, noise_level, noise);
 
         assert_eq!(
             matched.into_data().into_vec::<f32>().unwrap(),
             vec![-1.0, -1.0, -1.0, -1.0, 9.0, 9.0, 9.0, 9.0]
         );
+    }
+
+    #[test]
+    fn match_noise_pool_to_clean_cost_ignores_zero_noise_regions() {
+        let device = Default::default();
+        let clean = Tensor::<burn::backend::Flex, 4>::zeros([1, 1, 1, 2], &device);
+        let noise_level =
+            Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![1.0, 0.0], [1, 1, 1, 2]), &device);
+        let noise = Tensor::<burn::backend::Flex, 4>::from_data(
+            TensorData::new(vec![0.0, 100.0, 1.0, 0.0], [2, 1, 1, 2]),
+            &device,
+        );
+
+        let matched = match_noise_pool_to_clean_cost(clean, noise_level, noise);
+
+        assert_eq!(matched.into_data().into_vec::<f32>().unwrap(), vec![0.0, 100.0]);
     }
 
     #[test]
@@ -1285,9 +1647,12 @@ mod tests {
     }
 
     #[test]
-    fn uniform_image_noise_level_uses_one_value_per_image() {
+    fn full_image_noise_level_uses_one_value_per_image() {
         let device = Default::default();
-        let noise_level = uniform_image_noise_level::<burn::backend::Flex>(2, 3, 4, &device);
+        let config = noise_level_config_for_pattern(NoiseLevelPattern::Full);
+        let clean = Tensor::<burn::backend::Flex, 4>::ones([2, 1, 3, 4], &device);
+        let random_values = vec![0.2; 2 * NOISE_RANDOMS_PER_IMAGE];
+        let noise_level = image_noise_level_from_random_values(clean, &config, &random_values);
         let data = noise_level.into_data().into_vec::<f32>().unwrap();
 
         assert_eq!(data.len(), 2 * 3 * 4);
@@ -1296,10 +1661,111 @@ mod tests {
     }
 
     #[test]
+    fn band_noise_level_uses_two_values_in_selected_band() {
+        let device = Default::default();
+        let config = noise_level_config_for_pattern(NoiseLevelPattern::Band);
+        let clean = Tensor::<burn::backend::Flex, 4>::ones([1, 1, 3, 4], &device);
+        let random_values = vec![
+            0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, //
+        ];
+
+        let data = image_noise_level_from_random_values(clean, &config, &random_values)
+            .into_data()
+            .into_vec::<f32>()
+            .unwrap();
+        let base_noise = data[0];
+
+        assert!(base_noise > 0.0);
+        for y in 0..3 {
+            assert_eq!(data[y * 4], base_noise);
+            assert_eq!(data[y * 4 + 1], 0.0);
+            assert_eq!(data[y * 4 + 2], 0.0);
+            assert_eq!(data[y * 4 + 3], 0.0);
+        }
+    }
+
+    #[test]
+    fn rectangle_noise_level_uses_two_values_in_selected_rectangle() {
+        let device = Default::default();
+        let config = noise_level_config_for_pattern(NoiseLevelPattern::Rectangle);
+        let clean = Tensor::<burn::backend::Flex, 4>::ones([1, 1, 4, 4], &device);
+        let random_values = vec![
+            0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, //
+        ];
+
+        let data = image_noise_level_from_random_values(clean, &config, &random_values)
+            .into_data()
+            .into_vec::<f32>()
+            .unwrap();
+        let base_noise = data[0];
+
+        assert!(base_noise > 0.0);
+        assert_eq!(data[0], base_noise);
+        assert!(data[1..].iter().all(|value| *value == 0.0));
+    }
+
+    #[test]
+    fn region_line_clean_noise_level_keeps_lines_clean_inside_region() {
+        let device = Default::default();
+        let config = noise_level_config_for_pattern(NoiseLevelPattern::RegionLineClean);
+        let clean = Tensor::<burn::backend::Flex, 4>::from_data(
+            TensorData::new(
+                vec![
+                    -1.0, 1.0, 1.0, 1.0, //
+                    1.0, 1.0, 1.0, 1.0, //
+                    1.0, 1.0, 1.0, 1.0, //
+                    1.0, 1.0, 1.0, 1.0,
+                ],
+                [1, 1, 4, 4],
+            ),
+            &device,
+        );
+        let random_values = vec![
+            0.4, 0.0, 0.5, 0.5, 0.0, 0.0, 1.0, 0.0, //
+        ];
+
+        let data = image_noise_level_from_random_values(clean, &config, &random_values)
+            .into_data()
+            .into_vec::<f32>()
+            .unwrap();
+        let base_noise = data[1];
+
+        assert_eq!(data[0], 0.0);
+        assert!(base_noise > 0.0);
+        assert!(data[1..].iter().all(|value| *value == base_noise));
+    }
+
+    fn noise_level_config_for_pattern(pattern: NoiseLevelPattern) -> NoiseLevelConfig {
+        let mut config = NoiseLevelConfig::new();
+        config.full_weight = 0.0;
+        config.band_weight = 0.0;
+        config.rectangle_weight = 0.0;
+        config.region_line_clean_weight = 0.0;
+        match pattern {
+            NoiseLevelPattern::Full => config.full_weight = 1.0,
+            NoiseLevelPattern::Band => config.band_weight = 1.0,
+            NoiseLevelPattern::Rectangle => config.rectangle_weight = 1.0,
+            NoiseLevelPattern::RegionLineClean => config.region_line_clean_weight = 1.0,
+        }
+        config
+    }
+
+    #[test]
     fn format_noise_level_uses_filename_safe_decimal() {
         assert_eq!(format_noise_level(0.0), "0_0");
         assert_eq!(format_noise_level(0.1), "0_1");
         assert_eq!(format_noise_level(1.0), "1_0");
+    }
+
+    #[test]
+    fn sample_filename_marks_partial_noise_kind() {
+        assert_eq!(sample_filename(SampleNoiseKind::Full, 0.5), "0_5");
+        assert_eq!(sample_filename(SampleNoiseKind::Band, 0.5), "band-0_5");
+        assert_eq!(sample_filename(SampleNoiseKind::Rectangle, 0.5), "rectangle-0_5");
+        assert_eq!(
+            sample_filename(SampleNoiseKind::RegionLineClean, 0.5),
+            "region-line-clean-0_5"
+        );
     }
 
     #[test]
@@ -1802,6 +2268,143 @@ mod tests {
             .unwrap()[0];
 
         assert!(black_loss > white_loss);
+    }
+
+    #[test]
+    fn q_sample_keeps_zero_noise_pixels_clean() {
+        let device = Default::default();
+        let clean = Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![2.0, 3.0], [1, 1, 1, 2]), &device);
+        let noise =
+            Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![10.0, 20.0], [1, 1, 1, 2]), &device);
+        let noise_level =
+            Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![0.0, 1.0], [1, 1, 1, 2]), &device);
+        let signal_scale = (noise_level.clone().neg() + 1.0).sqrt();
+        let noise_scale = noise_level.sqrt();
+
+        let sampled = q_sample(clean, noise, signal_scale, noise_scale)
+            .into_data()
+            .into_vec::<f32>()
+            .unwrap();
+
+        assert_eq!(sampled, vec![2.0, 20.0]);
+    }
+
+    #[test]
+    fn band_sample_noisy_input_keeps_zero_noise_side_clean() {
+        let device = Default::default();
+        let clean = Tensor::<burn::backend::Flex, 4>::from_data(
+            TensorData::new(
+                vec![
+                    -1.0, -0.5, 0.5, 1.0, //
+                    0.25, 0.5, -0.25, -0.75,
+                ],
+                [1, 1, 2, 4],
+            ),
+            &device,
+        );
+        let noise = Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![10.0; 8], [1, 1, 2, 4]), &device);
+        let noise_level = fixed_sample_noise_level(clean.clone(), 0.25, SampleNoiseKind::Band, &device);
+        let signal_scale = (noise_level.clone().neg() + 1.0).sqrt();
+        let noise_scale = noise_level.sqrt();
+
+        let noisy = q_sample(clean, noise, signal_scale, noise_scale)
+            .into_data()
+            .into_vec::<f32>()
+            .unwrap();
+
+        assert_eq!(noisy[0], -1.0);
+        assert_eq!(noisy[1], -0.5);
+        assert_eq!(noisy[4], 0.25);
+        assert_eq!(noisy[5], 0.5);
+        assert!(noisy.iter().all(|value| value.is_finite()));
+    }
+
+    #[test]
+    fn denoise_next_sample_matches_noise_prediction_update_for_positive_noise() {
+        let device = Default::default();
+        let sample = Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![0.7], [1, 1, 1, 1]), &device);
+        let predicted_clean =
+            Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![0.2], [1, 1, 1, 1]), &device);
+        let start_noise_level =
+            Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![0.25], [1, 1, 1, 1]), &device);
+
+        let next = denoise_next_sample(
+            sample.clone(),
+            predicted_clean.clone(),
+            start_noise_level.clone(),
+            1.0,
+            0.25,
+        )
+        .into_data()
+        .into_vec::<f32>()
+        .unwrap()[0];
+
+        let signal = 0.75_f32.sqrt();
+        let noise_scale = 0.25_f32.sqrt();
+        let next_signal = 0.9375_f32.sqrt();
+        let next_noise_scale = 0.0625_f32.sqrt();
+        let predicted_noise = (0.7 - 0.2 * signal) / noise_scale;
+        let expected = 0.2 * next_signal + predicted_noise * next_noise_scale;
+
+        assert!((next - expected).abs() < 1.0e-6);
+    }
+
+    #[test]
+    fn denoise_next_sample_is_continuous_at_zero_noise_level() {
+        let device = Default::default();
+        let sample =
+            Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![0.7, 0.7], [1, 1, 1, 2]), &device);
+        let predicted_clean =
+            Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![0.2, 0.2], [1, 1, 1, 2]), &device);
+        let start_noise_level =
+            Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![0.0, 1.0e-8], [1, 1, 1, 2]), &device);
+
+        let next = denoise_next_sample(sample, predicted_clean, start_noise_level, 1.0, 0.25)
+            .into_data()
+            .into_vec::<f32>()
+            .unwrap();
+
+        assert!((next[0] - next[1]).abs() < 1.0e-5);
+    }
+
+    #[test]
+    fn diffusion_regression_loss_uses_noise_floor_for_zero_noise_pixels() {
+        let device = Default::default();
+        let predicted_clean =
+            Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![1.0], [1, 1, 1, 1]), &device);
+        let clean = Tensor::<burn::backend::Flex, 4>::zeros([1, 1, 1, 1], &device);
+        let noisy = clean.clone();
+        let noise = Tensor::<burn::backend::Flex, 4>::ones([1, 1, 1, 1], &device);
+        let noise_level = Tensor::<burn::backend::Flex, 4>::zeros([1, 1, 1, 1], &device);
+
+        let output = diffusion_regression_loss(predicted_clean, noisy, noise, clean, noise_level, false);
+        let loss = output.loss.into_data().into_vec::<f32>().unwrap()[0];
+        let metric_output = output.output.into_data().into_vec::<f32>().unwrap()[0];
+        let metric_target = output.target.into_data().into_vec::<f32>().unwrap()[0];
+        let expected_scale = (MIN_NOISE_FOR_V_LOSS as f32).sqrt();
+
+        assert!((loss - (1.0 / MIN_NOISE_FOR_V_LOSS) as f32).abs() < 1.0e-4);
+        assert!((metric_output - 1.0 / expected_scale).abs() < 1.0e-4);
+        assert!(metric_target.abs() < 1.0e-6);
+    }
+
+    #[test]
+    fn diffusion_regression_loss_treats_zero_and_tiny_noise_continuously() {
+        let device = Default::default();
+        let predicted_clean =
+            Tensor::<burn::backend::Flex, 4>::from_data(TensorData::new(vec![1.0, 1.0], [1, 1, 1, 2]), &device);
+        let clean = Tensor::<burn::backend::Flex, 4>::zeros([1, 1, 1, 2], &device);
+        let noisy = clean.clone();
+        let noise = Tensor::<burn::backend::Flex, 4>::ones([1, 1, 1, 2], &device);
+        let noise_level = Tensor::<burn::backend::Flex, 4>::from_data(
+            TensorData::new(vec![0.0, (MIN_NOISE_FOR_V_LOSS * 0.5) as f32], [1, 1, 1, 2]),
+            &device,
+        );
+
+        let output = diffusion_regression_loss(predicted_clean, noisy, noise, clean, noise_level, false);
+        let loss = output.loss.into_data().into_vec::<f32>().unwrap()[0];
+
+        assert!((loss - (1.0 / MIN_NOISE_FOR_V_LOSS) as f32).abs() < 1.0e-4);
     }
 
     #[test]

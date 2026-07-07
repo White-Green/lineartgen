@@ -39,6 +39,45 @@ pub struct LineartLossConfig {
     pub direction_weight: f64,
 }
 
+#[derive(Config, Debug)]
+pub struct NoiseLevelConfig {
+    #[config(default = "1.0")]
+    pub full_weight: f64,
+    #[config(default = "1.0")]
+    pub band_weight: f64,
+    #[config(default = "1.0")]
+    pub rectangle_weight: f64,
+    #[config(default = "1.0")]
+    pub region_line_clean_weight: f64,
+}
+
+impl NoiseLevelConfig {
+    pub fn total_weight(&self) -> f64 {
+        self.full_weight + self.band_weight + self.rectangle_weight + self.region_line_clean_weight
+    }
+
+    pub fn validate(&self) {
+        assert!(
+            self.full_weight.is_finite()
+                && self.band_weight.is_finite()
+                && self.rectangle_weight.is_finite()
+                && self.region_line_clean_weight.is_finite(),
+            "noise level weights must be finite"
+        );
+        assert!(
+            self.full_weight >= 0.0
+                && self.band_weight >= 0.0
+                && self.rectangle_weight >= 0.0
+                && self.region_line_clean_weight >= 0.0,
+            "noise level weights must be non-negative"
+        );
+        assert!(
+            self.total_weight() > 0.0,
+            "at least one noise level weight must be positive"
+        );
+    }
+}
+
 #[derive(Module, Debug)]
 pub struct DiffusionModel<B: Backend> {
     u_net: UNet<B>,
@@ -58,6 +97,8 @@ pub struct DiffusionModel<B: Backend> {
     recursive_training_insert: bool,
     #[module(skip)]
     scale_loss_multiplier: f64,
+    #[module(skip)]
+    noise_level: NoiseLevelConfig,
 }
 
 impl DiffusionModelConfig {
@@ -73,6 +114,7 @@ impl DiffusionModelConfig {
             lineart_loss: LineartLossConfig::new(),
             recursive_training_insert: false,
             scale_loss_multiplier: 1.0,
+            noise_level: NoiseLevelConfig::new(),
         }
     }
 }
@@ -118,6 +160,12 @@ impl<B: Backend> DiffusionModel<B> {
         self
     }
 
+    pub fn with_noise_level_config(mut self, noise_level: NoiseLevelConfig) -> Self {
+        noise_level.validate();
+        self.noise_level = noise_level;
+        self
+    }
+
     pub fn sample_noise_levels(&self) -> &[f32] {
         &self.sample_noise_levels
     }
@@ -148,6 +196,10 @@ impl<B: Backend> DiffusionModel<B> {
 
     pub fn scale_loss_multiplier(&self) -> f64 {
         self.scale_loss_multiplier
+    }
+
+    pub fn noise_level_config(&self) -> &NoiseLevelConfig {
+        &self.noise_level
     }
 
     pub fn input_sizes(&self, base_size: [usize; 2]) -> impl Iterator<Item = [usize; 2]> {

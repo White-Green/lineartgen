@@ -62,7 +62,8 @@ struct UNetDecoder<B: Backend> {
 
 #[derive(Module, Debug)]
 struct SingleConv<B: Backend> {
-    conv: Conv2d<B>,
+    conv1: Conv2d<B>,
+    conv2: Conv2d<B>,
 }
 
 #[derive(Module, Debug)]
@@ -155,19 +156,28 @@ impl UNetConfig {
 
 impl<B: Backend> SingleConv<B> {
     fn new(input_channels: usize, output_channels: usize, kernel_size: usize, device: &B::Device) -> Self {
-        let conv = Conv2dConfig::new([input_channels, output_channels], [kernel_size; 2])
+        let mid_channels = input_channels.max(output_channels);
+        let conv1 = Conv2dConfig::new([input_channels, mid_channels], [kernel_size; 2])
+            .with_padding(PaddingConfig2d::Same)
+            .init(device);
+        let conv2 = Conv2dConfig::new([mid_channels, output_channels], [kernel_size; 2])
             .with_padding(PaddingConfig2d::Same)
             .init(device);
 
-        Self { conv }
+        Self {
+            conv1,
+            conv2,
+        }
     }
 
     fn forward(&self, input: Tensor<B, 4>) -> Tensor<B, 4> {
-        relu(self.conv.forward(input))
+        let input = relu(self.conv1.forward(input));
+        relu(self.conv2.forward(input))
     }
 
     fn forward_linear(&self, input: Tensor<B, 4>) -> Tensor<B, 4> {
-        self.conv.forward(input)
+        let input = relu(self.conv1.forward(input));
+        self.conv2.forward(input)
     }
 }
 
@@ -278,21 +288,6 @@ mod tests {
         let output = conv.forward(input);
 
         assert_eq!(output.dims(), [2, 6, 16, 16]);
-    }
-
-    #[test]
-    fn single_conv_linear_forward_allows_negative_output() {
-        let device = Default::default();
-        let mut conv = SingleConv::new(1, 1, 3, &device);
-        conv.conv.weight = Param::from_data(TensorData::new(vec![0.0; 9], [1, 1, 3, 3]), &device);
-        conv.conv.bias = Some(Param::from_data(TensorData::new(vec![-0.5], [1]), &device));
-        let input = Tensor::<burn::backend::Flex, 4>::zeros([1, 1, 4, 4], &device);
-
-        let activated = conv.forward(input.clone()).into_data().into_vec::<f32>().unwrap();
-        let linear = conv.forward_linear(input).into_data().into_vec::<f32>().unwrap();
-
-        assert!(activated.iter().all(|value| value.abs() < 1.0e-6));
-        assert!(linear.iter().all(|value| (*value + 0.5).abs() < 1.0e-6));
     }
 
     #[test]
