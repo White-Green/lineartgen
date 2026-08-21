@@ -2,9 +2,7 @@ use crate::model::u_net::{UNet, UNetConfig};
 use burn::config::Config;
 use burn::module::Module;
 use burn::tensor::backend::Backend;
-use burn::tensor::module::adaptive_avg_pool2d;
 use burn::tensor::{Tensor, TensorCreationOptions};
-use std::iter;
 
 mod u_net;
 
@@ -14,351 +12,110 @@ pub struct DiffusionModelConfig {
     pub u_net: UNetConfig,
 }
 
-#[derive(Config, Debug)]
-pub struct LineartLossConfig {
-    /// 多段avg poolで黒密度を比較
-    // #[config(default = "0.25")]
-    #[config(default = "0.0")]
-    pub density_weight: f64,
-    /// Sobelカーネルの畳み込み結果を比較
-    #[config(default = "1.0")]
-    pub edge_weight: f64,
-    /// 正解線の近傍外に出た黒を罰する
-    // #[config(default = "0.10")]
-    #[config(default = "0.0")]
-    pub speckle_weight: f64,
-    /// 灰色っぽい中間値を罰する
-    // #[config(default = "0.05")]
-    #[config(default = "0.0")]
-    pub contrast_weight: f64,
-    /// 正解を参照せず、黒画素が近傍の黒supportを持つようにする
-    #[config(default = "0.0")]
-    pub support_weight: f64,
-    /// 正解を参照せず、黒画素が線状の方向supportを持つようにする
-    #[config(default = "0.0")]
-    pub direction_weight: f64,
-}
-
-#[derive(Config, Debug)]
-pub struct NoiseLevelConfig {
-    #[config(default = "1.0")]
-    pub full_weight: f64,
-    #[config(default = "1.0")]
-    pub band_weight: f64,
-    #[config(default = "1.0")]
-    pub rectangle_weight: f64,
-    #[config(default = "1.0")]
-    pub region_line_clean_weight: f64,
-}
-
-impl NoiseLevelConfig {
-    pub fn total_weight(&self) -> f64 {
-        self.full_weight + self.band_weight + self.rectangle_weight + self.region_line_clean_weight
-    }
-
-    pub fn validate(&self) {
-        assert!(
-            self.full_weight.is_finite()
-                && self.band_weight.is_finite()
-                && self.rectangle_weight.is_finite()
-                && self.region_line_clean_weight.is_finite(),
-            "noise level weights must be finite"
-        );
-        assert!(
-            self.full_weight >= 0.0
-                && self.band_weight >= 0.0
-                && self.rectangle_weight >= 0.0
-                && self.region_line_clean_weight >= 0.0,
-            "noise level weights must be non-negative"
-        );
-        assert!(
-            self.total_weight() > 0.0,
-            "at least one noise level weight must be positive"
-        );
-    }
-}
-
 #[derive(Module, Debug)]
 pub struct DiffusionModel<B: Backend> {
     u_net: UNet<B>,
-    #[module(skip)]
-    sample_noise_levels: Vec<f32>,
-    #[module(skip)]
-    sample_denoising_steps: usize,
-    #[module(skip)]
-    balance_loss_by_tone: bool,
-    #[module(skip)]
-    micro_batch_size: usize,
-    #[module(skip)]
-    noise_pool_size: Option<usize>,
-    #[module(skip)]
-    lineart_loss: LineartLossConfig,
-    #[module(skip)]
-    recursive_training_insert: bool,
-    #[module(skip)]
-    scale_loss_multiplier: f64,
-    #[module(skip)]
-    noise_level: NoiseLevelConfig,
 }
 
 impl DiffusionModelConfig {
     pub fn init<B: Backend>(&self, device: &B::Device) -> DiffusionModel<B> {
-        let u_net = self.u_net.init(device);
         DiffusionModel {
-            u_net,
-            sample_noise_levels: Vec::new(),
-            sample_denoising_steps: 0,
-            balance_loss_by_tone: false,
-            micro_batch_size: 32,
-            noise_pool_size: None,
-            lineart_loss: LineartLossConfig::new(),
-            recursive_training_insert: false,
-            scale_loss_multiplier: 1.0,
-            noise_level: NoiseLevelConfig::new(),
+            u_net: self.u_net.init(device),
         }
     }
 }
 
 impl<B: Backend> DiffusionModel<B> {
-    pub fn with_sample_noise_levels(mut self, sample_noise_levels: Vec<f32>) -> Self {
-        self.sample_noise_levels = sample_noise_levels;
-        self
+    pub fn minimum_input_size(&self) -> [usize; 2] {
+        self.u_net.minimum_input_size()
     }
 
-    pub fn with_sample_denoising_steps(mut self, sample_denoising_steps: usize) -> Self {
-        self.sample_denoising_steps = sample_denoising_steps;
-        self
+    pub fn expected_insert_size(&self, input_size: [usize; 2]) -> [usize; 2] {
+        self.u_net.expected_insert_size(input_size)
     }
 
-    pub fn with_balance_loss_by_tone(mut self, balance_loss_by_tone: bool) -> Self {
-        self.balance_loss_by_tone = balance_loss_by_tone;
-        self
+    pub fn insert_channels(&self) -> usize {
+        self.u_net.insert_channels()
     }
 
-    pub fn with_training_batching(mut self, micro_batch_size: usize, noise_pool_size: Option<usize>) -> Self {
-        self.micro_batch_size = micro_batch_size.max(1);
-        self.noise_pool_size = noise_pool_size;
-        self
-    }
-
-    pub fn with_lineart_loss_config(mut self, lineart_loss: LineartLossConfig) -> Self {
-        self.lineart_loss = lineart_loss;
-        self
-    }
-
-    pub fn with_recursive_training_insert(mut self, recursive_training_insert: bool) -> Self {
-        self.recursive_training_insert = recursive_training_insert;
-        self
-    }
-
-    pub fn with_scale_loss_multiplier(mut self, scale_loss_multiplier: f64) -> Self {
-        assert!(
-            scale_loss_multiplier.is_finite() && scale_loss_multiplier >= 0.0,
-            "scale_loss_multiplier must be finite and non-negative"
-        );
-        self.scale_loss_multiplier = scale_loss_multiplier;
-        self
-    }
-
-    pub fn with_noise_level_config(mut self, noise_level: NoiseLevelConfig) -> Self {
-        noise_level.validate();
-        self.noise_level = noise_level;
-        self
-    }
-
-    pub fn sample_noise_levels(&self) -> &[f32] {
-        &self.sample_noise_levels
-    }
-
-    pub fn sample_denoising_steps(&self) -> usize {
-        self.sample_denoising_steps
-    }
-
-    pub fn balance_loss_by_tone(&self) -> bool {
-        self.balance_loss_by_tone
-    }
-
-    pub fn micro_batch_size(&self) -> usize {
-        self.micro_batch_size.max(1)
-    }
-
-    pub fn noise_pool_size(&self, batch_size: usize) -> usize {
-        self.noise_pool_size.unwrap_or(batch_size).max(batch_size)
-    }
-
-    pub fn lineart_loss_config(&self) -> &LineartLossConfig {
-        &self.lineart_loss
-    }
-
-    pub fn recursive_training_insert(&self) -> bool {
-        self.recursive_training_insert
-    }
-
-    pub fn scale_loss_multiplier(&self) -> f64 {
-        self.scale_loss_multiplier
-    }
-
-    pub fn noise_level_config(&self) -> &NoiseLevelConfig {
-        &self.noise_level
-    }
-
-    pub fn input_sizes(&self, base_size: [usize; 2]) -> impl Iterator<Item = [usize; 2]> {
-        assert_eq!(base_size[0].next_power_of_two(), base_size[0]);
-        assert_eq!(base_size[1].next_power_of_two(), base_size[1]);
-        let minimum_input_size = self.u_net.minimum_input_size();
-        iter::successors(Some(base_size), |&size| Some(self.u_net.expected_insert_size(size)))
-            .take_while(move |&size| minimum_input_size[0] <= size[0] && minimum_input_size[1] <= size[1])
-    }
-
-    pub fn forward(&self, input: Vec<Tensor<B, 4>>, noise_level: Tensor<B, 4>) -> Tensor<B, 4> {
-        self.forward_recursive(input, noise_level)
-            .into_iter()
-            .next()
-            .expect("at least one scale is required")
-    }
-
-    pub fn forward_recursive(&self, input: Vec<Tensor<B, 4>>, noise_level: Tensor<B, 4>) -> Vec<Tensor<B, 4>> {
-        assert!(
-            input
-                .iter()
-                .map(Tensor::dims)
-                .map(|[_, _, w, h]| [w, h])
-                .eq(self.input_sizes([input[0].dims()[2], input[0].dims()[3]]))
-        );
-        let noise_levels = tensor_pyramid(self.input_sizes([input[0].dims()[2], input[0].dims()[3]]), noise_level);
-        let [batches, _, w, h] = input.last().unwrap().dims();
-        let [empty_h, empty_w] = self.u_net.expected_insert_size([w, h]);
-        let mut a = Tensor::full(
-            [batches, 1, empty_h, empty_w],
-            0.0,
-            TensorCreationOptions {
-                device: input[0].device(),
-                dtype: Some(input[0].dtype()),
-            },
-        );
-        let mut outputs = Vec::with_capacity(input.len());
-        for (input, noise_level) in input.into_iter().zip(noise_levels.into_iter()).rev() {
-            a = self.u_net.forward(input, noise_level, a);
-            outputs.push(a.clone());
-        }
-        outputs.reverse();
-        outputs
-    }
-
-    pub fn forward_training(
+    /// Processes exactly one resolution. Recursive orchestration belongs to the caller.
+    pub fn forward(
         &self,
-        input: Vec<Tensor<B, 4>>,
+        input: Tensor<B, 4>,
         noise_level: Tensor<B, 4>,
-        clean: Vec<Tensor<B, 4>>,
-    ) -> Vec<Tensor<B, 4>> {
-        if self.recursive_training_insert {
-            self.forward_recursive(input, noise_level)
-        } else {
-            self.forward_teacher_forced(input, noise_level, clean)
-        }
-    }
-
-    pub fn forward_teacher_forced(
-        &self,
-        input: Vec<Tensor<B, 4>>,
-        noise_level: Tensor<B, 4>,
-        clean: Vec<Tensor<B, 4>>,
-    ) -> Vec<Tensor<B, 4>> {
-        assert_eq!(input.len(), clean.len());
-        assert!(
-            input
-                .iter()
-                .map(Tensor::dims)
-                .map(|[_, _, w, h]| [w, h])
-                .eq(self.input_sizes([input[0].dims()[2], input[0].dims()[3]]))
-        );
-        assert!(
-            input
-                .iter()
-                .zip(clean.iter())
-                .all(|(input, clean)| input.dims() == clean.dims())
-        );
-
-        let noise_levels = tensor_pyramid(self.input_sizes([input[0].dims()[2], input[0].dims()[3]]), noise_level);
-        let mut outputs = Vec::with_capacity(input.len());
-
-        for index in 0..input.len() {
-            let insert = match clean.get(index + 1) {
-                Some(clean) => clean.clone(),
-                None => {
-                    let [batches, _, height, width] = input[index].dims();
-                    let [empty_h, empty_w] = self.u_net.expected_insert_size([height, width]);
-                    Tensor::full(
-                        [batches, 1, empty_h, empty_w],
-                        0.0,
-                        TensorCreationOptions {
-                            device: input[index].device(),
-                            dtype: Some(input[index].dtype()),
-                        },
-                    )
-                }
-            };
-            outputs.push(
-                self.u_net
-                    .forward(input[index].clone(), noise_levels[index].clone(), insert),
-            );
-        }
-
-        outputs
-    }
-}
-
-fn tensor_pyramid<B: Backend>(sizes: impl Iterator<Item = [usize; 2]>, tensor: Tensor<B, 4>) -> Vec<Tensor<B, 4>> {
-    let [_, _, height, width] = tensor.dims();
-
-    sizes
-        .map(|size| {
-            if size == [height, width] {
-                tensor.clone()
-            } else {
-                adaptive_avg_pool2d(tensor.clone(), size)
+        insert: Option<Tensor<B, 4>>,
+    ) -> Tensor<B, 4> {
+        let [batch_size, _, height, width] = input.dims();
+        let [insert_height, insert_width] = self.expected_insert_size([height, width]);
+        let expected_insert_dims = [batch_size, self.insert_channels(), insert_height, insert_width];
+        let insert = match insert {
+            Some(insert) => {
+                assert_eq!(
+                    insert.dims(),
+                    expected_insert_dims,
+                    "insert shape must match the first encoder output"
+                );
+                insert
             }
-        })
-        .collect()
+            None => Tensor::full(
+                expected_insert_dims,
+                0.0,
+                TensorCreationOptions {
+                    device: input.device(),
+                    dtype: Some(input.dtype()),
+                },
+            ),
+        };
+
+        self.u_net.forward(input, noise_level, insert)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use burn::tensor::Tensor;
 
     #[test]
-    fn teacher_forced_forward_returns_all_scales_for_default_model() {
+    fn one_step_forward_accepts_an_insert() {
         let device = Default::default();
         let model = DiffusionModelConfig::new().init::<burn::backend::Flex>(&device);
-        let input = Tensor::<_, 4>::zeros([1, 1, 1024, 1024], &device);
-        let noise_level = Tensor::<_, 4>::zeros([1, 1, 1024, 1024], &device);
-        let inputs = tensor_pyramid(model.input_sizes([1024, 1024]), input.clone());
-        let clean = tensor_pyramid(model.input_sizes([1024, 1024]), input);
+        let input = Tensor::<_, 4>::zeros([1, 1, 128, 128], &device);
+        let noise_level = Tensor::<_, 4>::zeros([1, 1, 128, 128], &device);
+        let [insert_height, insert_width] = model.expected_insert_size([128, 128]);
+        let insert = Tensor::<_, 4>::zeros([1, model.insert_channels(), insert_height, insert_width], &device);
 
-        let outputs = model.forward_teacher_forced(inputs, noise_level, clean);
+        let output = model.forward(input, noise_level, Some(insert));
 
-        let expected_sizes = model.input_sizes([1024, 1024]).collect::<Vec<_>>();
-        assert_eq!(outputs.len(), expected_sizes.len());
-        for (output, [height, width]) in outputs.iter().zip(expected_sizes) {
-            assert_eq!(output.dims(), [1, 1, height, width]);
-        }
+        assert_eq!(output.dims(), [1, 1, 128, 128]);
     }
 
     #[test]
-    fn recursive_forward_returns_all_scales_for_default_model() {
+    fn missing_insert_is_equivalent_to_an_explicit_zero_insert() {
         let device = Default::default();
         let model = DiffusionModelConfig::new().init::<burn::backend::Flex>(&device);
-        let input = Tensor::<_, 4>::zeros([1, 1, 1024, 1024], &device);
-        let noise_level = Tensor::<_, 4>::zeros([1, 1, 1024, 1024], &device);
-        let inputs = tensor_pyramid(model.input_sizes([1024, 1024]), input);
+        let input = Tensor::<_, 4>::zeros([1, 1, 32, 32], &device);
+        let noise_level = Tensor::<_, 4>::zeros([1, 1, 32, 32], &device);
+        let [insert_height, insert_width] = model.expected_insert_size([32, 32]);
+        let insert = Tensor::<_, 4>::zeros([1, model.insert_channels(), insert_height, insert_width], &device);
 
-        let outputs = model.forward_recursive(inputs, noise_level);
+        let implicit = model.forward(input.clone(), noise_level.clone(), None);
+        let explicit = model.forward(input, noise_level, Some(insert));
 
-        let expected_sizes = model.input_sizes([1024, 1024]).collect::<Vec<_>>();
-        assert_eq!(outputs.len(), expected_sizes.len());
-        for (output, [height, width]) in outputs.iter().zip(expected_sizes) {
-            assert_eq!(output.dims(), [1, 1, height, width]);
-        }
+        assert_eq!(
+            implicit.into_data().into_vec::<f32>().unwrap(),
+            explicit.into_data().into_vec::<f32>().unwrap()
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "insert shape must match the first encoder output")]
+    fn rejects_an_insert_with_the_wrong_shape() {
+        let device = Default::default();
+        let model = DiffusionModelConfig::new().init::<burn::backend::Flex>(&device);
+        let input = Tensor::<_, 4>::zeros([1, 1, 32, 32], &device);
+        let noise_level = Tensor::<_, 4>::zeros([1, 1, 32, 32], &device);
+        let insert = Tensor::<_, 4>::zeros([1, 1, 8, 8], &device);
+
+        let _ = model.forward(input, noise_level, Some(insert));
     }
 }

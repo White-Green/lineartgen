@@ -64,6 +64,7 @@ struct UNetDecoder<B: Backend> {
 struct SingleConv<B: Backend> {
     conv1: Conv2d<B>,
     conv2: Conv2d<B>,
+    conv3: Conv2d<B>,
 }
 
 #[derive(Module, Debug)]
@@ -71,6 +72,7 @@ pub struct UNet<B: Backend> {
     encoders: Vec<UNetEncoder<B>>,
     decoders: Vec<UNetDecoder<B>>,
     final_conv: SingleConv<B>,
+    insert_channels: usize,
 }
 
 impl UNetConfig {
@@ -140,7 +142,7 @@ impl UNetConfig {
         let decoder_output_channels =
             (self.input_channels as f64 * self.sizes[0].transposed_channels_mul).round() as usize;
         let final_conv = SingleConv::new(
-            self.input_channels + decoder_output_channels,
+            1 + decoder_output_channels,
             self.output_channels,
             self.final_kernel_size,
             device,
@@ -150,6 +152,7 @@ impl UNetConfig {
             encoders,
             decoders,
             final_conv,
+            insert_channels: self.insert_channels,
         }
     }
 }
@@ -160,28 +163,34 @@ impl<B: Backend> SingleConv<B> {
         let conv1 = Conv2dConfig::new([input_channels, mid_channels], [kernel_size; 2])
             .with_padding(PaddingConfig2d::Same)
             .init(device);
-        let conv2 = Conv2dConfig::new([mid_channels, output_channels], [kernel_size; 2])
+        let conv2 = Conv2dConfig::new([mid_channels, mid_channels], [kernel_size; 2])
+            .with_padding(PaddingConfig2d::Same)
+            .init(device);
+        let conv3 = Conv2dConfig::new([mid_channels, output_channels], [kernel_size; 2])
             .with_padding(PaddingConfig2d::Same)
             .init(device);
 
-        Self {
-            conv1,
-            conv2,
-        }
+        Self { conv1, conv2, conv3 }
     }
 
     fn forward(&self, input: Tensor<B, 4>) -> Tensor<B, 4> {
         let input = relu(self.conv1.forward(input));
-        relu(self.conv2.forward(input))
+        let input = relu(self.conv2.forward(input));
+        relu(self.conv3.forward(input))
     }
 
     fn forward_linear(&self, input: Tensor<B, 4>) -> Tensor<B, 4> {
         let input = relu(self.conv1.forward(input));
-        self.conv2.forward(input)
+        let input = relu(self.conv2.forward(input));
+        self.conv3.forward(input)
     }
 }
 
 impl<B: Backend> UNet<B> {
+    pub fn insert_channels(&self) -> usize {
+        self.insert_channels
+    }
+
     pub fn minimum_input_size(&self) -> [usize; 2] {
         let shrink_rate = self.encoders.last().map(|encoder| encoder.shrink_rate).unwrap_or(1);
         [shrink_rate; 2]
@@ -209,7 +218,7 @@ impl<B: Backend> UNet<B> {
         assert_eq!(input.dims()[3].next_power_of_two(), input.dims()[3]);
         assert_eq!(input.dims()[1], 1);
         assert_eq!(noise_level.dims(), input.dims());
-        let conditioned_input = Tensor::cat(vec![input, noise_level], 1);
+        let conditioned_input = Tensor::cat(vec![input.clone(), noise_level], 1);
         let mut x = conditioned_input.clone();
         let mut skips = Vec::with_capacity(self.encoders.len());
 
@@ -219,6 +228,7 @@ impl<B: Backend> UNet<B> {
             x = encoder.pool.forward(c);
             if index == 0 {
                 assert_eq!(insert.dims()[0], x.dims()[0]);
+                assert_eq!(insert.dims()[1], self.insert_channels);
                 assert_eq!(insert.dims()[2], x.dims()[2]);
                 assert_eq!(insert.dims()[3], x.dims()[3]);
                 x = Tensor::cat(vec![x, insert.clone()], 1);
@@ -249,8 +259,7 @@ impl<B: Backend> UNet<B> {
         }
 
         let result = Tensor::clamp(
-            self.final_conv
-                .forward_linear(Tensor::cat(vec![conditioned_input, x], 1)),
+            self.final_conv.forward_linear(Tensor::cat(vec![input, x], 1)),
             -1.0,
             1.0,
         );
@@ -262,8 +271,6 @@ impl<B: Backend> UNet<B> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use burn::module::Param;
-    use burn::tensor::TensorData;
 
     #[test]
     fn default_unet_forwards_single_1024_image() {
@@ -288,6 +295,14 @@ mod tests {
         let output = conv.forward(input);
 
         assert_eq!(output.dims(), [2, 6, 16, 16]);
+    }
+
+    #[test]
+    fn default_unet_final_head_concatenates_only_the_image_input() {
+        let device = Default::default();
+        let model = UNetConfig::new().init::<burn::backend::Flex>(&device);
+
+        assert_eq!(model.final_conv.conv1.weight.val().dims()[1], 3);
     }
 
     #[test]

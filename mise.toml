@@ -14,6 +14,75 @@ run = "mise run dataset:gen1:body"
 depends = ["dataset:gen:prepare"]
 run = "mise run dataset:gen2:body"
 
+[tasks."dataset:gen3"]
+depends = ["dataset:gen3:prepare"]
+run = "ruby dataset/gen3.rb all"
+
+[tasks."dataset:gen3:2x"]
+depends = ["dataset:gen3:prepare"]
+run = "ruby dataset/gen3.rb 2x"
+
+[tasks."dataset:gen3:4x"]
+depends = ["dataset:gen3:prepare"]
+run = "ruby dataset/gen3.rb 4x"
+
+[tasks."dataset:gen3:8x"]
+depends = ["dataset:gen3:prepare"]
+run = "ruby dataset/gen3.rb 8x"
+
+[tasks."dataset:gen3:16x"]
+depends = ["dataset:gen3:prepare"]
+run = "ruby dataset/gen3.rb 16x"
+
+[tasks."dataset:gen3:32x"]
+depends = ["dataset:gen3:prepare"]
+run = "ruby dataset/gen3.rb 32x"
+
+[tasks."dataset:gen3:64x"]
+depends = ["dataset:gen3:prepare"]
+run = "ruby dataset/gen3.rb 64x"
+
+[tasks."dataset:gen3:prepare"]
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+MODEL_DIR="${COMFYUI_ROOT_DIR}/models/upscale_models"
+mkdir -p "${MODEL_DIR}"
+
+fetch_model() {
+    local filename="$1"
+    local url="$2"
+    local expected_sha256="$3"
+    local destination="${MODEL_DIR}/${filename}"
+    local temporary="${destination}.tmp"
+
+    if [[ -f "${destination}" ]] && echo "${expected_sha256}  ${destination}" | sha256sum --check --status; then
+        return
+    fi
+
+    rm -f "${temporary}"
+    curl --fail --location --output "${temporary}" "${url}"
+    echo "${expected_sha256}  ${temporary}" | sha256sum --check --status
+    mv "${temporary}" "${destination}"
+}
+
+fetch_model \
+    "001_classicalSR_DIV2K_s48w8_SwinIR-M_x2.pth" \
+    "https://github.com/JingyunLiang/SwinIR/releases/download/v0.0/001_classicalSR_DIV2K_s48w8_SwinIR-M_x2.pth" \
+    "ac6d4895f73aa1b3d563937e29dcedcfdff4d401280e248f23db3c6f68e8343b"
+
+fetch_model \
+    "001_classicalSR_DIV2K_s48w8_SwinIR-M_x4.pth" \
+    "https://github.com/JingyunLiang/SwinIR/releases/download/v0.0/001_classicalSR_DIV2K_s48w8_SwinIR-M_x4.pth" \
+    "129dc773ba2d4c07f3eb0bb116fbe692011b7cc072d9ca12797cd3748198610a"
+
+fetch_model \
+    "001_classicalSR_DIV2K_s48w8_SwinIR-M_x8.pth" \
+    "https://github.com/JingyunLiang/SwinIR/releases/download/v0.0/001_classicalSR_DIV2K_s48w8_SwinIR-M_x8.pth" \
+    "3c3ae9238a7125e52aab457df052aa8981adb2fb8e42b6d4112a96b3c19432d7"
+"""
+
 [tasks."dataset:gen1:body"]
 run = "ruby dataset/gen1.rb"
 

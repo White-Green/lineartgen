@@ -10,6 +10,7 @@ mod data;
 mod image_io;
 #[allow(dead_code)]
 mod model;
+mod recursion;
 mod train;
 
 pub type BurnBackend = burn::backend::Vulkan;
@@ -98,4 +99,19 @@ fn output_path_for(input_path: &Path) -> Result<PathBuf> {
     })?;
 
     Ok(Path::new(OUTPUT_DIR).join(file_name))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn train_uses_source_defaults_when_config_is_omitted() {
+        let cli = Cli::try_parse_from(["lineartgen", "train"]).unwrap();
+        let Some(Command::Train(args)) = cli.command else {
+            panic!("train subcommand should be parsed");
+        };
+
+        assert_eq!(args.config, None);
+    }
 }

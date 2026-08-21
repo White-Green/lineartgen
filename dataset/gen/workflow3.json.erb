@@ -1,0 +1,51 @@
+{
+  "prompt": {
+    "1": {
+      "inputs": {
+        "model_name": <%= model_name.dump %>
+      },
+      "class_type": "UpscaleModelLoader",
+      "_meta": {
+        "title": "Load SwinIR"
+      }
+    },
+    "2": {
+      "inputs": {
+        "image": <%= image_filename.dump %>
+      },
+      "class_type": "LoadImage",
+      "_meta": {
+        "title": "Load input image"
+      }
+    },
+    "3": {
+      "inputs": {
+        "upscale_model": [
+          "1",
+          0
+        ],
+        "image": [
+          "2",
+          0
+        ]
+      },
+      "class_type": "ImageUpscaleWithModel",
+      "_meta": {
+        "title": "Upscale with SwinIR"
+      }
+    },
+    "4": {
+      "inputs": {
+        "filename_prefix": <%= filename.dump %>,
+        "images": [
+          "3",
+          0
+        ]
+      },
+      "class_type": "SaveImage",
+      "_meta": {
+        "title": "Save upscaled image"
+      }
+    }
+  }
+}
