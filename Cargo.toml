@@ -12,6 +12,7 @@ default = ["training"]
 inference-cpu = ["burn/autotune", "burn/cpu", "burn/fusion"]
 inference-flex = ["burn/flex", "dep:burn-flex"]
 inference-vulkan = ["burn/fusion", "burn/vulkan"]
+inference-wgpu = ["burn/fusion", "burn/wgpu"]
 training = [
   "burn/autodiff",
   "burn/dataset",

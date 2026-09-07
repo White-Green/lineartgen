@@ -1,6 +1,6 @@
 # lineartgen-native
 
-CPU inference extension for Python 3.10 and later. The epoch 1500 model is embedded in the extension, and image data stays in memory as tightly packed BGRA8 bytes.
+wgpu inference extension for Python 3.10 and later. The epoch 1500 model is embedded in the extension, and image data stays in memory as tightly packed BGRA8 bytes.
 
 ```bash
 python -m pip install "maturin>=1.15,<2"
@@ -10,7 +10,8 @@ maturin develop --release --locked --manifest-path crates/lineartgen-native/Carg
 ```python
 import lineartgen_native
 
-model = lineartgen_native.LineartModel()  # optional num_threads=...
+model = lineartgen_native.LineartModel()
+print(model.backend, model.device)  # Actual backend and selected adapter
 output = model.infer(
     scribble=scribble,
     lineart=lineart,
@@ -28,7 +29,28 @@ Both dimensions must be at least 16 pixels. Pyramid depth is derived automatical
 
 `strength` must be between 0 and 1, and `denoise_steps` must be between 1 and 20. Existing lineart alpha protects that pixel from added noise. No filesystem image exchange or PNG encoding is performed.
 
-The default wheel uses Burn Flex. The experimental CubeCL CPU backend can be built with:
+The default wheel uses Burn Wgpu with kernel fusion and float32 tensors. Windows
+uses DirectX 12; other platforms use Burn's automatic graphics API (Vulkan on
+Linux and Metal on macOS). Adapter selection prefers a high-performance GPU.
+`model.backend` and `model.device` report the actual backend and adapter, including
+whether wgpu selected a CPU software adapter. Initialization and inference release
+the Python GIL. The first inference also compiles shaders; later calls reuse the
+model and GPU runtime. GPU initialization and synchronous backend panics are
+reported as Python `RuntimeError` exceptions.
+
+For environments without a physical GPU, wgpu can use a software adapter such as
+WARP or Mesa lavapipe. This still exercises the wgpu backend, but does not validate
+hardware GPU performance. `CUBECL_WGPU_DEFAULT_DEVICE=Cpu` can select a software
+adapter for testing. `num_threads` defaults to 1 for wgpu and controls only the
+host worker pool, not GPU parallelism.
+
+A separate CPU-only wheel using Burn Flex can be built with:
+
+```bash
+maturin build --release --locked --no-default-features --features flex --manifest-path crates/lineartgen-native/Cargo.toml
+```
+
+The experimental CubeCL CPU backend can be built with:
 
 ```bash
 maturin build --release --no-default-features --features cube-cpu --manifest-path crates/lineartgen-native/Cargo.toml
@@ -37,7 +59,7 @@ maturin build --release --no-default-features --features cube-cpu --manifest-pat
 Flex and Vulkan inference can be benchmarked under identical conditions with:
 
 ```bash
-cargo test -p lineartgen-native --release --features vulkan-benchmark benchmark_ -- --ignored --nocapture --test-threads=1
+cargo test -p lineartgen-native --release --no-default-features --features flex,vulkan-benchmark benchmark_ -- --ignored --nocapture --test-threads=1
 ```
 
 ## Building from a submodule on Windows x64
@@ -57,7 +79,8 @@ python -m pip install "maturin>=1.15,<2"
 python -m maturin build --release --locked --target x86_64-pc-windows-msvc --manifest-path lineartgen/crates/lineartgen-native/Cargo.toml --out wheels
 ```
 
-The resulting `cp310-abi3-win_amd64.whl` uses Burn Flex and includes the model.
+The resulting `cp310-abi3-win_amd64.whl` uses Burn Wgpu and includes the model.
+A compatible DirectX 12 adapter and graphics driver are required at runtime.
 Install the wheel into the plugin's private package directory during packaging:
 
 ```powershell

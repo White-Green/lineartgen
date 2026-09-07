@@ -8,10 +8,11 @@ crate-type = ["cdylib", "rlib"]
 name = "lineartgen_native"
 
 [features]
-default = ["flex"]
+default = ["wgpu"]
 cube-cpu = ["lineartgen/inference-cpu"]
 flex = ["lineartgen/inference-flex"]
 vulkan-benchmark = ["lineartgen/inference-vulkan"]
+wgpu = ["lineartgen/inference-wgpu"]
 
 [dependencies]
 burn = { default-features = false, features = ["std"], version = "0.21.0" }

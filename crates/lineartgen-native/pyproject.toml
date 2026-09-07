@@ -4,7 +4,7 @@ requires = ["maturin>=1.15,<2"]
 
 [project]
 dynamic = ["version"]
-description = "Embedded CPU lineart inference for Python and Krita plugins"
+description = "Embedded wgpu lineart inference for Python and Krita plugins"
 name = "lineartgen-native"
 readme = "README.md"
 requires-python = ">=3.10"
