@@ -4,7 +4,7 @@ use burn::module::Module;
 use burn::tensor::backend::Backend;
 use burn::tensor::{Tensor, TensorCreationOptions};
 
-mod u_net;
+pub mod u_net;
 
 #[derive(Config, Debug)]
 pub struct DiffusionModelConfig {

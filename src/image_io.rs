@@ -1,3 +1,4 @@
+use crate::inference::{normalize_luma, prediction_to_luma};
 use crate::{BurnBackend, LineartTensor};
 use burn::tensor::{Tensor, TensorData};
 use image::codecs::png::PngEncoder;
@@ -8,8 +9,6 @@ use std::io::{BufReader, Error, ErrorKind, Read, Write};
 use std::path::Path;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
-
-const IMAGE_SCALE: f32 = 1.1;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ImageCrop {
@@ -184,11 +183,6 @@ fn validate_crop(crop: ImageCrop, width: usize, height: usize, path: &Path) -> R
     Ok(())
 }
 
-fn normalize_luma(value: u8) -> f32 {
-    let value = f32::from(value) / 255.0;
-    ((value * 2.0 - 1.0) * IMAGE_SCALE).clamp(-1.0, 1.0)
-}
-
 pub fn write_lineart_image(tensor: LineartTensor, writer: impl Write) -> Result<()> {
     let data = tensor.try_into_data()?;
     let shape = data.shape.clone();
@@ -205,7 +199,7 @@ pub fn write_lineart_image(tensor: LineartTensor, writer: impl Write) -> Result<
     let pixels = data
         .into_vec::<f32>()?
         .into_iter()
-        .map(|value| (((value.clamp(-1.0, 1.0) + 1.0) * 0.5) * 255.0).round() as u8)
+        .map(prediction_to_luma)
         .collect::<Vec<_>>();
 
     let image = ImageBuffer::<Luma<u8>, Vec<u8>>::from_vec(width as u32, height as u32, pixels)

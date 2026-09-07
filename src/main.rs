@@ -1,20 +1,10 @@
 use clap::{Args, Parser, Subcommand};
-use image_io::{Result, read_lineart_image, write_lineart_image};
+use lineartgen::image_io::{Result, read_lineart_image, write_lineart_image};
+use lineartgen::train;
 use std::fs;
 use std::fs::File;
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
-
-#[allow(dead_code)]
-mod data;
-mod image_io;
-#[allow(dead_code)]
-mod model;
-mod recursion;
-mod train;
-
-pub type BurnBackend = burn::backend::Vulkan;
-pub type LineartTensor = burn::tensor::Tensor<BurnBackend, 2>;
 
 const INPUT_DIR: &str = "dataset/images";
 const OUTPUT_DIR: &str = "tmp/images";

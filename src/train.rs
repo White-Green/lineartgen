@@ -1,6 +1,7 @@
 use crate::BurnBackend;
 use crate::data::{LineartBatch, lineart_dataloader, multiscale_lineart_datasets};
 use crate::image_io::Result as AppResult;
+use crate::inference::{denoise_sample, prediction_to_luma, q_sample};
 use crate::model::{DiffusionModel, DiffusionModelConfig};
 use crate::recursion::{RecursionConfig, forward_recursive, forward_teacher_forced, input_sizes, tensor_pyramid};
 use burn::backend::{Autodiff, Flex};
@@ -1549,7 +1550,14 @@ fn sample_outputs<B: Backend>(
             let signal_scale = (noise_level_tensor.clone().neg() + 1.0).sqrt();
             let noise_scale = noise_level_tensor.clone().sqrt();
             let noisy = q_sample(clean.clone(), noise.clone(), signal_scale, noise_scale);
-            let predicted_clean = denoise_sample(model, noisy, noise_level_tensor, noise_level, &sizes);
+            let predicted_clean = denoise_sample(
+                &model.model,
+                noisy,
+                noise_level_tensor,
+                noise_level,
+                model.sample_denoising_steps(),
+                &sizes,
+            );
 
             outputs.push(SampleOutput {
                 noise_level,
@@ -1560,80 +1568,6 @@ fn sample_outputs<B: Backend>(
     }
 
     outputs
-}
-
-fn denoise_sample<B: Backend>(
-    model: &DiffusionTrainingModel<B>,
-    mut sample: Tensor<B, 4>,
-    start_noise_level_tensor: Tensor<B, 4>,
-    start_noise_level: f32,
-    sizes: &[[usize; 2]],
-) -> Tensor<B, 4> {
-    let schedule = denoising_schedule(start_noise_level, model.sample_denoising_steps());
-
-    for window in schedule.windows(2) {
-        let noise_level_factor = relative_noise_level(window[0], start_noise_level);
-        let next_noise_level_factor = relative_noise_level(window[1], start_noise_level);
-        let noise_level = start_noise_level_tensor.clone() * noise_level_factor;
-        let predicted_clean = forward_recursive(
-            &model.model,
-            tensor_pyramid(sizes, sample.clone()),
-            tensor_pyramid(sizes, noise_level),
-        )
-        .into_iter()
-        .next()
-        .expect("at least one sample scale is required");
-        sample = denoise_next_sample(
-            sample,
-            predicted_clean,
-            start_noise_level_tensor.clone(),
-            noise_level_factor,
-            next_noise_level_factor,
-        );
-    }
-
-    sample
-}
-
-fn relative_noise_level(noise_level: f32, start_noise_level: f32) -> f32 {
-    if start_noise_level == 0.0 {
-        0.0
-    } else {
-        noise_level / start_noise_level
-    }
-}
-
-fn denoise_next_sample<B: Backend>(
-    sample: Tensor<B, 4>,
-    predicted_clean: Tensor<B, 4>,
-    start_noise_level_tensor: Tensor<B, 4>,
-    noise_level_factor: f32,
-    next_noise_level_factor: f32,
-) -> Tensor<B, 4> {
-    let current_noise_level = start_noise_level_tensor.clone() * noise_level_factor;
-    let next_noise_level = start_noise_level_tensor * next_noise_level_factor;
-    let signal_scale = (current_noise_level.neg() + 1.0).sqrt();
-    let next_signal_scale = (next_noise_level.neg() + 1.0).sqrt();
-    let noise_ratio = if noise_level_factor <= 0.0 {
-        0.0
-    } else {
-        (next_noise_level_factor / noise_level_factor).clamp(0.0, 1.0).sqrt() as f64
-    };
-    let predicted_clean_weight = next_signal_scale - signal_scale * noise_ratio;
-
-    sample * noise_ratio + predicted_clean * predicted_clean_weight
-}
-
-fn denoising_schedule(start_noise_level: f32, denoising_steps: usize) -> Vec<f32> {
-    assert!(denoising_steps > 0, "denoising_steps must be greater than zero");
-    let start_noise_level = start_noise_level.clamp(0.0, 1.0);
-    if start_noise_level == 0.0 {
-        return vec![0.0, 0.0];
-    }
-
-    (0..=denoising_steps)
-        .map(|index| start_noise_level * (denoising_steps - index) as f32 / denoising_steps as f32)
-        .collect()
 }
 
 fn sample_scale_label(scale_level: usize) -> String {
@@ -1729,15 +1663,6 @@ fn flatten_for_regression<B: Backend>(tensor: Tensor<B, 4>) -> Tensor<B, 2> {
     tensor.reshape([batch_size, channels * height * width])
 }
 
-fn q_sample<B: Backend>(
-    clean: Tensor<B, 4>,
-    noise: Tensor<B, 4>,
-    signal_scale: Tensor<B, 4>,
-    noise_scale: Tensor<B, 4>,
-) -> Tensor<B, 4> {
-    clean * signal_scale + noise * noise_scale
-}
-
 fn format_noise_level(noise_level: f32) -> String {
     format!("{noise_level:.1}").replace('.', "_")
 }
@@ -1758,7 +1683,7 @@ fn write_sample_image(tensor: Tensor<Flex, 2>, path: &Path) -> AppResult<()> {
     let pixels = data
         .into_vec::<f32>()?
         .into_iter()
-        .map(|value| (((value.clamp(-1.0, 1.0) + 1.0) * 0.5) * 255.0).round() as u8)
+        .map(prediction_to_luma)
         .collect::<Vec<_>>();
     let image = ImageBuffer::<Luma<u8>, Vec<u8>>::from_vec(width as u32, height as u32, pixels)
         .ok_or_else(|| Error::new(ErrorKind::InvalidData, "tensor data length does not match shape"))?;
@@ -1950,6 +1875,7 @@ fn min_cost_assignment(costs: &[f64], row_count: usize, col_count: usize) -> Vec
 mod tests {
     use super::*;
     use crate::data::LineartScaleBatch;
+    use crate::inference::{denoise_next_sample, denoising_schedule};
     use burn::lr_scheduler::LrScheduler;
 
     #[test]

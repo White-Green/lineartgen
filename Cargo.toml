@@ -1,27 +1,49 @@
+[workspace]
+members = [".", "crates/lineartgen-native"]
+resolver = "3"
+
 [package]
 edition = "2024"
 name = "lineartgen"
 version = "0.1.0"
 
+[features]
+default = ["training"]
+inference-cpu = ["burn/autotune", "burn/cpu", "burn/fusion"]
+inference-flex = ["burn/flex", "dep:burn-flex"]
+inference-vulkan = ["burn/fusion", "burn/vulkan"]
+training = [
+  "burn/autodiff",
+  "burn/dataset",
+  "burn/flex",
+  "burn/fusion",
+  "burn/train",
+  "burn/tui",
+  "burn/vision",
+  "burn/vulkan",
+  "dep:burn-flex",
+  "dep:clap",
+  "dep:image",
+  "dep:log",
+  "dep:png",
+]
+
 [dependencies]
-burn = { default-features = false, features = [
-  "autodiff",
-  "dataset",
-  "fusion",
-  "std",
-  "train",
-  "tui",
-  "vision",
-  "vulkan",
-  "flex",
-], version = "0.21.0" }
-clap = { features = ["derive"], version = "4.6.4" }
+burn = { default-features = false, features = ["std"], version = "0.21.0" }
+burn-flex = { default-features = false, features = ["rayon", "simd", "std"], optional = true, version = "0.21.0" }
+clap = { features = ["derive"], optional = true, version = "4.6.4" }
 image = { default-features = false, features = [
   "jpeg",
   "png",
-], version = "0.25.10" }
-log = "0.4.33"
-serde = { version = "1.0.229" ,features=["derive"]}
+], optional = true, version = "0.25.10" }
+log = { optional = true, version = "0.4.33" }
+serde = { features = ["derive"], version = "1.0.229" }
 serde_json = "1.0.151"
-png = "0.18.1"
+png = { optional = true, version = "0.18.1" }
 rand = "0.10.2"
+rand_distr = "0.6.0"
+
+[[bin]]
+name = "lineartgen"
+path = "src/main.rs"
+required-features = ["training"]

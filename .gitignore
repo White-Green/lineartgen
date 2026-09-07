@@ -1,5 +1,6 @@
 /*
 !/dataset
+!/crates
 !/src
 !/.gitignore
 !/Cargo.lock

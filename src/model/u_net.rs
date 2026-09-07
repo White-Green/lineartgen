@@ -214,8 +214,17 @@ impl<B: Backend> UNet<B> {
     }
 
     pub fn forward(&self, input: Tensor<B, 4>, noise_level: Tensor<B, 4>, insert: Tensor<B, 4>) -> Tensor<B, 4> {
-        assert_eq!(input.dims()[2].next_power_of_two(), input.dims()[2]);
-        assert_eq!(input.dims()[3].next_power_of_two(), input.dims()[3]);
+        let minimum = self.minimum_input_size();
+        assert_eq!(
+            input.dims()[2] % minimum[0],
+            0,
+            "input height must be divisible by the model minimum"
+        );
+        assert_eq!(
+            input.dims()[3] % minimum[1],
+            0,
+            "input width must be divisible by the model minimum"
+        );
         assert_eq!(input.dims()[1], 1);
         assert_eq!(noise_level.dims(), input.dims());
         let conditioned_input = Tensor::cat(vec![input.clone(), noise_level], 1);

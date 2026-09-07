@@ -1,0 +1,13 @@
+[build-system]
+build-backend = "maturin"
+requires = ["maturin>=1.15,<2"]
+
+[project]
+dynamic = ["version"]
+description = "Embedded CPU lineart inference for Python and Krita plugins"
+name = "lineartgen-native"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.maturin]
+module-name = "lineartgen_native"
