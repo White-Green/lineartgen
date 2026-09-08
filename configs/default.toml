@@ -14,10 +14,16 @@ augment = true
 # Set after `lineartgen prepare`: prepared_root = ".cache/tiles"
 
 [diffusion]
-recursion_levels = 3
+original_steps = 1
+stop_size = 0
 pattern_weights = [1, 1, 1, 1]
 identity_probability = 0.1
-scale_loss_decay = 0.5
+scale_loss_multiplier = 0.0
+
+[matching]
+method = "exact"
+solver = "scipy"
+pool_size = 256
 
 [loss]
 balance_tones = true
@@ -28,8 +34,9 @@ contrast_weight = 0.01
 steps = 100000
 batch_size = 4
 accumulate_steps = 4
-learning_rate = 0.0003
-minimum_learning_rate = 0.00003
+# Base rate; peak = learning_rate * sqrt(batch_size * accumulate_steps).
+learning_rate = 0.0001
+minimum_learning_rate = 0.00001
 warmup_steps = 500
 evaluate_every = 250
 checkpoint_every = 250

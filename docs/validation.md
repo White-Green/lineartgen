@@ -8,7 +8,31 @@
 - dataset は 223.04 GiB、7,149 ファイルを独立コピーした。名前・サイズ・mtime を全件照合し、
   元ファイルと共有する inode は 0。全画素の hash 比較ではない。
 
-## 成功した検証
+## Burn の学習設計を戻した後の検証
+
+| 対象 | 結果 |
+| --- | --- |
+| テスト全体 | `JAX_PLATFORMS=cpu pytest -q`: 50 passed / 25.85 秒 |
+| 再帰と各段 loss | scale 0〜5 で 1〜6 段、最小サイズ・stop_size による上限、各段の重みと正規化、最大解像度の loss から小さい段への勾配を検証 |
+| LR | 実効 batch による平方根スケーリング、同じ実効 batch の異なる microbatch 分割、絶対値の最低 LR を検証 |
+| ノイズ割り当て | Burn の元式とコスト一致、mask の 0 領域、矩形・正方形・同点の厳密最適性、候補の一意性、SciPy / Optax の両方を検証 |
+| データ | 標準データ 1,019 元画像の全 6 scale の寸法比が一致。subset の明示的な scale level、誤った寸法の検出、入力列の途中再開を検証 |
+| 学習再開 | 厳密ノイズ割り当てと可変段数を含め、連続実行と中断→再開のモデル・optimizer・EMA 全 leaf が完全一致（CPU の合成データ） |
+| 実データ GPU 学習・再開 | crop 32、scale 0 / 1、batch 2 × 蓄積 2、pool 8、2 更新→保存→再開→4 更新。`runs/burn-design-verified` |
+| 実データ GPU 6 段再帰 | images_32x の scale level 5、512→256→128→64→32→16、batch 2 × 蓄積 2、pool 8、1 更新・検証画像・保存。`runs/burn-design-six-levels` |
+| GPU 保存 → CPU export | 新設計で学習した step 4 の EMA を ONNX 化。16² / 32×48 / 128² で JAX / ORT 最大絶対誤差 1.79e-7 |
+| ノイズ割り当ての GPU 測定 | 512² / batch 16 / pool 256。コスト計算 42.99→12.75 ms、SciPy callback 込み 12.82 ms。[条件と詳細](noise-matching.md) |
+| 静的検査・lock | Ruff lint / format、git diff --check、uv lock --check --offline 成功 |
+
+GPU 学習は `JAX_PLATFORMS=rocm,cpu` と `XLA_PYTHON_CLIENT_PREALLOCATE=false` を使用。
+コスト計算・モデル演算は ROCm、厳密 assignment の solver は SciPy の CPU callback。
+学習 smoke の pool は 8。標準 pool 256 での測定はノイズ割り当て単体であり、
+長時間学習の速度・画質を検証したものではない。
+
+## 初回 rewrite で成功した検証（9d41a36）
+
+以下の学習 run は設計を戻す前のもの。今回の学習設定での結果は上表を参照。
+Krita runtime と配布処理には今回変更を加えていない。
 
 | 対象 | 結果 |
 | --- | --- |

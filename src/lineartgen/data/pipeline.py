@@ -1,7 +1,7 @@
 """Grain input pipeline: fixed shapes and index-derived randomness make resume deterministic.
 
-Each microbatch samples one source scale. Images and crops are independently
-sampled with replacement. All scales use the same configurable recursion depth.
+Each logical optimizer batch samples one source scale. Images and crops are
+independently sampled with replacement. The scale selects the recursion depth.
 The validation split is by source filename, never by crop or resolution.
 """
 
@@ -26,6 +26,12 @@ class Source:
     variants: tuple[tuple[Path, int, int], ...]
 
 
+@dataclass(frozen=True)
+class Batch:
+    images: np.ndarray
+    scale_level: int
+
+
 def discover(config: DataConfig):
     directories = [config.root / name for name in config.scale_dirs]
     files = [
@@ -40,9 +46,20 @@ def discover(config: DataConfig):
     sources = []
     for name in sorted(files[0]):
         variants = []
-        for candidates in files:
+        base_width = base_height = None
+        base_level = config.resolved_scale_levels[0]
+        for candidates, level in zip(files, config.resolved_scale_levels, strict=True):
             path = candidates[name]
             width, height = image_size(path)
+            if base_width is None:
+                base_width, base_height = width, height
+            if (
+                width * 2**base_level != base_width * 2**level
+                or height * 2**base_level != base_height * 2**level
+            ):
+                raise ValueError(
+                    f"Image dimensions do not match dataset scale level {level}: {path}"
+                )
             if min(width, height) < config.crop_size:
                 raise ValueError(f"Image smaller than crop_size: {path} ({width}x{height})")
             variants.append((path, width, height))
@@ -75,7 +92,10 @@ def dataset_description(sources, training, validation):
         "fingerprint": hashlib.sha256(json.dumps(manifest).encode()).hexdigest(),
         "train": [s.name for s in training],
         "validation": [s.name for s in validation],
-        "sampling": "uniform source and scale, with replacement; indexed by microbatch/item",
+        "sampling": (
+            "uniform source with replacement; one scale per logical batch; "
+            "indexed by optimizer step/item"
+        ),
     }
 
 
@@ -91,7 +111,8 @@ class LoadSample:
         rng = np.random.default_rng(np.random.SeedSequence([self.seed, int(index), 0]))
         source = self.sources[rng.integers(len(self.sources))]
         scale_rng = np.random.default_rng([self.seed, int(index) // self.batch_size, 1])
-        path, width, height = source.variants[scale_rng.integers(len(source.variants))]
+        variant_index = int(scale_rng.integers(len(source.variants)))
+        path, width, height = source.variants[variant_index]
         if self.config.prepared_root is not None:
             prepared = self.config.prepared_root / path.relative_to(self.config.root).with_suffix(
                 path.suffix + ".tif"
@@ -108,14 +129,19 @@ class LoadSample:
             image = np.rot90(image, int(rng.integers(4)))
             if rng.random() < 0.5:
                 image = image[:, ::-1]
-        return np.ascontiguousarray(np.clip((image * 2 - 1) * self.config.image_scale, -1, 1))
+        return {
+            "images": np.ascontiguousarray(
+                np.clip((image * 2 - 1) * self.config.image_scale, -1, 1)
+            ),
+            "scale_level": np.int32(self.config.resolved_scale_levels[variant_index]),
+        }
 
 
 def batches(sources, config, *, batch_size, count, seed, start=0, training=True):
     dataset = grain.MapDataset.range(start * batch_size, (start + count) * batch_size)
     dataset = dataset.map(LoadSample(sources, config, batch_size, seed, training))
     dataset = dataset.batch(batch_size, drop_remainder=True)
-    return iter(
+    stream = iter(
         dataset.to_iter_dataset(
             grain.ReadOptions(
                 num_threads=max(1, config.workers),
@@ -123,6 +149,13 @@ def batches(sources, config, *, batch_size, count, seed, start=0, training=True)
             )
         )
     )
+    try:
+        for value in stream:
+            yield Batch(value["images"], int(value["scale_level"][0]))
+    finally:
+        close = getattr(stream, "close", None)
+        if close is not None:
+            close()
 
 
 def prepare_dataset(config: DataConfig, output: Path, limit: int | None = None):

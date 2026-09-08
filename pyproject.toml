@@ -10,10 +10,11 @@ requires-python = ">=3.12"
 dependencies = [
   "jax>=0.8.1,<0.12",
   "flax>=0.12.1,<0.14",
-  "optax>=0.2.4,<0.3",
+  "optax>=0.2.8,<0.3",
   "orbax-checkpoint>=0.11.6,<0.11.37",
   "grain>=0.2,<0.3",
   "numpy>=1.26,<3",
+  "scipy>=1.14,<2",
   "pillow>=11,<13",
   "pyvips[binary]>=3,<4",
   "pydantic>=2.10,<3",

@@ -31,7 +31,9 @@ def test_split_and_resume_input_stream(dataset):
     assert not {s.name for s in train} & {s.name for s in validation}
     full = list(batches(train, config, batch_size=2, count=4, seed=42))
     resumed = list(batches(train, config, batch_size=2, count=2, start=2, seed=42))
-    np.testing.assert_array_equal(full[2:], resumed)
+    for original, restored in zip(full[2:], resumed, strict=True):
+        np.testing.assert_array_equal(original.images, restored.images)
+        assert original.scale_level == restored.scale_level
 
 
 def test_tiled_preparation_preserves_alpha_and_pixels(dataset, tmp_path):
@@ -45,10 +47,29 @@ def test_tiled_preparation_preserves_alpha_and_pixels(dataset, tmp_path):
         )
 
 
+def test_scale_subset_keeps_original_level(dataset):
+    config = DataConfig(root=dataset, scale_dirs=("images_2x",), scale_levels=(1,), crop_size=16)
+    stream = batches(discover(config), config, batch_size=4, count=2, seed=42)
+    assert [batch.scale_level for batch in stream] == [1, 1]
+
+
+def test_mismatched_scale_dimensions_are_rejected(dataset):
+    Image.new("L", (63, 64)).save(dataset / "images_2x" / "0000.png")
+    config = DataConfig(root=dataset, scale_dirs=("images", "images_2x"), crop_size=16)
+    with pytest.raises(ValueError, match="dimensions do not match dataset scale"):
+        discover(config)
+
+
 @pytest.mark.parametrize(
     "settings",
     [
-        {"diffusion": {"recursion_levels": 8}},
+        {"data": {"crop_size": 48}},
+        {"data": {"scale_dirs": []}},
+        {"data": {"scale_dirs": ["images"], "scale_levels": []}},
+        {"data": {"scale_dirs": ["images"], "scale_levels": [-1]}},
+        {"data": {"scale_dirs": ["images", "images_2x"], "scale_levels": [0, 0]}},
+        {"diffusion": {"original_steps": 0}},
+        {"matching": {"pool_size": 8}},
         {"model": {"kernel_size": 2}},
         {"diffusion": {"pattern_weights": [0, 0, 0, 0]}},
         {"diffusion": {"pattern_weights": [float("nan"), 1, 1, 1]}},

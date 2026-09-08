@@ -1,9 +1,18 @@
 """Forward noise, image pyramids and recursive conditioning; independent of the trainer."""
 
+from typing import NamedTuple
+
 import jax
 import jax.numpy as jnp
 
 from lineartgen.config import DiffusionConfig
+from lineartgen.noise_matching import match_noise
+
+
+class TrainingInputs(NamedTuple):
+    targets: tuple
+    noise_levels: tuple
+    noisy: tuple
 
 
 def downsample(image):
@@ -60,16 +69,21 @@ def noise_map(clean, key, config: DiffusionConfig):
     )
 
 
-def training_inputs(clean, key, config):
+def training_inputs(clean, key, config, matching, *, levels):
     map_key, noise_key = jax.random.split(key)
-    levels = pyramid(noise_map(clean, map_key, config), config.recursion_levels)
-    targets = pyramid(clean, config.recursion_levels)
-    noise_keys = jax.random.split(noise_key, config.recursion_levels)
-    noisy = tuple(
-        target * jnp.sqrt(1 - level) + jax.random.normal(k, target.shape) * jnp.sqrt(level)
-        for target, level, k in zip(targets, levels, noise_keys, strict=True)
-    )
-    return targets, levels, noisy
+    noise_levels = pyramid(noise_map(clean, map_key, config), levels)
+    targets = pyramid(clean, levels)
+    noise_keys = jax.random.split(noise_key, levels)
+    noisy = []
+    for target, level, k in zip(targets, noise_levels, noise_keys, strict=True):
+        count = matching.pool_size if matching.method == "exact" else target.shape[0]
+        noise = jax.random.normal(k, (count, *target.shape[1:]))
+        if matching.method == "exact":
+            noise = match_noise(
+                target, level, noise, resolution=matching.cost_resolution, solver=matching.solver
+            )
+        noisy.append(target * jnp.sqrt(1 - level) + noise * jnp.sqrt(level))
+    return TrainingInputs(targets, noise_levels, tuple(noisy))
 
 
 def sample(model, clean, key, *, strength, steps, levels):

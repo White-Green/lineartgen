@@ -18,13 +18,14 @@ uv run --frozen --extra export lineartgen doctor
 
 ```bash
 uv sync --frozen --extra rocm --extra export
-JAX_PLATFORMS=rocm uv run --frozen --extra rocm --extra export lineartgen doctor
-JAX_PLATFORMS=rocm XLA_PYTHON_CLIENT_PREALLOCATE=false \
+JAX_PLATFORMS=rocm,cpu uv run --frozen --extra rocm --extra export lineartgen doctor
+JAX_PLATFORMS=rocm,cpu XLA_PYTHON_CLIENT_PREALLOCATE=false \
   uv run --frozen --extra rocm --extra export lineartgen train \
   --config configs/default.toml --run-dir runs/experiment-001
 ```
 
-`JAX_PLATFORMS=rocm` は GPU 初期化の失敗をエラーにする。
+`JAX_PLATFORMS=rocm,cpu` は GPU を既定にし、GPU 初期化の失敗をエラーにする。
+CPU backend はノイズの割り当てを解く SciPy callback に必要。
 共有メモリの GPU なので、この例では JAX の事前メモリ確保を無効にする。
 CPU を明示する場合は `JAX_PLATFORMS=cpu`。他の GPU については
 [JAX のインストール手順](https://docs.jax.dev/en/latest/installation.html)を参照。
@@ -54,7 +55,7 @@ run ごとに次が残る。
 | --- | --- |
 | `config.json` | 実際に使った全設定 |
 | `dataset.json` | 元画像単位の分割、名前・サイズ・mtime による指紋 |
-| `metrics.jsonl`, `events/` | 学習・検証の loss、学習率、勾配ノルム、TensorBoard イベント |
+| `metrics.jsonl`, `events/` | 学習・検証の loss、学習率、勾配ノルム、データの scale と再帰段数、TensorBoard イベント |
 | `samples/` | 検証画像と生成結果を並べた PNG |
 | `checkpoints/` | Orbax によるモデル・optimizer・EMA・step |
 | export 先の `.onnx`, `.json` | EMA モデルと JAX / ONNX の数値比較結果 |
@@ -65,7 +66,14 @@ run ごとに次が残る。
 `images_colored` は保持するが標準の線画学習には使わない。
 画像を解像度ごとに分割せず、元画像名で train / validation を分ける。
 訓練では元画像と解像度を一様に復元抽出し、固定サイズの crop・回転・反転を行う。
-各 microbatch の解像度選択を揃え、JIT に渡す形状を固定する。
+各 optimizer 更新の実効 batch 全体で解像度選択を揃える。
+その batch 全体にノイズを割り当ててから microbatch に分割する。
+Burn は一つの outer batch 内に解像度別の group を作るため、batch の構成は異なる。
+同じ画像・解像度の出現確率を保ち、再帰段数ごとに JIT する。
+
+`scale_dirs` は標準で先頭から scale level 0, 1, … と解釈し、画像寸法の倍率も検査する。
+一部だけを使う場合は、例えば `scale_dirs = ["images_8x", "images_32x"]` と
+`scale_levels = [3, 5]` を組み合わせ、元の再帰段数を維持する。
 
 PNG の読み込みには pyvips を使う。32K PNG は crop でもそこまでの行をデコードするため、
 長い学習ではロスレスの tiled TIFF キャッシュを作るとランダム crop を読みやすくなる。
@@ -92,6 +100,7 @@ src/lineartgen/
   models/blocks.py         Conv + ReLU の部品
   models/unet.py           1 解像度の U-Net
   diffusion.py            ノイズ・ピラミッド・小→大の再帰・sampling
+  noise_matching.py       Burn と同じコスト・一対一ノイズ割り当て
   data/images.py          画像 decode / crop / optional cache
   data/pipeline.py        元画像分割と Grain の入力列
   training/losses.py      loss の数式
@@ -111,14 +120,30 @@ MaxPool、nearest upsample、skip 接続を維持する。小さい解像度の�
 全解像度で重みを共有する。再帰を通る勾配も残す。
 
 `channels`、`convolutions_per_block`、`kernel_size` は TOML で変更できる。
-crop の辺は `2 ** len(channels) * 2 ** (recursion_levels - 1)` の倍数が必要。
+crop の辺は 2 の冪かつ `2 ** len(channels)` 以上にする。
 モデル内部に新しい演算を入れたら exporter の対応も確認する。
+
+次の学習設計は Burn 版を維持する。
+
+| 設計 | 設定と動作 |
+| --- | --- |
+| 再帰段数 | `diffusion.original_steps + dataset scale level`。標準は images で 1 段、images_32x で 6 段。モデルの最小サイズと `stop_size` で打ち切る |
+| 各段の loss | 最大解像度を段 0 として重み `scale_loss_multiplier ** 段番号`、重みの総和で正規化。標準値 0 は最大解像度だけに直接 loss を掛ける。小さい段にも再帰経由で勾配が届く |
+| 学習率 | `learning_rate * sqrt(batch_size * accumulate_steps)` をピークにする。標準は `1e-4 * sqrt(16) = 4e-4`。`minimum_learning_rate = 1e-5` はスケーリングしない |
+| ノイズ割り当て | 各再帰解像度で独立した候補 pool を作り、Burn と同じコストの厳密な一対一対応を選ぶ。標準は `matching.pool_size = 256` |
 
 学習は optimizer step を単位とし、AdamW、warmup + cosine、勾配 clipping、EMA を使う。
 実効 batch は `batch_size * accumulate_steps`。分散学習や mixed precision はまだ含まない。
 loss はノイズ量で正規化した誤差、濃淡のバランス、identity、Sobel、contrast から構成する。
-元の Burn 設定の移植ではなく、変更しやすい JAX の初期設定として用意した。
+上表以外の loss の係数・式、ノイズ領域の生成、warmup などは JAX 版の設定を使う。
+独立ノイズとの比較は `matching.method = "independent"`、GPU 上の厳密 solver との比較は
+`matching.solver = "optax"` で切り替える。どちらも新しい run で行う。
+コストの等価な高速化と候補手法の検討は [ノイズ割り当て](docs/noise-matching.md)を参照。
 標準の長時間学習や生成品質はこれから評価する必要がある。
+
+以前の JAX 設定の `recursion_levels` / `scale_loss_decay` は廃止した。
+学習の意味が変わるため、それらを使った run は旧 commit `9d41a36` で再開し、
+この設計での学習は新しい run にする。
 
 ## Krita への配布
 

@@ -5,21 +5,23 @@ import jax.numpy as jnp
 import optax
 from flax import nnx
 
-from lineartgen.diffusion import recursive_forward, training_inputs
+from lineartgen.diffusion import recursive_forward
 
 from .losses import image_loss
 
 
 def make_steps(config):
-    def objective(model, clean, key):
-        targets, noise_levels, noisy = training_inputs(clean, key, config.diffusion)
+    def objective(model, prepared):
+        targets, noise_levels, noisy = prepared
         predictions = recursive_forward(model, noisy, noise_levels)
         total, denominator = jnp.zeros(()), 0.0
         metrics = None
         for level, (prediction, target, noise) in enumerate(
             zip(predictions, targets, noise_levels, strict=True)
         ):
-            weight = config.diffusion.scale_loss_decay**level
+            weight = config.diffusion.scale_loss_multiplier**level
+            if weight == 0:
+                continue  # Still backpropagate through this scale's recursive prediction.
             loss, parts = image_loss(
                 prediction, target, noise, config.loss, config.diffusion.min_noise
             )
@@ -31,8 +33,8 @@ def make_steps(config):
         return metrics["loss"], metrics
 
     @nnx.jit
-    def gradients(model, clean, key):
-        (_, metrics), grads = nnx.value_and_grad(objective, has_aux=True)(model, clean, key)
+    def gradients(model, prepared):
+        (_, metrics), grads = nnx.value_and_grad(objective, has_aux=True)(model, prepared)
         return metrics, grads
 
     @nnx.jit
@@ -47,14 +49,15 @@ def make_steps(config):
         )
         return norm, ema
 
-    return gradients, update, nnx.jit(lambda model, clean, key: objective(model, clean, key)[1])
+    return gradients, update, nnx.jit(lambda model, prepared: objective(model, prepared)[1])
 
 
 def create_optimizer(model, config):
     train = config.train
+    peak = train.peak_learning_rate
     schedule = optax.warmup_cosine_decay_schedule(
-        init_value=train.learning_rate / 10 if train.warmup_steps else train.learning_rate,
-        peak_value=train.learning_rate,
+        init_value=peak / 10 if train.warmup_steps else peak,
+        peak_value=peak,
         warmup_steps=train.warmup_steps,
         decay_steps=train.steps,
         end_value=train.minimum_learning_rate,

@@ -20,7 +20,7 @@ from tensorboardX import SummaryWriter
 
 from lineartgen.config import load_config, save_config
 from lineartgen.data.pipeline import batches, dataset_description, discover, split_sources
-from lineartgen.diffusion import sample
+from lineartgen.diffusion import sample, training_inputs
 from lineartgen.models import UNet
 
 from . import checkpoints
@@ -35,6 +35,14 @@ class Trainer:
 
     def fit(self, *, resume=False, stop_after=None):
         config, train = self.config, self.config.train
+        if config.matching.method == "exact" and config.matching.solver == "scipy":
+            try:
+                jax.local_devices(backend="cpu")
+            except RuntimeError as error:
+                raise RuntimeError(
+                    "SciPy assignment needs a CPU backend for JAX callbacks. "
+                    "Use JAX_PLATFORMS=rocm,cpu (or cuda,cpu), or matching.solver='optax'."
+                ) from error
         if self.run_dir.exists() and any(self.run_dir.iterdir()) and not resume:
             raise FileExistsError(f"Run directory is not empty: {self.run_dir}; use --resume")
         self.run_dir.mkdir(parents=True, exist_ok=True)
@@ -58,15 +66,28 @@ class Trainer:
         optimizer, schedule = create_optimizer(model, config)
         ema = jax.tree.map(lambda x: x.copy(), nnx.state(model, nnx.Param))
         gradient_step, update_step, evaluate_step = make_steps(config)
+        # Assign a full candidate pool before slicing microbatches. Accumulation
+        # must not silently shrink the assignment problem to the microbatch.
+        prepare_step = jax.jit(
+            lambda clean, key, levels: training_inputs(
+                clean,
+                key,
+                config.diffusion,
+                config.matching,
+                levels=levels,
+            ),
+            static_argnums=(2,),
+        )
         sample_step = nnx.jit(
-            lambda model, clean, key: sample(
+            lambda model, clean, key, levels: sample(
                 model,
                 clean,
                 key,
                 strength=0.5,
                 steps=config.diffusion.sample_steps,
-                levels=config.diffusion.recursion_levels,
-            )
+                levels=levels,
+            ),
+            static_argnums=(3,),
         )
         root_key = jax.random.PRNGKey(train.seed)
         started, completed = time.monotonic(), 0
@@ -77,10 +98,10 @@ class Trainer:
             stream = batches(
                 training,
                 config.data,
-                batch_size=train.batch_size,
-                count=(end - completed) * train.accumulate_steps,
+                batch_size=train.effective_batch_size,
+                count=end - completed,
                 seed=train.seed,
-                start=completed * train.accumulate_steps,
+                start=completed,
             )
             self.console.print(f"Training on {jax.devices()}; optimizer steps {completed} → {end}")
             with SummaryWriter(
@@ -88,13 +109,24 @@ class Trainer:
             ) as writer:
                 try:
                     for step in range(completed, end):
+                        batch = next(stream)
+                        clean = jax.device_put(batch.images)
+                        levels = config.diffusion.levels_for_scale(
+                            config.data.crop_size,
+                            config.model.minimum_size,
+                            batch.scale_level,
+                        )
+                        prepared = prepare_step(clean, jax.random.fold_in(root_key, step), levels)
                         gradients, metrics = None, None
                         for micro in range(train.accumulate_steps):
-                            clean = jax.device_put(next(stream))
-                            key = jax.random.fold_in(
-                                root_key, step * train.accumulate_steps + micro
+                            start = micro * train.batch_size
+                            parts, grads = gradient_step(
+                                model,
+                                jax.tree.map(
+                                    lambda x, start=start: x[start : start + train.batch_size],
+                                    prepared,
+                                ),
                             )
-                            parts, grads = gradient_step(model, clean, key)
                             if gradients is None:
                                 gradients, metrics = grads, parts
                             else:
@@ -111,7 +143,12 @@ class Trainer:
                         completed = step + 1
                         if completed % train.log_every == 0 or completed == end:
                             logged = {name: float(value) for name, value in metrics.items()}
-                            logged.update(gradient_norm=norm, learning_rate=float(schedule(step)))
+                            logged.update(
+                                gradient_norm=norm,
+                                learning_rate=float(schedule(step)),
+                                scale_level=batch.scale_level,
+                                recursion_levels=levels,
+                            )
                             self._log(writer, completed, "train", logged)
                         if completed % train.evaluate_every == 0 or completed == end:
                             eval_model = nnx.clone(model)
@@ -123,6 +160,7 @@ class Trainer:
                                 validation,
                                 evaluate_step,
                                 sample_step,
+                                prepare_step,
                             )
                         if completed % train.checkpoint_every == 0 or completed == end:
                             checkpoints.save(saved, model, optimizer, ema, completed)
@@ -146,7 +184,7 @@ class Trainer:
             writer.add_scalar(f"{phase}/{name}", value, step)
         self.console.print(f"{phase} step={step} loss={metrics['loss']:.6f}")
 
-    def _evaluate(self, writer, step, model, validation, evaluate_step, sample_step):
+    def _evaluate(self, writer, step, model, validation, evaluate_step, sample_step, prepare_step):
         train, config = self.config.train, self.config
         stream = batches(
             validation,
@@ -158,17 +196,27 @@ class Trainer:
         )
         totals = {}
         first = None
-        for index, clean in enumerate(stream):
-            clean = jax.device_put(clean)
+        first_levels = None
+        for index, batch in enumerate(stream):
+            clean = jax.device_put(batch.images)
+            levels = config.diffusion.levels_for_scale(
+                config.data.crop_size,
+                config.model.minimum_size,
+                batch.scale_level,
+            )
             if first is None:
                 first = clean[:1]
-            parts = evaluate_step(
-                model, clean, jax.random.fold_in(jax.random.PRNGKey(train.seed + 2), index)
+                first_levels = levels
+            prepared = prepare_step(
+                clean,
+                jax.random.fold_in(jax.random.PRNGKey(train.seed + 2), index),
+                levels,
             )
+            parts = evaluate_step(model, prepared)
             for name, value in parts.items():
                 totals[name] = totals.get(name, 0.0) + float(value) / train.validation_batches
         self._log(writer, step, "validation", totals)
-        generated = sample_step(model, first, jax.random.PRNGKey(train.seed + 3))
+        generated = sample_step(model, first, jax.random.PRNGKey(train.seed + 3), first_levels)
         panel = np.concatenate((np.asarray(first[0]), np.asarray(generated[0])), axis=1)
         panel = np.rint(np.clip((panel[..., 0] + 1) * 127.5, 0, 255)).astype(np.uint8)
         samples = self.run_dir / "samples"

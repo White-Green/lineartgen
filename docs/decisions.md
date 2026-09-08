@@ -27,6 +27,19 @@ TensorBoard ログは TensorBoardX を使う。
 [Orbax checkpoint guide](https://orbax.readthedocs.io/en/latest/guides/checkpoint/orbax_checkpoint_101.html)、
 [Keras custom JAX training](https://keras.io/guides/custom_train_step_in_jax/)。
 
+## ノイズ割り当て: JAX のコスト計算 + SciPy の厳密解
+
+Burn の目的関数と重複しない候補選択を維持する。二乗誤差を展開して行列積にすると、
+候補ごとの巨大な画像テンソルを作らずに同じコストを計算できる。
+小さいコスト行列だけを SciPy `linear_sum_assignment` に送り、選択 index を GPU に戻す。
+このホストの batch 16 / pool 256 では、callback 込み約 0.21 ms、Optax の GPU Hungarian は
+約 2.94 ms だったため、既定を SciPy とした。Optax も設定で選べる。
+SciPy は矩形の assignment を解く Jonker–Volgenant 実装であり、Hungarian と同じ問題を解く。
+
+資料: [SciPy assignment](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html)、
+[Optax assignment](https://optax.readthedocs.io/en/latest/api/assignment.html)。
+等価性・測定条件・今後の画質実験は [ノイズ割り当ての調査](noise-matching.md)を参照。
+
 ## 大画像: pyvips と任意の tiled TIFF
 
 32K PNG 全体を NumPy 配列として読み込む方法は crop 学習に不要なメモリを使う。
