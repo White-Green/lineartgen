@@ -1,0 +1,36 @@
+# Fixed-shape microbatches; batch_size * accumulate_steps images per optimizer update.
+# Relative paths are resolved from the working directory, normally the project root.
+[model]
+channels = [4, 10, 20, 40]
+convolutions_per_block = 3
+
+[data]
+root = "dataset"
+scale_dirs = ["images", "images_2x", "images_4x", "images_8x", "images_16x", "images_32x"]
+crop_size = 512
+validation_count = 64
+workers = 4
+augment = true
+# Set after `lineartgen prepare`: prepared_root = ".cache/tiles"
+
+[diffusion]
+recursion_levels = 3
+pattern_weights = [1, 1, 1, 1]
+identity_probability = 0.1
+scale_loss_decay = 0.5
+
+[loss]
+balance_tones = true
+edge_weight = 0.1
+contrast_weight = 0.01
+
+[train]
+steps = 100000
+batch_size = 4
+accumulate_steps = 4
+learning_rate = 0.0003
+minimum_learning_rate = 0.00003
+warmup_steps = 500
+evaluate_every = 250
+checkpoint_every = 250
+seed = 42

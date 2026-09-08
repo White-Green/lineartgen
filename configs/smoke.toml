@@ -1,0 +1,20 @@
+# A small real-data end-to-end run. This tests plumbing, not model quality.
+[data]
+scale_dirs = ["images"]
+crop_size = 32
+validation_count = 8
+workers = 1
+
+[diffusion]
+recursion_levels = 2
+sample_steps = 2
+
+[train]
+steps = 4
+batch_size = 2
+accumulate_steps = 2
+warmup_steps = 1
+log_every = 1
+evaluate_every = 2
+checkpoint_every = 2
+validation_batches = 1

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lineartgen-runtime"
+version = "0.2.0"
+description = "JAX-free ONNX inference for the Diffusion Drawing Krita plugin"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.26,<3"]
+
+[project.optional-dependencies]
+cpu = [
+  "onnxruntime==1.23.2; python_version < '3.11'",
+  "onnxruntime>=1.24,<2; python_version >= '3.11'",
+]
+directml = [
+  "onnxruntime-directml==1.22.0; sys_platform == 'win32' and python_version < '3.11'",
+  "onnxruntime-directml>=1.24,<2; sys_platform == 'win32' and python_version >= '3.11'",
+]
+
+[tool.uv]
+conflicts = [[{ extra = "cpu" }, { extra = "directml" }]]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lineartgen_runtime"]

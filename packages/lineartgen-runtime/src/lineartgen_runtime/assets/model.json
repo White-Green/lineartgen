@@ -1,0 +1,42 @@
+{
+  "format_version": 1,
+  "layout": "NHWC",
+  "minimum_size": 16,
+  "stop_size": 128,
+  "image_scale": 1.1,
+  "model": {
+    "channels": [
+      4,
+      10,
+      20,
+      40
+    ],
+    "convolutions_per_block": 3,
+    "kernel_size": 3
+  },
+  "dynamic": true,
+  "provenance": "Original epoch 1500 checkpoint; MPK SHA256 e7d4b04c93cbf9fd1055876247863d5c3ca0f92cc4743d750a2c637b188215ac",
+  "validation": [
+    {
+      "size": [
+        16,
+        16
+      ],
+      "max_abs_error": 8.344650268554688e-07
+    },
+    {
+      "size": [
+        32,
+        48
+      ],
+      "max_abs_error": 1.0132789611816406e-06
+    },
+    {
+      "size": [
+        128,
+        128
+      ],
+      "max_abs_error": 1.3113021850585938e-06
+    }
+  ]
+}
