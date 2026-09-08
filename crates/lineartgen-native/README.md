@@ -25,6 +25,11 @@ output = model.infer(
 
 Both inputs and the output contain exactly `width * height * 4` bytes in BGRA order. The output RGB channels are zero and the generated line darkness is stored in alpha.
 
+Scribble RGB is ignored: alpha alone determines line darkness, with transparent
+pixels treated as white and opaque pixels as black, including opaque white paint.
+Partial opacity produces intermediate gray values. Existing lineart still uses
+RGB luminance and alpha compositing over the scribble.
+
 Both dimensions must be at least 16 pixels. Pyramid depth is derived automatically: each dimension is halved until both are at most 128 pixels, unless another reduction would make a dimension smaller than 16 pixels. Non-power-of-two inputs are padded on the right and bottom and cropped back to the requested size.
 
 `strength` must be between 0 and 1, and `denoise_steps` must be between 1 and 20. Existing lineart alpha protects that pixel from added noise. No filesystem image exchange or PNG encoding is performed.

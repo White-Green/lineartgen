@@ -363,7 +363,8 @@ fn prepare_input(
             let target = y * padded_width + x;
             let scribble_pixel = &scribble[source..source + 4];
             let lineart_pixel = &lineart[source..source + 4];
-            let scribble_luma = alpha_over(1.0, bgra_luma(scribble_pixel), alpha(scribble_pixel));
+            // Scribble opacity is line darkness, regardless of the drawing color.
+            let scribble_luma = 1.0 - alpha(scribble_pixel);
             let lineart_alpha = alpha(lineart_pixel);
             let combined_luma = alpha_over(scribble_luma, bgra_luma(lineart_pixel), lineart_alpha);
 
@@ -488,6 +489,41 @@ mod tests {
         assert_eq!(prepared.noise_level[0], 0.0);
         assert!((prepared.noise_level[1] - 0.8 * (1.0 - 128.0 / 255.0)).abs() < 1.0e-6);
         assert_eq!(prepared.noise_level[2], 0.8);
+    }
+
+    #[test]
+    fn scribble_darkness_depends_only_on_alpha() {
+        let plan = automatic_pyramid_plan([16, 16], [16, 16], 128).unwrap();
+        let lineart = vec![0; 16 * 16 * 4];
+        let black: Vec<u8> = (0..=255u8).flat_map(|alpha| [0, 0, 0, alpha]).collect();
+        let baseline = prepare_input(&black, &lineart, 16, 16, &plan, 0.8).unwrap();
+
+        // Transparent is white, opaque is black, and half opacity is mid-gray.
+        assert_eq!(baseline.clean[0], 1.0);
+        assert_eq!(baseline.clean[255], -1.0);
+        assert!((baseline.clean[128] + 0.0043137255).abs() < 1.0e-6);
+        assert!(baseline.clean.windows(2).all(|pair| pair[0] >= pair[1]));
+        for [b, g, r] in [[255, 255, 255], [255, 0, 0], [0, 255, 0], [0, 0, 255]] {
+            let colored: Vec<u8> = (0..=255u8).flat_map(|alpha| [b, g, r, alpha]).collect();
+            let prepared = prepare_input(&colored, &lineart, 16, 16, &plan, 0.8).unwrap();
+            assert_eq!(prepared.clean, baseline.clean);
+            assert_eq!(prepared.noise_level, baseline.noise_level);
+        }
+    }
+
+    #[test]
+    fn existing_lineart_keeps_rgb_and_alpha_compositing() {
+        let plan = automatic_pyramid_plan([16, 16], [16, 16], 128).unwrap();
+        let scribble = vec![255; 16 * 16 * 4]; // White, opaque scribble becomes black.
+        let mut lineart = vec![0; 16 * 16 * 4];
+        lineart[..12].copy_from_slice(&[255, 255, 255, 255, 0, 0, 255, 255, 255, 255, 255, 128]);
+
+        let prepared = prepare_input(&scribble, &lineart, 16, 16, &plan, 0.8).unwrap();
+
+        assert_eq!(prepared.clean[0], 1.0); // Opaque white lineart.
+        assert!((prepared.clean[1] + 0.63228).abs() < 1.0e-6); // Opaque red lineart.
+        assert!((prepared.clean[2] - 0.0043137255).abs() < 1.0e-6); // Half white over black.
+        assert_eq!(prepared.clean[3], -1.0); // Transparent lineart leaves the scribble.
     }
 
     #[test]
