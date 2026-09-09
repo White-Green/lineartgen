@@ -150,6 +150,12 @@ loss はノイズ量で正規化した誤差、濃淡のバランス、identity�
 export するのは 1 解像度の U-Net のみ。BGRA 入出力、padding、seed、段階的な denoise と
 再帰は NumPy で実行する。Krita 内では JAX / Flax / Orbax を import しない。
 
+runtime 0.2.1 から、画像とノイズ強度マップを先に各解像度へ縮小し、その後で各段に
+独立した Gaussian ノイズを一度だけ加える。複数回の denoise では各段の状態を更新して
+引き継ぎ、小さい段の clean 予測を次の段の insert に渡す。JAX の検証用 sampling も同じ順序。
+学習時の縮小→ノイズ付加に揃えたため、以前の runtime と多段推論の出力は変わる。
+更新後も同じ入力・設定・Seed での再現性は保つ。
+
 ```bash
 uv run --frozen --extra export lineartgen export --run-dir runs/experiment-001 \
   --output packages/lineartgen-runtime/src/lineartgen_runtime/assets/model.onnx

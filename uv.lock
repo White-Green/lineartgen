@@ -636,7 +636,7 @@ dev = [
 
 [[package]]
 name = "lineartgen-runtime"
-version = "0.2.0"
+version = "0.2.1"
 source = { editable = "packages/lineartgen-runtime" }
 dependencies = [
     { name = "numpy" },

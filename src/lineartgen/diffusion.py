@@ -87,17 +87,27 @@ def training_inputs(clean, key, config, matching, *, levels):
 
 
 def sample(model, clean, key, *, strength, steps, levels):
-    noise_level = jnp.full_like(clean, strength)
-    image = clean * jnp.sqrt(1 - strength) + jax.random.normal(key, clean.shape) * jnp.sqrt(
-        strength
+    """Resize first, then initialize and evolve independent noise at each scale.
+
+    strength may be a scalar or a per-pixel map, as in the Krita runtime.
+    """
+    noise_level = jnp.broadcast_to(jnp.asarray(strength, dtype=clean.dtype), clean.shape)
+    noise_levels = pyramid(noise_level, levels)
+    targets = pyramid(clean, levels)
+    noise_keys = (key,) if levels == 1 else jax.random.split(key, levels)
+    images = tuple(
+        target * jnp.sqrt(1 - level) + jax.random.normal(k, target.shape) * jnp.sqrt(level)
+        for target, level, k in zip(targets, noise_levels, noise_keys, strict=True)
     )
     for step in range(steps):
         current, following = (steps - step) / steps, (steps - step - 1) / steps
-        predicted = recursive_forward(
-            model, pyramid(image, levels), pyramid(noise_level * current, levels)
-        )[0]
-        ratio = jnp.sqrt(following / current)
-        image = image * ratio + predicted * (
-            jnp.sqrt(1 - noise_level * following) - jnp.sqrt(1 - noise_level * current) * ratio
+        predictions = recursive_forward(
+            model, images, tuple(level * current for level in noise_levels)
         )
-    return image
+        ratio = jnp.sqrt(following / current)
+        images = tuple(
+            image * ratio
+            + prediction * (jnp.sqrt(1 - level * following) - jnp.sqrt(1 - level * current) * ratio)
+            for image, prediction, level in zip(images, predictions, noise_levels, strict=True)
+        )
+    return images[0]

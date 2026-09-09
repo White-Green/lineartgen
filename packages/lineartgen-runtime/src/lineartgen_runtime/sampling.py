@@ -14,23 +14,37 @@ def pyramid(image, count):
 
 
 def denoise(forward, clean, noise_level, *, seed, steps, levels):
-    noise = np.random.default_rng(seed).standard_normal(clean.shape, dtype=np.float32)
-    image = clean * np.sqrt(1 - noise_level) + noise * np.sqrt(noise_level)
-    # Keep the same number of calls for strength=0: the model's identity behavior
-    # is learned and zero strength is still a valid forward request.
+    rng = np.random.default_rng(seed)
+    clean_scales = pyramid(clean, levels)
+    noise_levels = pyramid(noise_level, levels)
+    # Match training: resize the clean image and mask before adding independent
+    # noise at each resolution. Draw once; later steps evolve each scale's state.
+    images = [
+        target * np.sqrt(1 - level)
+        + rng.standard_normal(target.shape, dtype=np.float32) * np.sqrt(level)
+        for target, level in zip(clean_scales, noise_levels, strict=True)
+    ]
     for step in range(steps):
         current = np.float32((steps - step) / steps)
         following = np.float32((steps - step - 1) / steps)
-        images = pyramid(image, levels)
-        noises = pyramid(noise_level * current, levels)
         smallest = images[-1]
-        insert = np.zeros((1, smallest.shape[1] // 2, smallest.shape[2] // 2, 1), np.float32)
-        for x, level in zip(reversed(images), reversed(noises), strict=True):
-            insert = forward(
-                np.ascontiguousarray(x), np.ascontiguousarray(level), np.ascontiguousarray(insert)
-            )
-        ratio = np.sqrt(following / current)
-        image = image * ratio + insert * (
-            np.sqrt(1 - noise_level * following) - np.sqrt(1 - noise_level * current) * ratio
+        insert = np.zeros(
+            (smallest.shape[0], smallest.shape[1] // 2, smallest.shape[2] // 2, 1), np.float32
         )
-    return image
+        predictions = []
+        for x, level in zip(reversed(images), reversed(noise_levels), strict=True):
+            insert = forward(
+                np.ascontiguousarray(x),
+                np.ascontiguousarray(level * current),
+                np.ascontiguousarray(insert),
+            )
+            predictions.append(insert)
+        ratio = np.sqrt(following / current)
+        images = [
+            image * ratio
+            + prediction * (np.sqrt(1 - level * following) - np.sqrt(1 - level * current) * ratio)
+            for image, prediction, level in zip(
+                images, reversed(predictions), noise_levels, strict=True
+            )
+        ]
+    return images[0]
