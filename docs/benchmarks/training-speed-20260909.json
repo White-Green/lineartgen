@@ -1,0 +1,2304 @@
+{
+  "date": "2026-09-09",
+  "environment": {
+    "python": "3.12.3",
+    "platform": "Linux-6.17.0-1028-oem-x86_64-with-glibc2.39",
+    "versions": {
+      "jax": "0.11.1",
+      "jaxlib": "0.11.1",
+      "flax": "0.12.9",
+      "optax": "0.2.8",
+      "scipy": "1.18.1",
+      "numpy": "2.5.3",
+      "grain": "0.2.18",
+      "pyvips": "3.2.0"
+    },
+    "burn": "0.21.0",
+    "vulkan_driver": "Mesa RADV 25.2.8",
+    "gpu": "Radeon 8060S (gfx1151)",
+    "burn_commit": "87cb7b29498f9825156f6be1f3e940f8186cf3e8",
+    "jax_commit": "88f0eec",
+    "comparison": "FP32; 512x512; effective batch16/micro4; exact OT pool256; 1/6 recursive calls; scale_loss_multiplier0; edge .1; contrast .01; identity .1; initialized from scratch; preloaded identical crops; no evaluation/checkpoints; wait for GPU completion after each update",
+    "rustc": "1.98.1 (48a229cea 2026-09-01)",
+    "rocm": "7.2.1",
+    "rust_build": "release; offline; training Vulkan backend with Fusion; existing caches retained",
+    "warmup_steps": 5,
+    "measured_steps": 20
+  },
+  "inputs": {
+    "shape": [
+      16,
+      512,
+      512,
+      1
+    ],
+    "dtype": "float32 little endian",
+    "sha256": "76ae0bda6fcd33eb4cc61bb63db9508bd00a38e3d98c5ab1c5c2bcb473acd352",
+    "sources": [
+      {
+        "path": "dataset/images/0000.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0001.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0002.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0003.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0004.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0005.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0006.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0007.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0008.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0009.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0010.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0011.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0012.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0013.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0014.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      },
+      {
+        "path": "dataset/images/0015.png",
+        "crop": [
+          256,
+          256,
+          512
+        ]
+      }
+    ]
+  },
+  "io_inputs": {
+    "images": [
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0000.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0001.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0002.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0003.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0004.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0005.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0006.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0007.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0008.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0009.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0010.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0011.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0012.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0013.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0014.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images/0015.png",
+        "x": 256,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      }
+    ],
+    "images_32x": [
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0000.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0001.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0002.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0003.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0004.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0005.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0006.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0007.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0008.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0009.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0010.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0011.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0012.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0013.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0014.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      },
+      {
+        "path": "/home/whitegreen/projects/lineartgen/dataset/images_32x/0015.png",
+        "x": 16128,
+        "y": 16128,
+        "width": 32768,
+        "height": 32768
+      }
+    ]
+  },
+  "summary": {
+    "burn-l1-full": {
+      "setup": {
+        "backend": "Burn Vulkan",
+        "batch": 16,
+        "device": "DefaultDevice",
+        "event": "setup",
+        "levels": 1,
+        "micro": 4,
+        "mode": "full",
+        "parameters": 126765,
+        "pool": 256,
+        "seconds": 0.061455212,
+        "size": 512
+      },
+      "measured_updates": 20,
+      "first_update_s": 5.082097036,
+      "mean_s": 2.9128447019,
+      "median_s": 2.906131081,
+      "p10_s": 2.8836997787,
+      "p90_s": 2.9436678552,
+      "images_per_second": 5.492912131416916
+    },
+    "burn-l1-prepare": {
+      "setup": {
+        "backend": "Burn Vulkan",
+        "batch": 16,
+        "device": "DefaultDevice",
+        "event": "setup",
+        "levels": 1,
+        "micro": 4,
+        "mode": "prepare",
+        "parameters": 126765,
+        "pool": 256,
+        "seconds": 0.050352774,
+        "size": 512
+      },
+      "measured_updates": 20,
+      "first_update_s": 0.566986206,
+      "mean_s": 0.50609043335,
+      "median_s": 0.510588813,
+      "p10_s": 0.4831634661,
+      "p90_s": 0.5218713747,
+      "images_per_second": 31.614903079850915
+    },
+    "burn-l6-full": {
+      "setup": {
+        "backend": "Burn Vulkan",
+        "batch": 16,
+        "device": "DefaultDevice",
+        "event": "setup",
+        "levels": 6,
+        "micro": 4,
+        "mode": "full",
+        "parameters": 126765,
+        "pool": 256,
+        "seconds": 0.051055943,
+        "size": 512
+      },
+      "measured_updates": 20,
+      "first_update_s": 8.248807359,
+      "mean_s": 3.7600251301,
+      "median_s": 3.7579206275,
+      "p10_s": 3.7249681661,
+      "p90_s": 3.7943118994000002,
+      "images_per_second": 4.255290708542278
+    },
+    "burn-l6-prepare": {
+      "setup": {
+        "backend": "Burn Vulkan",
+        "batch": 16,
+        "device": "DefaultDevice",
+        "event": "setup",
+        "levels": 6,
+        "micro": 4,
+        "mode": "prepare",
+        "parameters": 126765,
+        "pool": 256,
+        "seconds": 0.051908647,
+        "size": 512
+      },
+      "measured_updates": 20,
+      "first_update_s": 0.685773407,
+      "mean_s": 0.59897078135,
+      "median_s": 0.6023985414999999,
+      "p10_s": 0.5698066035,
+      "p90_s": 0.6282870464,
+      "images_per_second": 26.71248831860903
+    },
+    "jax-l1-full": {
+      "setup": {
+        "event": "setup",
+        "backend": "JAX ROCm",
+        "device": "[RocmDevice(id=0)]",
+        "size": 512,
+        "batch": 16,
+        "micro": 4,
+        "levels": 1,
+        "pool": 256,
+        "mode": "full",
+        "parameters": 126765,
+        "seconds": 3.4814134226180613
+      },
+      "measured_updates": 20,
+      "first_update_s": 7.71852688677609,
+      "mean_s": 0.8489758820040152,
+      "median_s": 0.8567612955812365,
+      "p10_s": 0.8268122233916074,
+      "p90_s": 0.8626171039883047,
+      "images_per_second": 18.84623619958656
+    },
+    "jax-l1-prepare": {
+      "setup": {
+        "event": "setup",
+        "backend": "JAX ROCm",
+        "device": "[RocmDevice(id=0)]",
+        "size": 512,
+        "batch": 16,
+        "micro": 4,
+        "levels": 1,
+        "pool": 256,
+        "mode": "prepare",
+        "parameters": 126765,
+        "seconds": 3.4154452248476446
+      },
+      "measured_updates": 20,
+      "first_update_s": 2.384921377990395,
+      "mean_s": 0.016797208902426065,
+      "median_s": 0.016869748244062066,
+      "p10_s": 0.016325445286929606,
+      "p90_s": 0.017236267728731037,
+      "images_per_second": 952.5392041584407
+    },
+    "jax-l6-full": {
+      "setup": {
+        "event": "setup",
+        "backend": "JAX ROCm",
+        "device": "[RocmDevice(id=0)]",
+        "size": 512,
+        "batch": 16,
+        "micro": 4,
+        "levels": 6,
+        "pool": 256,
+        "mode": "full",
+        "parameters": 126765,
+        "seconds": 3.624477908015251
+      },
+      "measured_updates": 20,
+      "first_update_s": 22.23748320993036,
+      "mean_s": 1.1444766883039847,
+      "median_s": 1.1427963052410632,
+      "p10_s": 1.1183673148509115,
+      "p90_s": 1.1523453059140594,
+      "images_per_second": 13.98018864299509
+    },
+    "jax-l6-prepare": {
+      "setup": {
+        "event": "setup",
+        "backend": "JAX ROCm",
+        "device": "[RocmDevice(id=0)]",
+        "size": 512,
+        "batch": 16,
+        "micro": 4,
+        "levels": 6,
+        "pool": 256,
+        "mode": "prepare",
+        "parameters": 126765,
+        "seconds": 3.768385567702353
+      },
+      "measured_updates": 20,
+      "first_update_s": 3.1487238607369363,
+      "mean_s": 0.04656310956925154,
+      "median_s": 0.0267422990873456,
+      "p10_s": 0.02624930702149868,
+      "p90_s": 0.04089387133717555,
+      "images_per_second": 343.6196626044446
+    }
+  },
+  "speedup": {
+    "levels_1": 3.431009954045107,
+    "levels_6": 3.28536628882501
+  },
+  "io_summary": {
+    "burn-images": {
+      "mean_s": 0.010076275666666667,
+      "median_s": 0.010104328,
+      "seconds": [
+        0.010430498,
+        0.009694001,
+        0.010104328
+      ]
+    },
+    "burn-images_32x": {
+      "mean_s": 2.290054933,
+      "median_s": 2.285767156,
+      "seconds": [
+        2.282787877,
+        2.301609766,
+        2.285767156
+      ]
+    },
+    "jax-images": {
+      "mean_s": 0.025176556160052616,
+      "median_s": 0.02520878193899989,
+      "seconds": [
+        0.02816852042451501,
+        0.02520878193899989,
+        0.022152366116642952
+      ]
+    },
+    "jax-images_32x": {
+      "mean_s": 2.277850305351118,
+      "median_s": 2.276781341060996,
+      "seconds": [
+        2.2585306358523667,
+        2.276781341060996,
+        2.298238939139992
+      ]
+    }
+  },
+  "raw": {
+    "burn-l1-full": [
+      {
+        "backend": "Burn Vulkan",
+        "batch": 16,
+        "device": "DefaultDevice",
+        "event": "setup",
+        "levels": 1,
+        "micro": 4,
+        "mode": "full",
+        "parameters": 126765,
+        "pool": 256,
+        "seconds": 0.061455212,
+        "size": 512
+      },
+      {
+        "event": "step",
+        "iteration": 0,
+        "loss": 2.351928234100342,
+        "seconds": 5.082097036,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 1,
+        "loss": 7.799690246582031,
+        "seconds": 3.01652215,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 2,
+        "loss": 7.452811241149902,
+        "seconds": 2.902696825,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 3,
+        "loss": 5.760951042175293,
+        "seconds": 2.89831166,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 4,
+        "loss": 26.44318962097168,
+        "seconds": 2.9281007,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 5,
+        "loss": 3.048872470855713,
+        "seconds": 2.905243836,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 6,
+        "loss": 33.4719123840332,
+        "seconds": 2.966151155,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 7,
+        "loss": 2.1328930854797363,
+        "seconds": 2.933386876,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 8,
+        "loss": 6.135024070739746,
+        "seconds": 2.888935208,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 9,
+        "loss": 4.235729217529297,
+        "seconds": 2.892811659,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 10,
+        "loss": 3.7210285663604736,
+        "seconds": 2.921500042,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 11,
+        "loss": 4.31948184967041,
+        "seconds": 2.88528005,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 12,
+        "loss": 1.9930639266967773,
+        "seconds": 2.940779126,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 13,
+        "loss": 1.8126375675201416,
+        "seconds": 2.884215063,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 14,
+        "loss": 7.9212846755981445,
+        "seconds": 2.939142156,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 15,
+        "loss": 6.468494892120361,
+        "seconds": 2.943651376,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 16,
+        "loss": 2.3979363441467285,
+        "seconds": 2.87906222,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 17,
+        "loss": 2.9730989933013916,
+        "seconds": 2.93247081,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 18,
+        "loss": 4.536304950714111,
+        "seconds": 2.885360726,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 19,
+        "loss": 4.411154270172119,
+        "seconds": 2.903453917,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 20,
+        "loss": 1.7913202047348022,
+        "seconds": 2.907018326,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 21,
+        "loss": 4.760807991027832,
+        "seconds": 2.9042825199999998,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 22,
+        "loss": 4.1154351234436035,
+        "seconds": 2.929618718,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 23,
+        "loss": 3.1813669204711914,
+        "seconds": 2.943816168,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 24,
+        "loss": 3.789163589477539,
+        "seconds": 2.870714086,
+        "warmup": false
+      }
+    ],
+    "burn-l1-prepare": [
+      {
+        "backend": "Burn Vulkan",
+        "batch": 16,
+        "device": "DefaultDevice",
+        "event": "setup",
+        "levels": 1,
+        "micro": 4,
+        "mode": "prepare",
+        "parameters": 126765,
+        "pool": 256,
+        "seconds": 0.050352774,
+        "size": 512
+      },
+      {
+        "event": "step",
+        "iteration": 0,
+        "loss": 0.0,
+        "seconds": 0.566986206,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 1,
+        "loss": 0.0,
+        "seconds": 0.540163895,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 2,
+        "loss": 0.0,
+        "seconds": 0.477810091,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 3,
+        "loss": 0.0,
+        "seconds": 0.523770901,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 4,
+        "loss": 0.0,
+        "seconds": 0.515274383,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 5,
+        "loss": 0.0,
+        "seconds": 0.499807172,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 6,
+        "loss": 0.0,
+        "seconds": 0.484496315,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 7,
+        "loss": 0.0,
+        "seconds": 0.465294408,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 8,
+        "loss": 0.0,
+        "seconds": 0.489705474,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 9,
+        "loss": 0.0,
+        "seconds": 0.53450307,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 10,
+        "loss": 0.0,
+        "seconds": 0.509458413,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 11,
+        "loss": 0.0,
+        "seconds": 0.513645874,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 12,
+        "loss": 0.0,
+        "seconds": 0.520467853,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 13,
+        "loss": 0.0,
+        "seconds": 0.498127363,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 14,
+        "loss": 0.0,
+        "seconds": 0.514625344,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 15,
+        "loss": 0.0,
+        "seconds": 0.517949471,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 16,
+        "loss": 0.0,
+        "seconds": 0.498178702,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 17,
+        "loss": 0.0,
+        "seconds": 0.513992243,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 18,
+        "loss": 0.0,
+        "seconds": 0.471167826,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 19,
+        "loss": 0.0,
+        "seconds": 0.560811867,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 20,
+        "loss": 0.0,
+        "seconds": 0.497390996,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 21,
+        "loss": 0.0,
+        "seconds": 0.491059581,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 22,
+        "loss": 0.0,
+        "seconds": 0.517419637,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 23,
+        "loss": 0.0,
+        "seconds": 0.511719213,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 24,
+        "loss": 0.0,
+        "seconds": 0.511987845,
+        "warmup": false
+      }
+    ],
+    "burn-l6-full": [
+      {
+        "backend": "Burn Vulkan",
+        "batch": 16,
+        "device": "DefaultDevice",
+        "event": "setup",
+        "levels": 6,
+        "micro": 4,
+        "mode": "full",
+        "parameters": 126765,
+        "pool": 256,
+        "seconds": 0.051055943,
+        "size": 512
+      },
+      {
+        "event": "step",
+        "iteration": 0,
+        "loss": 2.3519279956817627,
+        "seconds": 8.248807359,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 1,
+        "loss": 5.957058906555176,
+        "seconds": 3.912850963,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 2,
+        "loss": 2.138151168823242,
+        "seconds": 3.720810643,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 3,
+        "loss": 2.4400157928466797,
+        "seconds": 3.765016907,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 4,
+        "loss": 7.960296630859375,
+        "seconds": 3.775324989,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 5,
+        "loss": 7.081278324127197,
+        "seconds": 3.752405587,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 6,
+        "loss": 4.794442653656006,
+        "seconds": 3.764982168,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 7,
+        "loss": 3.885307788848877,
+        "seconds": 3.797868622,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 8,
+        "loss": 3.6883139610290527,
+        "seconds": 3.7528843910000003,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 9,
+        "loss": 10.083596229553223,
+        "seconds": 3.725076279,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 10,
+        "loss": 8.608772277832031,
+        "seconds": 3.759164416,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 11,
+        "loss": 7.558382987976074,
+        "seconds": 3.745429609,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 12,
+        "loss": 3.9702887535095215,
+        "seconds": 3.750619409,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 13,
+        "loss": 5.9036102294921875,
+        "seconds": 3.76740244,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 14,
+        "loss": 6.2068328857421875,
+        "seconds": 3.779093989,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 15,
+        "loss": 3.7623491287231445,
+        "seconds": 3.72399515,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 16,
+        "loss": 6.476385593414307,
+        "seconds": 3.742217397,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 17,
+        "loss": 4.775406360626221,
+        "seconds": 3.79909566,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 18,
+        "loss": 3.985677719116211,
+        "seconds": 3.778186775,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 19,
+        "loss": 5.420772552490234,
+        "seconds": 3.756676839,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 20,
+        "loss": 1.847966194152832,
+        "seconds": 3.7014944229999998,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 21,
+        "loss": 5.55750036239624,
+        "seconds": 3.767930071,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 22,
+        "loss": 4.363465309143066,
+        "seconds": 3.7909625289999997,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 23,
+        "loss": 8.00715446472168,
+        "seconds": 3.7939167080000002,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 24,
+        "loss": 14.169631004333496,
+        "seconds": 3.75110014,
+        "warmup": false
+      }
+    ],
+    "burn-l6-prepare": [
+      {
+        "backend": "Burn Vulkan",
+        "batch": 16,
+        "device": "DefaultDevice",
+        "event": "setup",
+        "levels": 6,
+        "micro": 4,
+        "mode": "prepare",
+        "parameters": 126765,
+        "pool": 256,
+        "seconds": 0.051908647,
+        "size": 512
+      },
+      {
+        "event": "step",
+        "iteration": 0,
+        "loss": 0.0,
+        "seconds": 0.685773407,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 1,
+        "loss": 0.0,
+        "seconds": 0.570923484,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 2,
+        "loss": 0.0,
+        "seconds": 0.618946501,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 3,
+        "loss": 0.0,
+        "seconds": 0.555118513,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 4,
+        "loss": 0.0,
+        "seconds": 0.576698276,
+        "warmup": true
+      },
+      {
+        "event": "step",
+        "iteration": 5,
+        "loss": 0.0,
+        "seconds": 0.6231796,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 6,
+        "loss": 0.0,
+        "seconds": 0.586409826,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 7,
+        "loss": 0.0,
+        "seconds": 0.594940892,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 8,
+        "loss": 0.0,
+        "seconds": 0.612015105,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 9,
+        "loss": 0.0,
+        "seconds": 0.62253254,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 10,
+        "loss": 0.0,
+        "seconds": 0.600631306,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 11,
+        "loss": 0.0,
+        "seconds": 0.607544293,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 12,
+        "loss": 0.0,
+        "seconds": 0.585689008,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 13,
+        "loss": 0.0,
+        "seconds": 0.572946382,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 14,
+        "loss": 0.0,
+        "seconds": 0.604165777,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 15,
+        "loss": 0.0,
+        "seconds": 0.58885918,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 16,
+        "loss": 0.0,
+        "seconds": 0.531208941,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 17,
+        "loss": 0.0,
+        "seconds": 0.571606854,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 18,
+        "loss": 0.0,
+        "seconds": 0.654019947,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 19,
+        "loss": 0.0,
+        "seconds": 0.627294283,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 20,
+        "loss": 0.0,
+        "seconds": 0.60699518,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 21,
+        "loss": 0.0,
+        "seconds": 0.604770209,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 22,
+        "loss": 0.0,
+        "seconds": 0.553604349,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 23,
+        "loss": 0.0,
+        "seconds": 0.593780038,
+        "warmup": false
+      },
+      {
+        "event": "step",
+        "iteration": 24,
+        "loss": 0.0,
+        "seconds": 0.637221917,
+        "warmup": false
+      }
+    ],
+    "jax-l1-full": [
+      {
+        "event": "setup",
+        "backend": "JAX ROCm",
+        "device": "[RocmDevice(id=0)]",
+        "size": 512,
+        "batch": 16,
+        "micro": 4,
+        "levels": 1,
+        "pool": 256,
+        "mode": "full",
+        "parameters": 126765,
+        "seconds": 3.4814134226180613
+      },
+      {
+        "event": "step",
+        "iteration": 0,
+        "warmup": true,
+        "seconds": 7.71852688677609,
+        "loss": 1.8514512777328491
+      },
+      {
+        "event": "step",
+        "iteration": 1,
+        "warmup": true,
+        "seconds": 0.9575326591730118,
+        "loss": 5.39470911026001
+      },
+      {
+        "event": "step",
+        "iteration": 2,
+        "warmup": true,
+        "seconds": 0.83471859106794,
+        "loss": 2.4124033451080322
+      },
+      {
+        "event": "step",
+        "iteration": 3,
+        "warmup": true,
+        "seconds": 0.8251511459238827,
+        "loss": 3.5104804039001465
+      },
+      {
+        "event": "step",
+        "iteration": 4,
+        "warmup": true,
+        "seconds": 0.8253879891708493,
+        "loss": 14.121946334838867
+      },
+      {
+        "event": "step",
+        "iteration": 5,
+        "warmup": false,
+        "seconds": 0.8244101591408253,
+        "loss": 8.135255813598633
+      },
+      {
+        "event": "step",
+        "iteration": 6,
+        "warmup": false,
+        "seconds": 0.8258854141458869,
+        "loss": 2.27055287361145
+      },
+      {
+        "event": "step",
+        "iteration": 7,
+        "warmup": false,
+        "seconds": 0.8277171179652214,
+        "loss": 23.55222511291504
+      },
+      {
+        "event": "step",
+        "iteration": 8,
+        "warmup": false,
+        "seconds": 0.837154736276716,
+        "loss": 4.88393497467041
+      },
+      {
+        "event": "step",
+        "iteration": 9,
+        "warmup": false,
+        "seconds": 0.8332635359838605,
+        "loss": 2.2495064735412598
+      },
+      {
+        "event": "step",
+        "iteration": 10,
+        "warmup": false,
+        "seconds": 0.8269152021966875,
+        "loss": 2.328742504119873
+      },
+      {
+        "event": "step",
+        "iteration": 11,
+        "warmup": false,
+        "seconds": 0.8298513707704842,
+        "loss": 8.939497947692871
+      },
+      {
+        "event": "step",
+        "iteration": 12,
+        "warmup": false,
+        "seconds": 0.8595659732818604,
+        "loss": 3.257284164428711
+      },
+      {
+        "event": "step",
+        "iteration": 13,
+        "warmup": false,
+        "seconds": 0.8621711931191385,
+        "loss": 3.1309328079223633
+      },
+      {
+        "event": "step",
+        "iteration": 14,
+        "warmup": false,
+        "seconds": 0.8620484368875623,
+        "loss": 6.708742141723633
+      },
+      {
+        "event": "step",
+        "iteration": 15,
+        "warmup": false,
+        "seconds": 0.8627072358503938,
+        "loss": 2.4411182403564453
+      },
+      {
+        "event": "step",
+        "iteration": 16,
+        "warmup": false,
+        "seconds": 0.8563674530014396,
+        "loss": 2.8550004959106445
+      },
+      {
+        "event": "step",
+        "iteration": 17,
+        "warmup": false,
+        "seconds": 0.8626070893369615,
+        "loss": 1.8266656398773193
+      },
+      {
+        "event": "step",
+        "iteration": 18,
+        "warmup": false,
+        "seconds": 0.8583965990692377,
+        "loss": 1.7311770915985107
+      },
+      {
+        "event": "step",
+        "iteration": 19,
+        "warmup": false,
+        "seconds": 0.8603217899799347,
+        "loss": 1.8588529825210571
+      },
+      {
+        "event": "step",
+        "iteration": 20,
+        "warmup": false,
+        "seconds": 0.8645743280649185,
+        "loss": 4.40388822555542
+      },
+      {
+        "event": "step",
+        "iteration": 21,
+        "warmup": false,
+        "seconds": 0.8571551381610334,
+        "loss": 2.2243056297302246
+      },
+      {
+        "event": "step",
+        "iteration": 22,
+        "warmup": false,
+        "seconds": 0.8578736749477684,
+        "loss": 3.3922410011291504
+      },
+      {
+        "event": "step",
+        "iteration": 23,
+        "warmup": false,
+        "seconds": 0.8559007868170738,
+        "loss": 5.33534049987793
+      },
+      {
+        "event": "step",
+        "iteration": 24,
+        "warmup": false,
+        "seconds": 0.8546304050832987,
+        "loss": 2.451447010040283
+      }
+    ],
+    "jax-l1-prepare": [
+      {
+        "event": "setup",
+        "backend": "JAX ROCm",
+        "device": "[RocmDevice(id=0)]",
+        "size": 512,
+        "batch": 16,
+        "micro": 4,
+        "levels": 1,
+        "pool": 256,
+        "mode": "prepare",
+        "parameters": 126765,
+        "seconds": 3.4154452248476446
+      },
+      {
+        "event": "step",
+        "iteration": 0,
+        "warmup": true,
+        "seconds": 2.384921377990395,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 1,
+        "warmup": true,
+        "seconds": 0.01732906512916088,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 2,
+        "warmup": true,
+        "seconds": 0.016427792143076658,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 3,
+        "warmup": true,
+        "seconds": 0.01786243822425604,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 4,
+        "warmup": true,
+        "seconds": 0.01723967818543315,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 5,
+        "warmup": false,
+        "seconds": 0.017462880816310644,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 6,
+        "warmup": false,
+        "seconds": 0.01691156765446067,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 7,
+        "warmup": false,
+        "seconds": 0.017233967781066895,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 8,
+        "warmup": false,
+        "seconds": 0.01685084868222475,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 9,
+        "warmup": false,
+        "seconds": 0.01653827866539359,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 10,
+        "warmup": false,
+        "seconds": 0.017130590975284576,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 11,
+        "warmup": false,
+        "seconds": 0.01633622497320175,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 12,
+        "warmup": false,
+        "seconds": 0.016493729781359434,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 13,
+        "warmup": false,
+        "seconds": 0.01714410027489066,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 14,
+        "warmup": false,
+        "seconds": 0.01688864780589938,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 15,
+        "warmup": false,
+        "seconds": 0.016997764818370342,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 16,
+        "warmup": false,
+        "seconds": 0.01622842811048031,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 17,
+        "warmup": false,
+        "seconds": 0.017082361970096827,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 18,
+        "warmup": false,
+        "seconds": 0.016643335111439228,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 19,
+        "warmup": false,
+        "seconds": 0.016436191741377115,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 20,
+        "warmup": false,
+        "seconds": 0.016741362866014242,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 21,
+        "warmup": false,
+        "seconds": 0.01696524629369378,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 22,
+        "warmup": false,
+        "seconds": 0.01604820368811488,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 23,
+        "warmup": false,
+        "seconds": 0.01725696725770831,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 24,
+        "warmup": false,
+        "seconds": 0.01655347878113389,
+        "loss": 0.0
+      }
+    ],
+    "jax-l6-full": [
+      {
+        "event": "setup",
+        "backend": "JAX ROCm",
+        "device": "[RocmDevice(id=0)]",
+        "size": 512,
+        "batch": 16,
+        "micro": 4,
+        "levels": 6,
+        "pool": 256,
+        "mode": "full",
+        "parameters": 126765,
+        "seconds": 3.624477908015251
+      },
+      {
+        "event": "step",
+        "iteration": 0,
+        "warmup": true,
+        "seconds": 22.23748320993036,
+        "loss": 1.8513060808181763
+      },
+      {
+        "event": "step",
+        "iteration": 1,
+        "warmup": true,
+        "seconds": 1.1502846698276699,
+        "loss": 5.394731521606445
+      },
+      {
+        "event": "step",
+        "iteration": 2,
+        "warmup": true,
+        "seconds": 1.1081202309578657,
+        "loss": 2.4123470783233643
+      },
+      {
+        "event": "step",
+        "iteration": 3,
+        "warmup": true,
+        "seconds": 1.1150550479069352,
+        "loss": 3.510484218597412
+      },
+      {
+        "event": "step",
+        "iteration": 4,
+        "warmup": true,
+        "seconds": 1.1133377710357308,
+        "loss": 14.122665405273438
+      },
+      {
+        "event": "step",
+        "iteration": 5,
+        "warmup": false,
+        "seconds": 1.1314486721530557,
+        "loss": 8.135504722595215
+      },
+      {
+        "event": "step",
+        "iteration": 6,
+        "warmup": false,
+        "seconds": 1.1129086641594768,
+        "loss": 2.270559310913086
+      },
+      {
+        "event": "step",
+        "iteration": 7,
+        "warmup": false,
+        "seconds": 1.1260579880326986,
+        "loss": 23.55320167541504
+      },
+      {
+        "event": "step",
+        "iteration": 8,
+        "warmup": false,
+        "seconds": 1.1187550527974963,
+        "loss": 4.883871555328369
+      },
+      {
+        "event": "step",
+        "iteration": 9,
+        "warmup": false,
+        "seconds": 1.1510595753788948,
+        "loss": 2.249516487121582
+      },
+      {
+        "event": "step",
+        "iteration": 10,
+        "warmup": false,
+        "seconds": 1.1556639540940523,
+        "loss": 2.3287405967712402
+      },
+      {
+        "event": "step",
+        "iteration": 11,
+        "warmup": false,
+        "seconds": 1.149367358069867,
+        "loss": 8.94030475616455
+      },
+      {
+        "event": "step",
+        "iteration": 12,
+        "warmup": false,
+        "seconds": 1.1480421083979309,
+        "loss": 3.257394313812256
+      },
+      {
+        "event": "step",
+        "iteration": 13,
+        "warmup": false,
+        "seconds": 1.1479474510997534,
+        "loss": 3.13108491897583
+      },
+      {
+        "event": "step",
+        "iteration": 14,
+        "warmup": false,
+        "seconds": 1.1519765672273934,
+        "loss": 6.708794593811035
+      },
+      {
+        "event": "step",
+        "iteration": 15,
+        "warmup": false,
+        "seconds": 1.1484711859375238,
+        "loss": 2.4410645961761475
+      },
+      {
+        "event": "step",
+        "iteration": 16,
+        "warmup": false,
+        "seconds": 1.145852206274867,
+        "loss": 2.855070114135742
+      },
+      {
+        "event": "step",
+        "iteration": 17,
+        "warmup": false,
+        "seconds": 1.2815678338520229,
+        "loss": 1.8266642093658447
+      },
+      {
+        "event": "step",
+        "iteration": 18,
+        "warmup": false,
+        "seconds": 1.1148776733316481,
+        "loss": 1.7312129735946655
+      },
+      {
+        "event": "step",
+        "iteration": 19,
+        "warmup": false,
+        "seconds": 1.1319841840304434,
+        "loss": 1.8588639497756958
+      },
+      {
+        "event": "step",
+        "iteration": 20,
+        "warmup": false,
+        "seconds": 1.1453417716547847,
+        "loss": 4.4039764404296875
+      },
+      {
+        "event": "step",
+        "iteration": 21,
+        "warmup": false,
+        "seconds": 1.1277027069590986,
+        "loss": 2.2242133617401123
+      },
+      {
+        "event": "step",
+        "iteration": 22,
+        "warmup": false,
+        "seconds": 1.1334196999669075,
+        "loss": 3.392251968383789
+      },
+      {
+        "event": "step",
+        "iteration": 23,
+        "warmup": false,
+        "seconds": 1.1402508388273418,
+        "loss": 5.335363388061523
+      },
+      {
+        "event": "step",
+        "iteration": 24,
+        "warmup": false,
+        "seconds": 1.1268382738344371,
+        "loss": 2.450965404510498
+      }
+    ],
+    "jax-l6-prepare": [
+      {
+        "event": "setup",
+        "backend": "JAX ROCm",
+        "device": "[RocmDevice(id=0)]",
+        "size": 512,
+        "batch": 16,
+        "micro": 4,
+        "levels": 6,
+        "pool": 256,
+        "mode": "prepare",
+        "parameters": 126765,
+        "seconds": 3.768385567702353
+      },
+      {
+        "event": "step",
+        "iteration": 0,
+        "warmup": true,
+        "seconds": 3.1487238607369363,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 1,
+        "warmup": true,
+        "seconds": 0.02629216806963086,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 2,
+        "warmup": true,
+        "seconds": 0.026586508844047785,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 3,
+        "warmup": true,
+        "seconds": 0.026634577196091413,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 4,
+        "warmup": true,
+        "seconds": 0.026751802768558264,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 5,
+        "warmup": false,
+        "seconds": 0.026838960591703653,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 6,
+        "warmup": false,
+        "seconds": 0.026285097934305668,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 7,
+        "warmup": false,
+        "seconds": 0.0265934681519866,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 8,
+        "warmup": false,
+        "seconds": 0.02669177483767271,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 9,
+        "warmup": false,
+        "seconds": 0.02689031884074211,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 10,
+        "warmup": false,
+        "seconds": 0.026308258064091206,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 11,
+        "warmup": false,
+        "seconds": 0.026654536835849285,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 12,
+        "warmup": false,
+        "seconds": 0.1559477928094566,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 13,
+        "warmup": false,
+        "seconds": 0.29287264263257384,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 14,
+        "warmup": false,
+        "seconds": 0.02722871908918023,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 15,
+        "warmup": false,
+        "seconds": 0.027810869738459587,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 16,
+        "warmup": false,
+        "seconds": 0.02811010228469968,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 17,
+        "warmup": false,
+        "seconds": 0.0267398739233613,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 18,
+        "warmup": false,
+        "seconds": 0.026433594059199095,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 19,
+        "warmup": false,
+        "seconds": 0.027270806953310966,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 20,
+        "warmup": false,
+        "seconds": 0.0267447242513299,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 21,
+        "warmup": false,
+        "seconds": 0.025865000672638416,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 22,
+        "warmup": false,
+        "seconds": 0.026664017233997583,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 23,
+        "warmup": false,
+        "seconds": 0.027384443674236536,
+        "loss": 0.0
+      },
+      {
+        "event": "step",
+        "iteration": 24,
+        "warmup": false,
+        "seconds": 0.02592718880623579,
+        "loss": 0.0
+      }
+    ],
+    "burn-io": [
+      {
+        "backend": "Burn PNG crop reader",
+        "images": 16,
+        "iteration": 0,
+        "pixel_sum": 3579017.9024355,
+        "scale": "images",
+        "seconds": 0.021070949,
+        "warmup": true,
+        "workers": 4
+      },
+      {
+        "backend": "Burn PNG crop reader",
+        "images": 16,
+        "iteration": 1,
+        "pixel_sum": 3578329.084017124,
+        "scale": "images",
+        "seconds": 0.010430498,
+        "warmup": false,
+        "workers": 4
+      },
+      {
+        "backend": "Burn PNG crop reader",
+        "images": 16,
+        "iteration": 2,
+        "pixel_sum": 3577863.6193205696,
+        "scale": "images",
+        "seconds": 0.009694001,
+        "warmup": false,
+        "workers": 4
+      },
+      {
+        "backend": "Burn PNG crop reader",
+        "images": 16,
+        "iteration": 3,
+        "pixel_sum": 3577425.3977642213,
+        "scale": "images",
+        "seconds": 0.010104328,
+        "warmup": false,
+        "workers": 4
+      },
+      {
+        "backend": "Burn PNG crop reader",
+        "images": 16,
+        "iteration": 0,
+        "pixel_sum": 3641560.058927174,
+        "scale": "images_32x",
+        "seconds": 2.358831008,
+        "warmup": true,
+        "workers": 4
+      },
+      {
+        "backend": "Burn PNG crop reader",
+        "images": 16,
+        "iteration": 1,
+        "pixel_sum": 3640958.9130617506,
+        "scale": "images_32x",
+        "seconds": 2.282787877,
+        "warmup": false,
+        "workers": 4
+      },
+      {
+        "backend": "Burn PNG crop reader",
+        "images": 16,
+        "iteration": 2,
+        "pixel_sum": 3640326.209549057,
+        "scale": "images_32x",
+        "seconds": 2.301609766,
+        "warmup": false,
+        "workers": 4
+      },
+      {
+        "backend": "Burn PNG crop reader",
+        "images": 16,
+        "iteration": 3,
+        "pixel_sum": 3639661.0828971523,
+        "scale": "images_32x",
+        "seconds": 2.285767156,
+        "warmup": false,
+        "workers": 4
+      }
+    ],
+    "jax-io": [
+      {
+        "backend": "JAX pyvips crop reader",
+        "scale": "images",
+        "iteration": 0,
+        "warmup": true,
+        "workers": 4,
+        "images": 16,
+        "seconds": 0.047582291066646576,
+        "pixel_sum": 3579017.902090665
+      },
+      {
+        "backend": "JAX pyvips crop reader",
+        "scale": "images",
+        "iteration": 1,
+        "warmup": false,
+        "workers": 4,
+        "images": 16,
+        "seconds": 0.02816852042451501,
+        "pixel_sum": 3578329.083669018
+      },
+      {
+        "backend": "JAX pyvips crop reader",
+        "scale": "images",
+        "iteration": 2,
+        "warmup": false,
+        "workers": 4,
+        "images": 16,
+        "seconds": 0.02520878193899989,
+        "pixel_sum": 3577863.61897373
+      },
+      {
+        "backend": "JAX pyvips crop reader",
+        "scale": "images",
+        "iteration": 3,
+        "warmup": false,
+        "workers": 4,
+        "images": 16,
+        "seconds": 0.022152366116642952,
+        "pixel_sum": 3577425.3974173223
+      },
+      {
+        "backend": "JAX pyvips crop reader",
+        "scale": "images_32x",
+        "iteration": 0,
+        "warmup": true,
+        "workers": 4,
+        "images": 16,
+        "seconds": 2.264582969248295,
+        "pixel_sum": 3641560.0590447146
+      },
+      {
+        "backend": "JAX pyvips crop reader",
+        "scale": "images_32x",
+        "iteration": 1,
+        "warmup": false,
+        "workers": 4,
+        "images": 16,
+        "seconds": 2.2585306358523667,
+        "pixel_sum": 3640958.913180498
+      },
+      {
+        "backend": "JAX pyvips crop reader",
+        "scale": "images_32x",
+        "iteration": 2,
+        "warmup": false,
+        "workers": 4,
+        "images": 16,
+        "seconds": 2.276781341060996,
+        "pixel_sum": 3640326.20966995
+      },
+      {
+        "backend": "JAX pyvips crop reader",
+        "scale": "images_32x",
+        "iteration": 3,
+        "warmup": false,
+        "workers": 4,
+        "images": 16,
+        "seconds": 2.298238939139992,
+        "pixel_sum": 3639661.083019744
+      }
+    ]
+  }
+}

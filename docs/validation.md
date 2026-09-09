@@ -1,5 +1,7 @@
 # ローカル検証結果（2026-09-09 更新）
 
+Burn / JAX の学習更新と PNG 読み込みの実測比較は [training-speed.md](training-speed.md) を参照。
+
 ## 作業場所
 
 - lineartgen: `rewrite/jax`、`.worktrees/jax-rewrite`
