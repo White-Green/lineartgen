@@ -4,6 +4,9 @@ JAX / Flax NNX で線画モデルを学習し、ONNX に出力する。
 Krita の Diffusion Drawing は小さな別パッケージ `lineartgen-runtime` で推論する。
 このブランチに Rust ソース・Cargo・ネイティブ拡張のビルドはない。
 
+複数サイズで特徴計算を共有する入れ子モデルは `configs/nested.toml`。
+[構造・学習比較・切り出しの手順](docs/nested-models.md)を参照。
+
 ## 環境を作る
 
 Python 3.12 と uv を使う。依存関係は `uv.lock` で固定している。

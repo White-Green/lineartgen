@@ -5,12 +5,9 @@ from pathlib import Path
 
 import jax
 import numpy as np
-from flax import nnx
 
-from lineartgen.config import load_config
-from lineartgen.models import UNet
+from lineartgen.models import NestedUNet
 from lineartgen.training import checkpoints
-from lineartgen.training.steps import create_optimizer
 
 
 def export_model(model, config, destination, *, dynamic=True, provenance=None):
@@ -18,6 +15,14 @@ def export_model(model, config, destination, *, dynamic=True, provenance=None):
     import onnxruntime as ort
     from jax2onnx import to_onnx
 
+    if isinstance(model, NestedUNet):
+        if model.num_subnets != 1:
+            raise ValueError(
+                "Multi-prefix recursion needs its internal prediction channels. "
+                "The current ONNX runtime supports only subnet 0; use extract for JAX inference."
+            )
+        model, model_config = model.to_unet()
+        config = config.model_copy(update={"model": model_config})
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
     minimum = config.model.minimum_size
@@ -137,13 +142,10 @@ def make_spatially_dynamic(model):
             dims[axis].dim_param = "insert_" + symbol if value.name == "insert" else symbol
 
 
-def export_run(run_dir, destination, step=None):
-    run_dir = Path(run_dir)
-    config = load_config(run_dir / "config.json")
-    model = UNet(config.model, rngs=nnx.Rngs(config.train.seed))
-    optimizer, _ = create_optimizer(model, config)
-    ema = nnx.state(model, nnx.Param)
-    with checkpoints.manager(run_dir / "checkpoints", config.train.keep_checkpoints) as saved:
-        step, ema = checkpoints.restore(saved, model, optimizer, ema, step)
-    nnx.update(model, ema)
+def export_run(run_dir, destination, step=None, *, subnet=None):
+    model, config, step = checkpoints.load_run_model(run_dir, step=step)
+    if subnet is not None:
+        if not isinstance(model, NestedUNet):
+            raise ValueError("--subnet requires a nested model")
+        model = model.extract(subnet)
     return export_model(model, config, destination, provenance=f"EMA at optimizer step {step}")

@@ -18,6 +18,14 @@ def main(argv=None):
     export.add_argument("--run-dir", type=Path, required=True)
     export.add_argument("--output", type=Path, required=True)
     export.add_argument("--step", type=int)
+    export.add_argument("--subnet", type=int, help="Nested subnet (currently 0 for ONNX)")
+    extract = commands.add_parser(
+        "extract", help="Save a standalone nested prefix for JAX inference"
+    )
+    extract.add_argument("--run-dir", type=Path, required=True)
+    extract.add_argument("--output", type=Path, required=True)
+    extract.add_argument("--subnet", type=int, required=True)
+    extract.add_argument("--step", type=int)
     prepare = commands.add_parser(
         "prepare", help="Create an optional lossless tiled TIFF crop cache"
     )
@@ -41,7 +49,11 @@ def main(argv=None):
     elif args.command == "export":
         from lineartgen.export import export_run
 
-        print(export_run(args.run_dir, args.output, args.step))
+        print(export_run(args.run_dir, args.output, args.step, subnet=args.subnet))
+    elif args.command == "extract":
+        from lineartgen.models.serialization import extract_run
+
+        print(extract_run(args.run_dir, args.output, args.subnet, step=args.step))
     elif args.command == "prepare":
         from lineartgen.config import load_config
         from lineartgen.data.pipeline import prepare_dataset

@@ -77,7 +77,17 @@ def split_sources(sources, validation_count, seed):
     )
 
 
-def dataset_description(sources, training, validation):
+def split_experiment(sources, config, seed):
+    """Reserve final-test sources before training; changing model seeds cannot move them."""
+    training, held_out = split_sources(
+        sources,
+        config.validation_count + config.final_test_count,
+        seed if config.split_seed is None else config.split_seed,
+    )
+    return training, held_out[: config.validation_count], held_out[config.validation_count :]
+
+
+def dataset_description(sources, training, validation, final_test=()):
     manifest = [
         [
             source.name,
@@ -88,7 +98,7 @@ def dataset_description(sources, training, validation):
         ]
         for source in sources
     ]
-    return {
+    description = {
         "fingerprint": hashlib.sha256(json.dumps(manifest).encode()).hexdigest(),
         "train": [s.name for s in training],
         "validation": [s.name for s in validation],
@@ -97,6 +107,9 @@ def dataset_description(sources, training, validation):
             "indexed by optimizer step/item"
         ),
     }
+    if final_test:
+        description["final_test"] = [s.name for s in final_test]
+    return description
 
 
 @dataclass(frozen=True)
@@ -145,7 +158,7 @@ def batches(sources, config, *, batch_size, count, seed, start=0, training=True)
         dataset.to_iter_dataset(
             grain.ReadOptions(
                 num_threads=max(1, config.workers),
-                prefetch_buffer_size=config.prefetch_batches,
+                prefetch_buffer_size=max(config.workers, config.prefetch_batches),
             )
         )
     )

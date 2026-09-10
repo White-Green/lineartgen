@@ -12,19 +12,18 @@ from pathlib import Path
 
 import jax
 import numpy as np
-import optax
 from flax import nnx
 from PIL import Image
 from rich.console import Console
 from tensorboardX import SummaryWriter
 
 from lineartgen.config import load_config, save_config
-from lineartgen.data.pipeline import batches, dataset_description, discover, split_sources
+from lineartgen.data.pipeline import batches, dataset_description, discover, split_experiment
 from lineartgen.diffusion import sample, training_inputs
-from lineartgen.models import UNet
+from lineartgen.models import create_model
 
 from . import checkpoints
-from .steps import create_optimizer, make_steps
+from .steps import accumulate_gradients, create_optimizer, make_steps
 
 
 class Trainer:
@@ -56,13 +55,13 @@ class Trainer:
             save_config(config, config_path)
         self.console.print("Indexing source images…")
         sources = discover(config.data)
-        training, validation = split_sources(sources, config.data.validation_count, train.seed)
-        description = dataset_description(sources, training, validation)
+        training, validation, final_test = split_experiment(sources, config.data, train.seed)
+        description = dataset_description(sources, training, validation, final_test)
         split_path = self.run_dir / "dataset.json"
         if resume and json.loads(split_path.read_text()) != description:
             raise ValueError("Dataset or split changed since this run was created")
         split_path.write_text(json.dumps(description, indent=2) + "\n")
-        model = UNet(config.model, rngs=nnx.Rngs(train.seed))
+        model = create_model(config.model, rngs=nnx.Rngs(train.initialization_seed))
         optimizer, schedule = create_optimizer(model, config)
         ema = jax.tree.map(lambda x: x.copy(), nnx.state(model, nnx.Param))
         gradient_step, update_step, evaluate_step = make_steps(config)
@@ -117,24 +116,10 @@ class Trainer:
                             batch.scale_level,
                         )
                         prepared = prepare_step(clean, jax.random.fold_in(root_key, step), levels)
-                        gradients, metrics = None, None
-                        for micro in range(train.accumulate_steps):
-                            start = micro * train.batch_size
-                            parts, grads = gradient_step(
-                                model,
-                                jax.tree.map(
-                                    lambda x, start=start: x[start : start + train.batch_size],
-                                    prepared,
-                                ),
-                            )
-                            if gradients is None:
-                                gradients, metrics = grads, parts
-                            else:
-                                gradients = jax.tree.map(lambda a, b: a + b, gradients, grads)
-                                metrics = jax.tree.map(lambda a, b: a + b, metrics, parts)
-                        gradients = jax.tree.map(lambda x: x / train.accumulate_steps, gradients)
-                        metrics = jax.tree.map(lambda x: x / train.accumulate_steps, metrics)
-                        norm = float(optax.tree.norm(gradients))
+                        metrics, gradients, norm = accumulate_gradients(
+                            gradient_step, model, prepared, train
+                        )
+                        norm = float(norm)
                         if not math.isfinite(norm) or not math.isfinite(float(metrics["loss"])):
                             raise FloatingPointError(
                                 f"Nonfinite loss/gradients before update {step + 1}"
@@ -216,8 +201,21 @@ class Trainer:
             for name, value in parts.items():
                 totals[name] = totals.get(name, 0.0) + float(value) / train.validation_batches
         self._log(writer, step, "validation", totals)
-        generated = sample_step(model, first, jax.random.PRNGKey(train.seed + 3), first_levels)
-        panel = np.concatenate((np.asarray(first[0]), np.asarray(generated[0])), axis=1)
+        # After one denoising iteration, widths have different noisy trajectories.
+        # Evaluate complete autonomous samplers, not large-model states fed to small heads.
+        count = getattr(model, "num_subnets", 1)
+        generated = [
+            sample_step(
+                model.extract(i) if count > 1 else model,
+                first,
+                jax.random.PRNGKey(train.seed + 3),
+                first_levels,
+            )
+            for i in range(count)
+        ]
+        panel = np.concatenate(
+            [np.asarray(first[0]), *(np.asarray(value[0]) for value in generated)], axis=1
+        )
         panel = np.rint(np.clip((panel[..., 0] + 1) * 127.5, 0, 255)).astype(np.uint8)
         samples = self.run_dir / "samples"
         samples.mkdir(exist_ok=True)

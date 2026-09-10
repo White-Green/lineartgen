@@ -27,14 +27,26 @@ def pyramid(image, levels):
     return tuple(images)
 
 
-def recursive_forward(model, images, noise_levels):
+def recursive_forward_all(model, images, noise_levels):
+    """All retained subnets share features, with a separate recursive state per prefix."""
     smallest = images[-1]
-    insert = jnp.zeros((smallest.shape[0], smallest.shape[1] // 2, smallest.shape[2] // 2, 1))
+    count = getattr(model, "num_subnets", 1)
+    insert = jnp.zeros(
+        (smallest.shape[0], smallest.shape[1] // 2, smallest.shape[2] // 2, count),
+        dtype=smallest.dtype,
+    )
     outputs = []
     for image, noise in zip(reversed(images), reversed(noise_levels), strict=True):
         insert = model(image, noise, insert)
         outputs.append(insert)
-    return tuple(reversed(outputs))
+    return tuple(
+        tuple(output[..., i : i + 1] for output in reversed(outputs)) for i in range(count)
+    )
+
+
+def recursive_forward(model, images, noise_levels):
+    """Return the selected prefix's predictions, including its internal smaller states."""
+    return recursive_forward_all(model, images, noise_levels)[-1]
 
 
 def noise_map(clean, key, config: DiffusionConfig):

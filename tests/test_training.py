@@ -1,6 +1,7 @@
 import jax
 import numpy as np
 import orbax.checkpoint as ocp
+import pytest
 from PIL import Image
 
 from lineartgen.config import ExperimentConfig
@@ -8,7 +9,8 @@ from lineartgen.training import checkpoints
 from lineartgen.training.trainer import Trainer
 
 
-def test_resume_matches_uninterrupted_training(tmp_path):
+@pytest.mark.parametrize("nested", [False, True])
+def test_resume_matches_uninterrupted_training(tmp_path, nested):
     root = tmp_path / "dataset"
     for name, size in (("images", 20), ("images_2x", 40)):
         (root / name).mkdir(parents=True)
@@ -38,6 +40,14 @@ def test_resume_matches_uninterrupted_training(tmp_path):
             },
         }
     )
+    if nested:
+        config = config.model_copy(
+            update={
+                "model": config.model.model_copy(
+                    update={"architecture": "nested", "nested_channels": ((3, 5),)}
+                )
+            }
+        )
     full, resumed = tmp_path / "full", tmp_path / "resumed"
     assert Trainer(config, full).fit() == 2
     assert Trainer(config, resumed).fit(stop_after=1) == 1

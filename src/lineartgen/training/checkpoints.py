@@ -47,3 +47,23 @@ def restore(checkpoints, model, optimizer, ema, step=None):
 def save(checkpoints, model, optimizer, ema, step):
     checkpoints.save(step, args=ocp.args.StandardSave(payload(model, optimizer, ema, step)))
     checkpoints.wait_until_finished()
+
+
+def load_run_model(run_dir, *, step=None, use_ema=True):
+    from pathlib import Path
+
+    from lineartgen.config import load_config
+    from lineartgen.models import create_model
+
+    from .steps import create_optimizer
+
+    run_dir = Path(run_dir)
+    config = load_config(run_dir / "config.json")
+    model = create_model(config.model, rngs=nnx.Rngs(config.train.initialization_seed))
+    optimizer, _ = create_optimizer(model, config)
+    ema = nnx.state(model, nnx.Param)
+    with manager(run_dir / "checkpoints", config.train.keep_checkpoints) as saved:
+        step, ema = restore(saved, model, optimizer, ema, step)
+    if use_ema:
+        nnx.update(model, ema)
+    return model, config, step

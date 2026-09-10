@@ -1,0 +1,38 @@
+# Cumulative widths. Every retained prefix is an autonomous recursive model.
+[model]
+architecture = "nested"
+channels = [4, 6, 8]
+nested_channels = [[6, 8, 12], [8, 12, 16]]
+convolutions_per_block = 2
+nested_execution = "fused"
+
+[data]
+root = "dataset"
+crop_size = 512
+validation_count = 64
+final_test_count = 64
+split_seed = 42
+workers = 4
+prefetch_batches = 8
+
+[diffusion]
+original_steps = 1
+scale_loss_multiplier = 0.0
+sample_steps = 5
+
+[matching]
+method = "exact"
+solver = "scipy"
+pool_size = 256
+
+[train]
+steps = 100000
+batch_size = 4
+accumulate_steps = 4
+learning_rate = 0.0001
+minimum_learning_rate = 0.00001
+warmup_steps = 500
+evaluate_every = 1000
+checkpoint_every = 250
+validation_batches = 12
+seed = 42

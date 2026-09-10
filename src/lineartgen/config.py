@@ -14,9 +14,13 @@ class Settings(BaseModel):
 
 
 class ModelConfig(Settings):
+    architecture: Literal["unet", "nested"] = "unet"
     channels: tuple[int, ...] = (4, 10, 20, 40)
     convolutions_per_block: int = Field(default=3, ge=1)
     kernel_size: int = Field(default=3, ge=1)
+    # Cumulative encoder widths above the smallest model in `channels`.
+    nested_channels: tuple[tuple[int, ...], ...] = ()
+    nested_execution: Literal["fused", "blocks"] = "fused"
 
     @model_validator(mode="after")
     def validate_architecture(self):
@@ -24,6 +28,15 @@ class ModelConfig(Settings):
             raise ValueError("channels must contain positive channel counts")
         if self.kernel_size % 2 == 0:
             raise ValueError("kernel_size must be odd")
+        if self.architecture != "nested" and self.nested_channels:
+            raise ValueError("nested_channels requires architecture='nested'")
+        previous = self.channels
+        for widths in self.nested_channels:
+            if len(widths) != len(previous) or any(
+                larger <= smaller for smaller, larger in zip(previous, widths, strict=True)
+            ):
+                raise ValueError("Each nested width must increase at every encoder stage")
+            previous = widths
         return self
 
     @property
@@ -45,6 +58,8 @@ class DataConfig(Settings):
     scale_levels: tuple[int, ...] | None = None
     crop_size: int = Field(default=512, ge=16)
     validation_count: int = Field(default=64, ge=1)
+    final_test_count: int = Field(default=0, ge=0)
+    split_seed: int | None = Field(default=None, ge=0, le=2**32 - 1)
     workers: int = Field(default=4, ge=0)
     prefetch_batches: int = Field(default=2, ge=1)
     augment: bool = True
@@ -132,6 +147,11 @@ class TrainConfig(Settings):
     keep_checkpoints: int = Field(default=3, ge=1)
     validation_batches: int = Field(default=4, ge=1)
     seed: int = Field(default=42, ge=0, le=2**32 - 1)
+    model_seed: int | None = Field(default=None, ge=0, le=2**32 - 1)
+
+    @property
+    def initialization_seed(self):
+        return self.seed if self.model_seed is None else self.model_seed
 
     @property
     def effective_batch_size(self):
