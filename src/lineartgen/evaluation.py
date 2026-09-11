@@ -154,12 +154,28 @@ def probe_metrics(prediction, target, probes, connections):
 def protected_metrics(prediction, target, strength):
     protected = strength[..., 0] == 0
     error = np.abs(prediction[..., 0] - target[..., 0])
+    active = ~protected
+    if active.any():
+        p, t = prediction[..., 0][active] < 0, target[..., 0][active] < 0
+        denominator = int(p.sum()) + int(t.sum())
+        regional = {
+            "active_mae": float(error[active].mean()),
+            "active_ink_f1": 2 * int((p & t).sum()) / denominator if denominator else 1.0,
+            "active_target_ink_fraction": float(t.mean()),
+        }
+    else:
+        regional = {
+            "active_mae": None,
+            "active_ink_f1": None,
+            "active_target_ink_fraction": None,
+        }
     if not protected.any():
-        return {"protected_max_error": None, "mask_boundary_mae": None}
+        return {**regional, "protected_max_error": None, "mask_boundary_mae": None}
     boundary = ndimage.binary_dilation(protected, iterations=3) & ndimage.binary_dilation(
         ~protected, iterations=3
     )
     return {
+        **regional,
         "protected_max_error": float(error[protected].max()),
         "mask_boundary_mae": float(error[boundary].mean()) if boundary.any() else None,
     }

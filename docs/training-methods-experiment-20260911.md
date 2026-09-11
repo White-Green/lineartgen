@@ -64,6 +64,8 @@ direct 出力の動作は維持する。Krita plugin と runtime は変更しな
 - 正解ではつながる点対の切断率、つながらない点対の誤接続率。
   閾値は正規化値 -0.25 / 0 / 0.25。正解の raster 自体で成立しない問い合わせは除外し、その数も記録。
 - 保護領域の平均・最大変化、mask 境界の両側約 3px の変化。
+- ノイズを加えた領域だけの F1・MAE。入力保持の改善と、ノイズ領域の復元を分けて見る。
+  追加実画像ではノイズ領域に正解の線が 0.1% 以上ある条件の集計も別記する。
 - 白地・identity・線を含む実画像・合成を分けた集計。
 
 これらは診断指標であり、線幅・曲率・位相を完全に評価するものではない。
@@ -74,6 +76,8 @@ direct 出力の動作は維持する。Krita plugin と runtime は変更しな
 
 run root は `runs/methods-20260911/`。このディレクトリは Git 管理対象外。
 全 93 テスト、4 条件の連続実行と停止・再開での model / optimizer / EMA の完全一致を確認した。
+主比較の前にノイズ領域の評価を追加し、その分離を確認する 2 テストも成功した。
+元画像・合成形状を単位とした bootstrap のテストを含め、追加した評価関連の 15 テストが成功した。
 残差出力の S は dynamic ONNX 出力も検証済み。
 
 2,000 更新の継続判定は、全件評価完了、残差出力の保護画素の誤差 0、
@@ -103,6 +107,28 @@ export JAX_COMPILATION_CACHE_DIR="$PWD/runs/methods-20260911/jax-cache"
 `runs/methods-20260911/stop` を作ると、全条件の更新・保存が済んだ境界で停止する。
 再開前に stop ファイルを除去する。
 
+終了後は、学習済み重みで切り出し・非混入・保護画素を再検証し、
+snapshot と checkpoint の一致、全条件の optimizer step が 10,000 であることを確認する。
+ONNX は各手法の S を raw / EMA とも出力し、通常の dynamic サイズに加えて
+実際の 512px 入力と下位段の予測を使って照合する。
+
+```sh
+.venv/bin/python scripts/verify_training_methods.py \
+  --root runs/methods-20260911 --step 10000 --check-checkpoints
+JAX_PLATFORMS=cpu .venv/bin/python scripts/verify_training_methods.py \
+  --root runs/methods-20260911 --step 10000 --exports-only
+.venv/bin/python scripts/summarize_training_methods.py \
+  --root runs/methods-20260911 \
+  --output benchmarks/training-methods-20260911.json
+```
+
+集計は全評価ケースの組合せ、入力・archive・ONNX の SHA、checkpoint の更新数を検査する。
+2,000 更新だけの中間集計には `--through 2000` と別の出力先を指定する。
+現行との差の区間推定は、実画像では元画像、合成では形状を単位として 5,000 回 bootstrap する。
+同じ元画像の mask・強度違いを独立した標本として扱わない。
+これは学習済みモデルを固定した開発セット上の探索的な比較であり、
+学習 seed による変動や多重比較の補正は含まない。
+
 | ファイル | 内容 |
 | --- | --- |
 | `training-source.json` | 学習開始時のコード SHA と比較条件 |
@@ -113,6 +139,9 @@ export JAX_COMPILATION_CACHE_DIR="$PWD/runs/methods-20260911/jax-cache"
 | `evaluation/cases.json`、`case-*.npz` | 元画像・crop・乱数 seed・固定入力・形状の正解 |
 | `evaluation/step-*-{raw,ema}/metrics.json` | 全評価値と条件別集計 |
 | `snapshots/step-*/手法/{raw,ema}/` | checkpoint の保持数に依存しない推論用重み |
+| `verification/step-10000-raw-ema.json` | 学習済み prefix の非混入・保存復元・checkpoint の照合 |
+| `extracted/step-10000/手法/{raw,ema}/{0,1,2}/` | 各サイズの独立した推論用重み |
+| `exports/step-10000/validation.json` | 全条件の S の ONNX 照合と SHA |
 | `pilot-gate.json`、`workflow-status.json` | 継続判定と実行状態 |
 
 測定結果は学習・評価の完了後に追記する。

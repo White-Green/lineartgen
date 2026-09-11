@@ -49,3 +49,30 @@ def test_protected_maximum_and_mask_boundary_do_not_hide_local_damage():
     metrics = protected_metrics(changed, target, noise)
     assert metrics["protected_max_error"] == 2
     assert metrics["mask_boundary_mae"] > 0
+
+
+def test_active_metrics_separate_restoration_from_protected_region_changes():
+    target = np.ones((32, 32, 1), np.float32)
+    target[:, 7:10] = -1
+    target[:, 23:26] = -1
+    noise = np.full_like(target, 0.5)
+    noise[:, :16] = 0
+    outside = target.copy()
+    outside[:, :16] = 1
+    a = protected_metrics(outside, target, noise)
+    assert a["active_ink_f1"] == 1 and a["active_mae"] == 0
+    assert a["protected_max_error"] == 2
+    inside = target.copy()
+    inside[:, 16:] = 1
+    b = protected_metrics(inside, target, noise)
+    assert b["active_ink_f1"] == 0 and b["active_mae"] > 0
+    assert b["protected_max_error"] == 0
+
+
+def test_identity_has_no_active_region_score_and_full_mask_has_no_protected_score():
+    target = np.ones((32, 32, 1), np.float32)
+    identity = protected_metrics(target, target, np.zeros_like(target))
+    assert identity["active_ink_f1"] is None and identity["active_mae"] is None
+    full = protected_metrics(target, target, np.ones_like(target))
+    assert full["active_ink_f1"] == 1 and full["active_mae"] == 0
+    assert full["protected_max_error"] is None

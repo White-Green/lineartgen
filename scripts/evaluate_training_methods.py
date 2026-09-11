@@ -133,6 +133,11 @@ def summarize(rows):
             and r["target_ink_fraction"] >= 0.001
         ),
         "matched_real": lambda r: r["suite"] == "matched_real" and r["strength"] > 0,
+        "matched_real_active_lines": lambda r: (
+            r["suite"] == "matched_real"
+            and r["strength"] > 0
+            and r["active_target_ink_fraction"] >= 0.001
+        ),
         "geometry": lambda r: r["suite"] == "geometry" and r["strength"] > 0,
         "real_identity": lambda r: r["kind"] == "real" and r["strength"] == 0,
         "geometry_identity": lambda r: r["suite"] == "geometry" and r["strength"] == 0,
@@ -141,6 +146,8 @@ def summarize(rows):
         ),
     }
     metrics = [
+        "active_mae",
+        "active_ink_f1",
         "mae",
         "ink_f1",
         "boundary_f1_1_5px",
