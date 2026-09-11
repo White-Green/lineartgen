@@ -12,11 +12,13 @@ from flax import nnx
 from lineartgen.config import ModelConfig
 
 from .blocks import ConvBlock
+from .output import denoised_output
 
 
 class UNet(nnx.Module):
     def __init__(self, config: ModelConfig, *, rngs: nnx.Rngs):
         self.minimum_size = config.minimum_size
+        self.output_mode = config.output_mode
         encoder_inputs = [2] + [
             channels + (1 if index == 0 else 0)
             for index, channels in enumerate(config.channels[:-1])
@@ -62,4 +64,9 @@ class UNet(nnx.Module):
                 x, (x.shape[0], x.shape[1] * 2, x.shape[2] * 2, x.shape[3]), "nearest"
             )
             x = decoder(x)
-        return jnp.clip(self.head(jnp.concatenate((image, x), -1), linear_output=True), -1, 1)
+        return denoised_output(
+            self.head(jnp.concatenate((image, x), -1), linear_output=True),
+            image,
+            noise_level,
+            self.output_mode,
+        )

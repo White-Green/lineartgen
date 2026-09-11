@@ -1,7 +1,7 @@
-"""Paired training: shared S/M/L versus an independently optimized identical S.
+"""Paired training of nested widths or four learning-method ablations.
 
 Optionally add the original JAX UNet as a quality reference. All runs consume
-the same source crops and the same full-batch OT preparation. No model shares
+the same source crops. Methods use a common Gaussian pool before assignment. No model shares
 optimizer state with another run. Checkpoints use the ordinary Trainer format.
 """
 
@@ -17,11 +17,12 @@ import numpy as np
 from flax import nnx
 from tensorboardX import SummaryWriter
 
-from lineartgen.config import ModelConfig, load_config, save_config
+from lineartgen.config import load_config, save_config
 from lineartgen.data.pipeline import batches, dataset_description, discover, split_experiment
 from lineartgen.diffusion import sample, training_inputs
 from lineartgen.models import create_model
 from lineartgen.training import checkpoints
+from lineartgen.training.comparison import comparison_configs
 from lineartgen.training.steps import accumulate_gradients, create_optimizer, make_steps
 from lineartgen.training.trainer import Trainer
 
@@ -33,6 +34,7 @@ def main():
     parser.add_argument("--stop-after", type=int, default=2000)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--baseline", action="store_true")
+    parser.add_argument("--study", choices=["widths", "methods"], default="widths")
     parser.add_argument(
         "--stop-file",
         type=Path,
@@ -42,16 +44,7 @@ def main():
     if args.stop_after < 1:
         parser.error("--stop-after must be positive")
     config = load_config(args.config)
-    if config.model.architecture != "nested" or not config.model.nested_channels:
-        parser.error("A nested model with at least two widths is required")
-    configs = {
-        "shared": config,
-        "independent_core": config.model_copy(
-            update={"model": config.model.model_copy(update={"nested_channels": ()})}
-        ),
-    }
-    if args.baseline:
-        configs["baseline"] = config.model_copy(update={"model": ModelConfig()})
+    configs = comparison_configs(config, study=args.study, baseline=args.baseline)
     for candidate in configs.values():
         for scale in config.data.resolved_scale_levels:
             if candidate.diffusion.levels_for_scale(
@@ -81,6 +74,22 @@ def main():
     end = min(config.train.steps, completed + args.stop_after)
     with ExitStack() as stack:
         runs = {}
+        # These comparisons preserve the loss and optimizer settings. Reuse the
+        # numerical functions so identical architectures share compiled programs.
+        gradient, update, evaluate = make_steps(config)
+        preparations = {}
+
+        def preparation(settings):
+            key = (settings.diffusion, settings.matching)
+            if key not in preparations:
+                preparations[key] = jax.jit(
+                    lambda x, rng, levels: training_inputs(
+                        x, rng, settings.diffusion, settings.matching, levels=levels
+                    ),
+                    static_argnums=(2,),
+                )
+            return preparations[key]
+
         for name, settings in configs.items():
             directory = root / name
             directory.mkdir(exist_ok=True)
@@ -101,7 +110,6 @@ def main():
             if args.resume:
                 restored, ema = checkpoints.restore(manager, model, optimizer, ema, completed)
                 assert restored == completed
-            gradient, update, evaluate = make_steps(settings)
             writer = stack.enter_context(
                 SummaryWriter(
                     str(directory / "events"), purge_step=completed if args.resume else None
@@ -119,19 +127,20 @@ def main():
                 evaluate=evaluate,
                 schedule=schedule,
                 trainer=Trainer(settings, directory),
+                prepare=preparation(settings),
             )
         if not args.resume:
             # The contrast starts with exactly the same weights, not just the same seed.
-            jax.tree.map(
-                np.testing.assert_array_equal,
-                nnx.state(runs["shared"]["model"].extract(0), nnx.Param),
-                nnx.state(runs["independent_core"]["model"], nnx.Param),
-            )
-        prepare = jax.jit(
-            lambda x, key, levels: training_inputs(
-                x, key, config.diffusion, config.matching, levels=levels
-            ),
-            static_argnums=(2,),
+            if args.study == "widths":
+                pairs = [(runs["shared"]["model"].extract(0), runs["independent_core"]["model"])]
+            else:
+                pairs = [(runs["current"]["model"], run["model"]) for run in runs.values()]
+            for a, b in pairs:
+                jax.tree.map(
+                    np.testing.assert_array_equal, nnx.state(a, nnx.Param), nnx.state(b, nnx.Param)
+                )
+        validation_prepare = preparation(
+            configs["independent_noise"] if args.study == "methods" else config
         )
         sampler = nnx.jit(
             lambda model, clean, key, levels: sample(
@@ -160,14 +169,20 @@ def main():
                 config.data.crop_size, config.model.minimum_size, batch.scale_level
             )
             prepared_at = time.perf_counter()
-            prepared = prepare(clean, jax.random.fold_in(root_key, step), levels)
-            jax.block_until_ready(prepared)
+            prepared_batches = {
+                key: prepare(clean, jax.random.fold_in(root_key, step), levels)
+                for key, prepare in preparations.items()
+            }
+            jax.block_until_ready(tuple(prepared_batches.values()))
             preparation_seconds = time.perf_counter() - prepared_at
             timings = {}
-            # Alternate order to avoid always giving one model the same position.
-            order = list(runs) if step % 2 == 0 else list(reversed(runs))
+            # Rotate through every position, including comparisons with four runs.
+            names = list(runs)
+            offset = step % len(names)
+            order = names[offset:] + names[:offset]
             for name in order:
                 run = runs[name]
+                prepared = prepared_batches[(run["config"].diffusion, run["config"].matching)]
                 update_at = time.perf_counter()
                 metrics, gradients, norm = accumulate_gradients(
                     run["gradient"], run["model"], prepared, config.train
@@ -216,7 +231,7 @@ def main():
                         validation,
                         run["evaluate"],
                         sampler,
-                        prepare,
+                        validation_prepare,
                     )
             if (step + 1) % config.train.checkpoint_every == 0 or step + 1 == end or stop_requested:
                 for run in runs.values():

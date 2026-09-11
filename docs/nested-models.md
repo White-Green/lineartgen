@@ -3,6 +3,8 @@
 `configs/nested.toml` は、特徴計算を共有する S / M / L のモデル。
 現行の単独 U-Net は `architecture = "unet"` のまま利用できる。
 [2,000 更新の比較結果](nested-experiment-20260910.md) に速度・品質・実機での切り出し検証を記録した。
+[入力保持とノイズ割当ての比較](training-methods-experiment-20260911.md) では、幅を固定したまま
+4 手法を比較する。`model.output_mode = "residual"` でノイズ強度に応じた残差出力を選べる。
 
 ## 構造
 

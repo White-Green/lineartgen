@@ -17,6 +17,7 @@ import numpy as np
 from flax import nnx
 
 from .blocks import ConvBlock
+from .output import denoised_output
 
 
 def concatenate_groups(left, right):
@@ -84,6 +85,7 @@ class NestedUNet(nnx.Module):
         widths = (config.channels, *config.nested_channels)
         self.num_subnets = len(widths)
         self.minimum_size = config.minimum_size
+        self.output_mode = config.output_mode
         # A group's initialization is independent of how many extensions exist.
         key = rngs.params()
         group_rngs = tuple(nnx.Rngs(jax.random.fold_in(key, i)) for i in range(self.num_subnets))
@@ -159,10 +161,11 @@ class NestedUNet(nnx.Module):
             groups = decoder(groups)
         return jnp.concatenate(
             [
-                jnp.clip(
+                denoised_output(
                     head(jnp.concatenate((image, *groups[: i + 1]), -1), linear_output=True),
-                    -1,
-                    1,
+                    image,
+                    noise_level,
+                    self.output_mode,
                 )
                 for i, head in enumerate(self.heads)
             ],
@@ -200,6 +203,7 @@ class NestedUNet(nnx.Module):
             channels=tuple(block.layers[-1].groups[0].bias.shape[0] for block in self.encoders),
             convolutions_per_block=len(self.encoders[0].layers),
             kernel_size=self.encoders[0].layers[0].groups[0].kernel.shape[0],
+            output_mode=self.output_mode,
         )
         model = UNet(config, rngs=nnx.Rngs(0))
         for source, target in zip(

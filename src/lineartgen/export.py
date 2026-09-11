@@ -100,7 +100,20 @@ def make_spatially_dynamic(model):
     import onnx
     from onnx import helper, numpy_helper
 
-    supported = {"Conv", "Relu", "MaxPool", "Concat", "Transpose", "Resize", "Clip", "Identity"}
+    supported = {
+        "Conv",
+        "Relu",
+        "MaxPool",
+        "Concat",
+        "Transpose",
+        "Resize",
+        "Clip",
+        "Identity",
+        # Residual output uses only spatially pointwise arithmetic.
+        "Sqrt",
+        "Mul",
+        "Add",
+    }
     unsupported = {node.op_type for node in model.graph.node} - supported
     if unsupported:
         raise ValueError(

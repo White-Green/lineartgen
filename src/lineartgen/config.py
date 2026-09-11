@@ -21,6 +21,7 @@ class ModelConfig(Settings):
     # Cumulative encoder widths above the smallest model in `channels`.
     nested_channels: tuple[tuple[int, ...], ...] = ()
     nested_execution: Literal["fused", "blocks"] = "fused"
+    output_mode: Literal["direct", "residual"] = "direct"
 
     @model_validator(mode="after")
     def validate_architecture(self):
@@ -121,6 +122,9 @@ class NoiseMatchingConfig(Settings):
     solver: Literal["scipy", "optax"] = "scipy"
     pool_size: int = Field(default=256, ge=1)
     cost_resolution: int = Field(default=32, ge=1)
+    # Draw a common random pool, then take an image-independent prefix before OT.
+    # This keeps candidate draws identical across assignment ablations.
+    generation_pool_size: int | None = Field(default=None, ge=1)
 
 
 class LossConfig(Settings):
@@ -184,6 +188,16 @@ class ExperimentConfig(Settings):
             and self.matching.pool_size < self.train.effective_batch_size
         ):
             raise ValueError("matching.pool_size must be at least batch_size * accumulate_steps")
+        needed = (
+            self.matching.pool_size
+            if self.matching.method == "exact"
+            else self.train.effective_batch_size
+        )
+        if (
+            self.matching.generation_pool_size is not None
+            and self.matching.generation_pool_size < needed
+        ):
+            raise ValueError("generation_pool_size must cover the assignment pool or full batch")
         return self
 
 

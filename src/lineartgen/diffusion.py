@@ -89,7 +89,10 @@ def training_inputs(clean, key, config, matching, *, levels):
     noisy = []
     for target, level, k in zip(targets, noise_levels, noise_keys, strict=True):
         count = matching.pool_size if matching.method == "exact" else target.shape[0]
-        noise = jax.random.normal(k, (count, *target.shape[1:]))
+        generated = matching.generation_pool_size or count
+        if generated < count:
+            raise ValueError("generation_pool_size is smaller than the required candidate count")
+        noise = jax.random.normal(k, (generated, *target.shape[1:]))[:count]
         if matching.method == "exact":
             noise = match_noise(
                 target, level, noise, resolution=matching.cost_resolution, solver=matching.solver
@@ -117,9 +120,17 @@ def sample(model, clean, key, *, strength, steps, levels):
             model, images, tuple(level * current for level in noise_levels)
         )
         ratio = jnp.sqrt(following / current)
-        images = tuple(
+        updated = tuple(
             image * ratio
             + prediction * (jnp.sqrt(1 - level * following) - jnp.sqrt(1 - level * current) * ratio)
             for image, prediction, level in zip(images, predictions, noise_levels, strict=True)
         )
+        if getattr(model, "output_mode", "direct") == "residual":
+            # The model is identity at t=0; avoid roundoff from the sampler's
+            # algebraically cancelling terms in those protected pixels as well.
+            updated = tuple(
+                jnp.where(level == 0, image, value)
+                for image, value, level in zip(images, updated, noise_levels, strict=True)
+            )
+        images = updated
     return images[0]
