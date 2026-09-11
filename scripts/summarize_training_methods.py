@@ -176,8 +176,8 @@ def main():
     )
     final_audit = None
     if args.through == 10000:
-        path = root / "verification/step-10000-raw-ema.json"
-        verified = read(path)
+        verification_path = root / "verification/step-10000-raw-ema.json"
+        verified = read(verification_path)
         assert len(verified["records"]) == 8
         assert {(r["method"], r["mode"]) for r in verified["records"]} == {
             (method, mode) for method in METHODS for mode in ("raw", "ema")
@@ -200,8 +200,8 @@ def main():
                     "weights.npz",
                     "metadata.json",
                 }
-                for path, digest in archive.items():
-                    assert sha(Path(path)) == digest, path
+                for archive_path, digest in archive.items():
+                    assert sha(Path(archive_path)) == digest, archive_path
         exports = read(root / "exports/step-10000/validation.json")
         assert exports["step"] == 10000 and len(exports["records"]) == 8
         assert {(r["method"], r["mode"]) for r in exports["records"]} == {
@@ -210,7 +210,7 @@ def main():
         for record in exports["records"]:
             assert sha(Path(record["onnx"])) == record["sha256"]
         final_audit = dict(trained_verification=verified, exports=exports)
-        files += [path, root / "exports/step-10000/validation.json"]
+        files += [verification_path, root / "exports/step-10000/validation.json"]
     evidence = dict(
         format_version=1,
         through_step=args.through,
