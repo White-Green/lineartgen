@@ -23,6 +23,18 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def freeze(root, name, payload):
+    """Retain the measured prefix even when training or provenance later changes."""
+    digest = hashlib.sha256(payload).hexdigest()
+    path = root / "evidence" / f"{digest}-{name}"
+    path.parent.mkdir(exist_ok=True)
+    if path.exists():
+        assert path.read_bytes() == payload, path
+    else:
+        path.write_bytes(payload)
+    return path
+
+
 def paired_deltas(report, manifest):
     output = []
     selected = {
@@ -94,11 +106,11 @@ def main():
     parser.add_argument("--through", type=int, choices=[2000, 10000], default=10000)
     args = parser.parse_args()
     root = args.root
+    provenance = freeze(root, "training-source.json", (root / "training-source.json").read_bytes())
     files = [
-        root / "training-source.json",
+        provenance,
         root / "evaluation/cases.json",
         root / "noise-assignment.json",
-        root / "training/timings.jsonl",
     ]
     manifest = read(root / "evaluation/cases.json")
     assert len(manifest["cases"]) == 434
@@ -138,12 +150,16 @@ def main():
                 summary=report["summary"], paired_deltas=paired_deltas(report, manifest)
             )
             files.append(path)
-    timings = [
-        json.loads(line) for line in (root / "training/timings.jsonl").read_text().splitlines()
-    ]
-    timings = [r for r in timings if r["step"] <= args.through]
+    # Read only the completed prefix. A later update may currently be appending a line.
+    timing_lines = (root / "training/timings.jsonl").read_text().splitlines()[: args.through]
+    timings = [json.loads(line) for line in timing_lines]
     assert [r["step"] for r in timings] == list(range(1, args.through + 1))
     assert all(set(r["updates"]) == set(METHODS) for r in timings)
+    files.append(
+        freeze(
+            root, f"timings-through-{args.through}.jsonl", ("\n".join(timing_lines) + "\n").encode()
+        )
+    )
     steady = [r for r in timings if r["step"] > 100]
     speed = {
         method: dict(
@@ -199,7 +215,8 @@ def main():
         format_version=1,
         through_step=args.through,
         training_examples_per_method=args.through * 16,
-        provenance=read(root / "training-source.json"),
+        provenance=read(provenance),
+        packaging_source_sha256=sha(Path(__file__)),
         dataset=manifest["dataset"],
         fixed_case_count=434,
         evaluation_input_sha256=read(root / "evaluation-input-sha256.json"),
