@@ -66,11 +66,11 @@ def checked_checkpoint(run, config, step, *, use_ema):
     return model
 
 
-def verify(root, step, modes, *, check_checkpoints=False):
+def verify(root, step, modes, *, check_checkpoints=False, study="methods"):
     reference = json.loads((root / "training-source.json").read_text())
     for path, expected in reference["file_sha256"].items():
         assert hashlib.sha256(Path(path).read_bytes()).hexdigest() == expected, path
-    settings = comparison_configs(load_config(root / "config.toml"), study="methods")
+    settings = comparison_configs(load_config(root / "config.toml"), study=study)
     forward_all, forward = nnx.jit(recursive_forward_all), nnx.jit(recursive_forward)
     sampler = nnx.jit(
         lambda m, x, k, t, levels: sample(m, x, k, strength=t, steps=5, levels=levels),
@@ -152,7 +152,7 @@ def verify(root, step, modes, *, check_checkpoints=False):
                 assert any(
                     not np.array_equal(a, b) for a, b in zip(whole[2], altered[2], strict=True)
                 )
-                if method == "residual":
+                if config.model.output_mode == "residual":
                     protected = np.asarray(strength) == 0
                     for index in range(3):
                         actual = np.asarray(
@@ -173,7 +173,7 @@ def verify(root, step, modes, *, check_checkpoints=False):
                     mutation="S/M unchanged at every scale while L changed",
                     archive_roundtrip="parameters exact; forward within tolerance",
                     protected_pixels="exact after five denoising steps"
-                    if method == "residual"
+                    if config.model.output_mode == "residual"
                     else "measured in operational evaluation",
                 )
             )
@@ -195,11 +195,11 @@ def verify(root, step, modes, *, check_checkpoints=False):
     )
 
 
-def exports(root, step, modes):
+def exports(root, step, modes, *, study="methods"):
     import onnxruntime as ort
 
     records = []
-    settings = comparison_configs(load_config(root / "config.toml"), study="methods")
+    settings = comparison_configs(load_config(root / "config.toml"), study=study)
     for mode in modes:
         for method in settings:
             model, config = load_inference(
@@ -221,7 +221,7 @@ def exports(root, step, modes):
             )
             actual = session.run(["prediction"], feeds)[0]
             error = max_error((actual,), (expected[0],))
-            if method == "residual":
+            if config.model.output_mode == "residual":
                 protected = feeds["noise_level"] == 0
                 np.testing.assert_array_equal(actual[protected], feeds["image"][protected])
             metadata = json.loads(output.with_suffix(".json").read_text())
@@ -258,11 +258,18 @@ def main():
     parser.add_argument("--modes", choices=["raw", "ema"], nargs="+", default=["raw", "ema"])
     parser.add_argument("--exports-only", action="store_true")
     parser.add_argument("--check-checkpoints", action="store_true")
+    parser.add_argument("--study", choices=["methods", "sketch"], default="methods")
     args = parser.parse_args()
     if args.exports_only:
-        exports(args.root, args.step, args.modes)
+        exports(args.root, args.step, args.modes, study=args.study)
     else:
-        verify(args.root, args.step, args.modes, check_checkpoints=args.check_checkpoints)
+        verify(
+            args.root,
+            args.step,
+            args.modes,
+            check_checkpoints=args.check_checkpoints,
+            study=args.study,
+        )
 
 
 if __name__ == "__main__":

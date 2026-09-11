@@ -6,6 +6,7 @@ optimizer state with another run. Checkpoints use the ordinary Trainer format.
 """
 
 import argparse
+import hashlib
 import json
 import math
 import time
@@ -21,6 +22,7 @@ from lineartgen.config import load_config, save_config
 from lineartgen.data.pipeline import batches, dataset_description, discover, split_experiment
 from lineartgen.diffusion import sample, training_inputs
 from lineartgen.models import create_model
+from lineartgen.models.serialization import load_inference, save_inference
 from lineartgen.training import checkpoints
 from lineartgen.training.comparison import comparison_configs
 from lineartgen.training.steps import accumulate_gradients, create_optimizer, make_steps
@@ -34,7 +36,10 @@ def main():
     parser.add_argument("--stop-after", type=int, default=2000)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--baseline", action="store_true")
-    parser.add_argument("--study", choices=["widths", "methods"], default="widths")
+    parser.add_argument("--study", choices=["widths", "methods", "sketch"], default="widths")
+    parser.add_argument(
+        "--initialize-from", type=Path, help="Shared inference weights; reset optimizer and EMA"
+    )
     parser.add_argument(
         "--stop-file",
         type=Path,
@@ -43,6 +48,8 @@ def main():
     args = parser.parse_args()
     if args.stop_after < 1:
         parser.error("--stop-after must be positive")
+    if args.initialize_from and (args.resume or args.study == "widths"):
+        parser.error("--initialize-from requires a fresh methods/sketch study")
     config = load_config(args.config)
     configs = comparison_configs(config, study=args.study, baseline=args.baseline)
     for candidate in configs.values():
@@ -57,6 +64,27 @@ def main():
     if root.exists() and any(root.iterdir()) and not args.resume:
         raise FileExistsError(f"Run group is not empty: {root}; use --resume")
     root.mkdir(parents=True, exist_ok=True)
+    initial = None
+    if args.initialize_from:
+        initial, initial_config = load_inference(args.initialize_from)
+        if any(c.model != initial_config.model for c in configs.values()):
+            raise ValueError("Warmstart architecture differs from the comparison")
+        (root / "initialization.json").write_text(
+            json.dumps(
+                {
+                    "source": str(args.initialize_from.resolve()),
+                    "files": {
+                        p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+                        for p in args.initialize_from.iterdir()
+                        if p.is_file()
+                    },
+                    "optimizer": "reset",
+                    "ema": "copy initial parameters",
+                },
+                indent=2,
+            )
+            + "\n"
+        )
     progress = json.loads((root / "progress.json").read_text()) if args.resume else None
     if progress is not None and progress["runs"] != list(configs):
         raise ValueError("Resume must include the same runs (including --baseline)")
@@ -80,11 +108,16 @@ def main():
         preparations = {}
 
         def preparation(settings):
-            key = (settings.diffusion, settings.matching)
+            key = (settings.diffusion, settings.matching, settings.sketch)
             if key not in preparations:
                 preparations[key] = jax.jit(
                     lambda x, rng, levels: training_inputs(
-                        x, rng, settings.diffusion, settings.matching, levels=levels
+                        x,
+                        rng,
+                        settings.diffusion,
+                        settings.matching,
+                        levels=levels,
+                        sketch=settings.sketch,
                     ),
                     static_argnums=(2,),
                 )
@@ -102,6 +135,14 @@ def main():
                 save_config(settings, directory / "config.json")
                 (directory / "dataset.json").write_text(json.dumps(description, indent=2) + "\n")
             model = create_model(settings.model, rngs=nnx.Rngs(settings.train.initialization_seed))
+            if initial is not None:
+                nnx.update(model, jax.tree.map(lambda x: x.copy(), nnx.state(initial, nnx.Param)))
+                save_inference(
+                    model,
+                    settings,
+                    root / "initial" / name,
+                    provenance=f"Shared warmstart from {args.initialize_from}",
+                )
             optimizer, schedule = create_optimizer(model, settings)
             ema = jax.tree.map(lambda x: x.copy(), nnx.state(model, nnx.Param))
             manager = stack.enter_context(
@@ -134,13 +175,18 @@ def main():
             if args.study == "widths":
                 pairs = [(runs["shared"]["model"].extract(0), runs["independent_core"]["model"])]
             else:
-                pairs = [(runs["current"]["model"], run["model"]) for run in runs.values()]
+                first = next(iter(runs.values()))["model"]
+                pairs = [(first, run["model"]) for run in runs.values()]
             for a, b in pairs:
                 jax.tree.map(
                     np.testing.assert_array_equal, nnx.state(a, nnx.Param), nnx.state(b, nnx.Param)
                 )
         validation_prepare = preparation(
-            configs["independent_noise"] if args.study == "methods" else config
+            configs["independent_noise"]
+            if args.study == "methods"
+            else configs["strokes"]
+            if args.study == "sketch"
+            else config
         )
         sampler = nnx.jit(
             lambda model, clean, key, levels: sample(
@@ -182,7 +228,10 @@ def main():
             order = names[offset:] + names[:offset]
             for name in order:
                 run = runs[name]
-                prepared = prepared_batches[(run["config"].diffusion, run["config"].matching)]
+                settings = run["config"]
+                prepared = prepared_batches[
+                    (settings.diffusion, settings.matching, settings.sketch)
+                ]
                 update_at = time.perf_counter()
                 metrics, gradients, norm = accumulate_gradients(
                     run["gradient"], run["model"], prepared, config.train

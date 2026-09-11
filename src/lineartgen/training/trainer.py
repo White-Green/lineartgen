@@ -74,6 +74,7 @@ class Trainer:
                 config.diffusion,
                 config.matching,
                 levels=levels,
+                sketch=config.sketch,
             ),
             static_argnums=(2,),
         )

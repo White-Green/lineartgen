@@ -7,6 +7,7 @@ import jax.numpy as jnp
 
 from lineartgen.config import DiffusionConfig
 from lineartgen.noise_matching import match_noise
+from lineartgen.sketch import augment_sketch, restoration_target
 
 
 class TrainingInputs(NamedTuple):
@@ -81,13 +82,20 @@ def noise_map(clean, key, config: DiffusionConfig):
     )
 
 
-def training_inputs(clean, key, config, matching, *, levels):
+def training_inputs(clean, key, config, matching, *, levels, sketch=None):
     map_key, noise_key = jax.random.split(key)
-    noise_levels = pyramid(noise_map(clean, map_key, config), levels)
-    targets = pyramid(clean, levels)
+    source = clean
+    if sketch is not None and sketch.mode != "none":
+        if matching.method != "independent":
+            raise ValueError("Sketch augmentation currently requires independent Gaussian noise")
+        source = augment_sketch(clean, jax.random.fold_in(key, 0x534B4554), sketch)
+    strength = noise_map(source, map_key, config)
+    noise_levels = pyramid(strength, levels)
+    targets = pyramid(restoration_target(clean, source, strength), levels)
+    sources = pyramid(source, levels)
     noise_keys = jax.random.split(noise_key, levels)
     noisy = []
-    for target, level, k in zip(targets, noise_levels, noise_keys, strict=True):
+    for target, source, level, k in zip(targets, sources, noise_levels, noise_keys, strict=True):
         count = matching.pool_size if matching.method == "exact" else target.shape[0]
         generated = matching.generation_pool_size or count
         if generated < count:
@@ -97,7 +105,7 @@ def training_inputs(clean, key, config, matching, *, levels):
             noise = match_noise(
                 target, level, noise, resolution=matching.cost_resolution, solver=matching.solver
             )
-        noisy.append(target * jnp.sqrt(1 - level) + noise * jnp.sqrt(level))
+        noisy.append(source * jnp.sqrt(1 - level) + noise * jnp.sqrt(level))
     return TrainingInputs(targets, noise_levels, tuple(noisy))
 
 

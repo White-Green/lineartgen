@@ -127,11 +127,33 @@ class NoiseMatchingConfig(Settings):
     generation_pool_size: int | None = Field(default=None, ge=1)
 
 
+class SketchAugmentationConfig(Settings):
+    """Corrupt only the input, at crop resolution before constructing the pyramid."""
+
+    mode: Literal["none", "tone", "blur", "strokes"] = "none"
+    probability: float = Field(default=0.75, ge=0, le=1)
+    opacity_min: float = Field(default=0.25, gt=0, le=1)
+    opacity_max: float = Field(default=1.0, gt=0, le=1)
+    blur_sigma_min: float = Field(default=0.0, ge=0, le=4)
+    blur_sigma_max: float = Field(default=2.0, ge=0, le=4)
+    dilation_radius: int = Field(default=2, ge=0, le=2)
+    displacement: float = Field(default=2.0, ge=0, le=8)
+
+    @model_validator(mode="after")
+    def validate_ranges(self):
+        if self.opacity_min > self.opacity_max or self.blur_sigma_min > self.blur_sigma_max:
+            raise ValueError("Sketch augmentation bounds must be ordered")
+        return self
+
+
 class LossConfig(Settings):
     balance_tones: bool = True
     identity_weight: float = Field(default=0.1, ge=0)
     edge_weight: float = Field(default=0.1, ge=0)
     contrast_weight: float = Field(default=0.01, ge=0)
+    # Sketch degradation does not vanish with Gaussian variance. Bound its loss weight.
+    noise_weight_floor: float = Field(default=0.0, ge=0, lt=1)
+    contrast_active_only: bool = False
 
 
 class TrainConfig(Settings):
@@ -171,6 +193,7 @@ class ExperimentConfig(Settings):
     data: DataConfig = DataConfig()
     diffusion: DiffusionConfig = DiffusionConfig()
     matching: NoiseMatchingConfig = NoiseMatchingConfig()
+    sketch: SketchAugmentationConfig = SketchAugmentationConfig()
     loss: LossConfig = LossConfig()
     train: TrainConfig = TrainConfig()
 
@@ -183,6 +206,8 @@ class ExperimentConfig(Settings):
             raise ValueError("warmup_steps must be less than steps")
         if self.train.minimum_learning_rate > self.train.peak_learning_rate:
             raise ValueError("minimum_learning_rate must not exceed the sqrt(batch)-scaled peak")
+        if self.sketch.mode != "none" and self.matching.method != "independent":
+            raise ValueError("Sketch augmentation currently requires independent Gaussian noise")
         if (
             self.matching.method == "exact"
             and self.matching.pool_size < self.train.effective_batch_size

@@ -1,0 +1,81 @@
+# 合成下描きからの線画復元実験
+
+2026-09-11開始。既存のclean線画から合成した下描きだけを使用する。実際の手描き下描きに対する性能は、この実験の結論に含めない。
+
+## 比較するもの
+
+全条件を前回のresidualモデルのraw 10,000更新重みから開始し、optimizerとEMAを同じ方法でリセットする。各条件で追加2,000更新を確認後、追加合計10,000更新まで進める。従って最終モデルは事前学習10,000＋今回10,000更新であり、ゼロからの学習比較ではない。
+
+| 条件 | cleanから入力だけに施す処理 |
+|---|---|
+| control | 変更なし |
+| tone | 不透明度を下げる |
+| blur | Gaussian blur＋不透明度 |
+| strokes | 線の膨張＋局所変位した2本の重ね描き＋blur＋不透明度 |
+
+処理順は表の記載順。画像ごとに75%の確率で適用し、25%はclean入力を残す。不透明度0.25–1.0、blurのσ 0–2px、膨張半径0–2px、変位上限2px。重ね描きは8×8の変位場を補間して局所変位を作り、元の線と2つのコピーをinkのalpha合成で重ねる。色調変化は背景の白を維持する。各処理には固定の別乱数キーを使い、累積した条件間で不透明度・blur・適用判定の乱数を揃える。
+
+S/M/Lの入れ子構造は5,933 / 10,206 / 17,893パラメータ、チャンネル[4,6,8] / [6,8,12] / [8,12,16]、各block 2convで固定。3サイズのloss平均、実効batch16＝micro4×4、学習率1e-4×√16＝4e-4、warmup500、固定100,000更新のscheduleを使う。再帰はデータセットscaleに応じて1–6段、scale loss倍率0で最高解像度の教師から低解像度の予測へも逆伝播する。
+
+前回の結果を踏まえ、全条件をresidual出力＋独立Gaussian noiseとする。この組み合わせ自体は前回のresidual＋OTとは異なるため、今回のcontrolで追加学習の影響を分離する。データ乱数seed43、初期化seed42、元画像の分割seed42。全条件で同じ画像・crop・マスク・Gaussian乱数を使う。
+
+## 教師と保護領域
+
+cleanを`y`、合成下描きを`x=D(y)`、ノイズ強度を`t`とする。
+
+1. crop解像度で`x`を一度作る。
+2. 入力`x`と`t`を各再帰段の解像度へ縮小する。
+3. 各段で独立Gaussian `eps_l`を作り、`x_l * sqrt(1-t_l) + eps_l * sqrt(t_l)`を入力する。
+4. 教師はcrop解像度で`where(t>0, y, x)`を作り、そのpyramidを使う。
+
+強度0の領域では実際の下描き入力を維持する。低解像度予測は別のinsert経路に入り、入力画像の置き換えには使わない。マスクは全体・帯・矩形を1:1:1とし、cleanの線の位置を使う保護パターンを比較実験では除外する。
+
+固定の下描き変形量はGaussian分散`t`に比例しないため、denoise lossの`1/t`を`1/max(t, .05)`にする。contrast lossは編集対象だけに適用し、保護された灰色の下描きを黒白化する矛盾を避ける。この2設定もcontrolを含め共通。通常設定では拡張off・従来lossを維持する。
+
+## 固定評価
+
+`runs/sketch-20260911/evaluation/`の入力を生成後に固定し、SHA256を保存する。既存の元画像分割train891/dev64/final64を維持し、今回はdevだけを評価に使用する。finalは使用しない。
+
+- 前回のclean評価434件をNPZ・seed・maskともそのまま再使用。
+- clean実画像由来の12crop × 3変形 × 2強度 × 5操作条件＝360件。
+- 線の幾何形状32種 × 3変形 × 2強度 × 4操作条件＝768件。
+- 合計1,562件。各checkpointで4条件×3サイズ×推論1/5回×raw/EMAを評価する。共通初期重みも同じ全ケースで評価する。
+
+操作条件はノイズ強度0.1/0.5の全面・部分編集、実画像cropは強度0も含む。幾何形状は直線、細線、曲線、角、交点、平行線、途切れ、先細りの8種類、variant 0/1/6/7（太さと角度を含む）。太い正解線や接近した平行線もあり、過度な細線化・融合を評価する。
+
+| 変形の強さ | 不透明度 | blur σ | 膨張半径上限 | 変位上限 |
+|---|---|---|---|---|
+| mild | .55–.9 | .5–1px | 1px | 1px |
+| strong | .2–.45 | 1.5–2.5px | 2px | 3px |
+
+strongは一部が学習範囲外であり、難しい条件の耐性を見る。失われた線間の情報が一意に復元できない場合も含む。変形の種類は学習と共通なので、未知の下描き分布への一般化を証明する評価ではない。
+
+編集対象のF1/MAEをcleanに対して測り、保護領域誤差を実際の下描きに対して測る。境界誤差は合成教師に対して測る。下描きの部分編集では保護領域に粗い線を残すのが正しいため、全体をcleanにする前提の線幅・接続probeは全面編集だけで集計する。cleanの既存probeは従来どおり。比較の主指標は推論1回、5回は反復による変化の診断。
+
+集計では元画像（実画像12source）または幾何形状(kind, variant)を単位にした対応付き比較を行い、同一画像のノイズ強度・マスク違いを独立画像として数えない。
+
+## 実行と確認
+
+設定は`configs/sketch.toml`。通常Trainerと比較実行の両方で`sketch`設定が使える。Kritaやモデル入出力形式の変更は含まない。
+
+```bash
+export JAX_PLATFORMS=rocm,cpu
+export XLA_PYTHON_CLIENT_PREALLOCATE=false
+export JAX_COMPILATION_CACHE_DIR="$PWD/runs/sketch-20260911/jax-cache"
+.venv/bin/python scripts/prepare_sketch_experiment.py --output runs/sketch-20260911/evaluation
+.venv/bin/python scripts/run_sketch_experiment.py \
+  --root runs/sketch-20260911 \
+  --initialize-from runs/methods-20260911/snapshots/step-10000/residual/raw
+```
+
+事前に`configs/sketch.toml`をrunの`config.toml`にコピーし、実装のcommit・source hashを保存する。既存runは上書きしない。中断はrun直下の`stop`ファイルで要求し、全条件の更新・checkpoint保存が揃ってから止まる。再実行は前のprocessが終了したことを確認してから行う。
+
+2,000更新時のgateは評価全組合せの完了、有限値、保護領域誤差0、clean入力のF1が.30以上であること。拡張の順位では打ち切らない。学習中の共通validation lossはstrokes入力で測り、Trainerの簡易sample画像はclean入力の診断として保存する。下描きの実運用評価は固定suite側で行う。
+
+最終checkpointはoptimizer更新数と保存重みの一致、S/M/Lの単独抽出、L専用重みを変更してもS/Mが変わらないこと、保存・再読み込み、ONNXの動的サイズと512px入力を検証する。
+
+事前検証: CPU全108テスト成功。4条件の共通初期重みと、3連続更新と1＋再開2更新のmodel・optimizer・EMAが完全一致。Radeon 8060Sでも実効batch16・512px、4条件×再帰1–6段の24更新で有限なloss/勾配、共通マスク、保護領域の教師一致を確認した。記録は`benchmarks/sketch-20260911-preflight.json`。これは実行確認であり、学習後の品質評価ではない。
+
+![実画像由来の合成入力](assets/sketch-20260911/preview-10.png)
+
+![平行線の合成入力。強い変形では線間の情報が失われる](assets/sketch-20260911/preview-32.png)

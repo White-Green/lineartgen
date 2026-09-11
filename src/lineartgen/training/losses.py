@@ -36,7 +36,8 @@ def image_loss(prediction, clean, noise_level, config, min_noise):
     active = noise_level > min_noise
     weights = tone_weights(clean) if config.balance_tones else jnp.ones_like(clean)
     error = jnp.square(prediction - clean)
-    denoise = region_mean(error / jnp.maximum(noise_level, min_noise), weights, active)
+    floor = max(min_noise, config.noise_weight_floor)
+    denoise = region_mean(error / jnp.maximum(noise_level, floor), weights, active)
     identity = region_mean(error, weights, ~active)
     black = jnp.clip((1 - prediction) / 2, 0, 1)
     edge = (
@@ -44,7 +45,12 @@ def image_loss(prediction, clean, noise_level, config, min_noise):
         if config.edge_weight
         else jnp.zeros(())
     )
-    contrast = jnp.mean(4 * black * (1 - black))
+    contrast_error = 4 * black * (1 - black)
+    contrast = (
+        region_mean(contrast_error, jnp.ones_like(clean), active)
+        if config.contrast_active_only
+        else jnp.mean(contrast_error)
+    )
     loss = denoise + config.identity_weight * identity
     loss += config.edge_weight * edge + config.contrast_weight * contrast
     return loss, {"denoise": denoise, "identity": identity, "edge": edge, "contrast": contrast}

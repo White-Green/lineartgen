@@ -139,12 +139,29 @@ def summarize(rows):
             and r["active_target_ink_fraction"] >= 0.001
         ),
         "geometry": lambda r: r["suite"] == "geometry" and r["strength"] > 0,
-        "real_identity": lambda r: r["kind"] == "real" and r["strength"] == 0,
+        "real_identity": lambda r: (
+            r["kind"] == "real" and r["strength"] == 0 and not r["suite"].startswith("sketch_")
+        ),
         "geometry_identity": lambda r: r["suite"] == "geometry" and r["strength"] == 0,
         "blank_real": lambda r: (
-            r["kind"] == "real" and r["strength"] > 0 and r["target_ink_fraction"] < 0.001
+            r["kind"] == "real"
+            and r["strength"] > 0
+            and r["target_ink_fraction"] < 0.001
+            and not r["suite"].startswith("sketch_")
         ),
     }
+    for family in ("tone", "blur", "strokes"):
+        for severity in ("mild", "strong"):
+            for kind in ("real", "geometry"):
+                subsets[f"sketch_{kind}_{family}_{severity}"] = (
+                    lambda r, f=family, s=severity, k=kind: (
+                        r["suite"] == f"sketch_{k}"
+                        and r.get("family") == f
+                        and r.get("severity") == s
+                        and r["strength"] > 0
+                    )
+                )
+    subsets["sketch_identity"] = lambda r: r["suite"].startswith("sketch_") and r["strength"] == 0
     metrics = [
         "active_mae",
         "active_ink_f1",
@@ -203,16 +220,31 @@ def main():
     parser.add_argument("--steps", type=int, nargs="+", default=[1, 2, 5])
     parser.add_argument("--limit", type=int)
     parser.add_argument("--snapshot-only", action="store_true")
+    parser.add_argument("--study", choices=["methods", "sketch"], default="methods")
+    parser.add_argument(
+        "--initialize-from", type=Path, help="Evaluate common warmstart at step zero"
+    )
     args = parser.parse_args()
     config = load_config(args.config)
     if config.data.crop_size != 512:
         parser.error("This fixed evaluation suite uses 512px crops")
-    manifest = prepare(config, args.cases, args.legacy_cases)
+    manifest = (
+        json.loads((args.cases / "cases.json").read_text())
+        if args.study == "sketch"
+        else prepare(config, args.cases, args.legacy_cases)
+    )
+    if manifest["data_config"] != data_settings(config):
+        raise ValueError("Evaluation data settings changed")
     if args.prepare_only:
         return
-    if args.run_group is None or args.step is None:
+    if (args.run_group is None and not args.initialize_from) or args.step is None:
         parser.error("--run-group and --step are required for evaluation")
-    if json.loads((args.run_group / "dataset.json").read_text()) != manifest["dataset"]:
+    if args.initialize_from and (args.step != 0 or not args.raw):
+        parser.error("Initial evaluation requires --step 0 --raw")
+    if (
+        args.run_group
+        and json.loads((args.run_group / "dataset.json").read_text()) != manifest["dataset"]
+    ):
         raise ValueError("Evaluation and training use different data or splits")
     if any(x < 1 for x in args.steps) or (args.limit is not None and args.limit < 1):
         parser.error("steps and limit must be positive")
@@ -221,8 +253,17 @@ def main():
     output = args.cases / f"step-{args.step}-{mode}{suffix}"
     output.mkdir(exist_ok=True)
     models = {}
-    for method, settings in comparison_configs(config, study="methods").items():
-        snapshot = args.run_group.parent / "snapshots" / f"step-{args.step}" / method / mode
+    variants = (
+        {"initial": config}
+        if args.initialize_from
+        else comparison_configs(config, study=args.study)
+    )
+    for method, settings in variants.items():
+        snapshot = (
+            args.initialize_from
+            if args.initialize_from
+            else args.run_group.parent / "snapshots" / f"step-{args.step}" / method / mode
+        )
         if snapshot.exists():
             model, saved = load_inference(snapshot)
         else:
@@ -231,7 +272,7 @@ def main():
             )
             assert step == args.step
             save_inference(model, saved, snapshot, provenance=f"{method} step {step} {mode}")
-        if saved != settings:
+        if saved.model != settings.model if args.initialize_from else saved != settings:
             raise ValueError(f"Saved configuration differs for {method}")
         models.update(((method, i), model.extract(i)) for i in range(model.num_subnets))
     if args.snapshot_only:
@@ -247,10 +288,12 @@ def main():
     selected_cases = manifest["cases"][: args.limit]
     for index, case in enumerate(selected_cases):
         with np.load(args.cases / case["file"], allow_pickle=False) as arrays:
-            target, strength = arrays["image"], arrays["strength"]
+            clean, strength = arrays["image"], arrays["strength"]
+            source = arrays["source"] if "source" in arrays else clean
+            target = np.where(strength > 0, clean, source)
             probes = arrays["probes"] if "probes" in arrays else None
             connections = arrays["connections"] if "connections" in arrays else None
-        image, noise = jax.device_put((target[None], strength[None]))
+        image, noise = jax.device_put((source[None], strength[None]))
         levels = config.diffusion.levels_for_scale(
             512, config.model.minimum_size, case["scale_level"]
         )
@@ -261,13 +304,18 @@ def main():
             + jax.random.normal(display_key, image.shape) * jax.numpy.sqrt(noise)
         )[0]
         for steps in args.steps:
-            pictures = [target, noisy]
-            labels = ["target", "noisy input"]
+            pictures = [target, source, noisy] if args.study == "sketch" else [target, noisy]
+            labels = (
+                ["target (preserve mask)", "source", "noisy input"]
+                if args.study == "sketch"
+                else ["target", "noisy input"]
+            )
             for (method, subnet), model in models.items():
                 prediction = np.asarray(run_sample(model, image, noise, key, steps, levels))[0]
                 extra = (
                     probe_metrics(prediction, target, probes, connections)
                     if probes is not None
+                    and (not case["suite"].startswith("sketch_") or not case["partial"])
                     else {}
                 )
                 results.append(
@@ -276,6 +324,10 @@ def main():
                         kind=case["kind"],
                         suite=case["suite"],
                         source=case.get("source"),
+                        family=case.get("family"),
+                        severity=case.get("severity"),
+                        variant=case.get("variant"),
+                        matched_crop=case.get("matched_crop"),
                         scale_level=case["scale_level"],
                         strength=case["strength"],
                         partial=case["partial"],
@@ -290,7 +342,9 @@ def main():
                 if subnet == 0:
                     pictures.append(prediction)
                     labels.append(method + " S")
-            if index < 70 or index % 16 == 0:
+            if (
+                index < 70 if args.study == "methods" else index in (4, 167, 256, 341)
+            ) or index % 32 == 0:
                 panel = np.concatenate(pictures, axis=1)[..., 0]
                 pixels = np.rint(np.clip((panel + 1) * 127.5, 0, 255)).astype(np.uint8)
                 canvas = Image.new("L", (pixels.shape[1], pixels.shape[0] + 24), 255)
