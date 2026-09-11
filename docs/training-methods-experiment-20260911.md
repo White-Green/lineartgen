@@ -129,6 +129,15 @@ JAX_PLATFORMS=cpu .venv/bin/python scripts/verify_training_methods.py \
 これは学習済みモデルを固定した開発セット上の探索的な比較であり、
 学習 seed による変動や多重比較の補正は含まない。
 
+上記の終了後の処理は、次のコマンドで実行中の workflow の後へ接続できる。
+2,000 更新の中間集計も、評価完了後に自動保存する。
+
+```sh
+.venv/bin/python scripts/finish_training_methods.py \
+  --root runs/methods-20260911 \
+  --output benchmarks/training-methods-20260911.json
+```
+
 | ファイル | 内容 |
 | --- | --- |
 | `training-source.json` | 学習開始時のコード SHA と比較条件 |
@@ -143,6 +152,7 @@ JAX_PLATFORMS=cpu .venv/bin/python scripts/verify_training_methods.py \
 | `extracted/step-10000/手法/{raw,ema}/{0,1,2}/` | 各サイズの独立した推論用重み |
 | `exports/step-10000/validation.json` | 全条件の S の ONNX 照合と SHA |
 | `pilot-gate.json`、`workflow-status.json` | 継続判定と実行状態 |
+| `finish-status.json` | 評価後の重み検証・ONNX 出力・集計の実行状態 |
 
 ## 学習と独立なノイズ診断（完了）
 
