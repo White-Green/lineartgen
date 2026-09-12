@@ -7,6 +7,9 @@ Krita の Diffusion Drawing は小さな別パッケージ `lineartgen-runtime` 
 複数サイズで特徴計算を共有する入れ子モデルは `configs/nested.toml`。
 [構造・学習比較・切り出しの手順](docs/nested-models.md)を参照。
 
+合成下描きからの復元比較は`configs/sketch.toml`。
+[4条件の10,000更新結果と比較画像](docs/sketch-experiment-20260911.md)に、改善点・副作用・保存モデルをまとめた。
+
 ## 環境を作る
 
 Python 3.12 と uv を使う。依存関係は `uv.lock` で固定している。
@@ -102,13 +105,16 @@ src/lineartgen/
   config.py               型と設定間の整合性検査
   models/blocks.py         Conv + ReLU の部品
   models/unet.py           1 解像度の U-Net
+  models/nested.py         小さいprefixへ大きい側の出力を混ぜない入れ子モデル
   diffusion.py            ノイズ・ピラミッド・小→大の再帰・sampling
+  sketch.py               入力だけの不透明度・blur・太線・重ね描き拡張
   noise_matching.py       Burn と同じコスト・一対一ノイズ割り当て
   data/images.py          画像 decode / crop / optional cache
   data/pipeline.py        元画像分割と Grain の入力列
   training/losses.py      loss の数式
   training/steps.py       勾配・更新・評価の JIT 関数
   training/trainer.py     学習ループ・蓄積・ログ・評価
+  training/comparison.py  共通条件を保った実験variantの定義
   training/checkpoints.py 保存・復元
   export.py              ONNX 変換と数値検証
 packages/lineartgen-runtime/
