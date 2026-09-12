@@ -18,6 +18,11 @@ def main():
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--controller-pid", type=int, required=True)
     parser.add_argument("--output", type=Path, default=Path("benchmarks/sketch-20260911.json"))
+    parser.add_argument(
+        "--summary-script",
+        choices=["summarize_sketch_experiment", "summarize_sketch_rates"],
+        default="summarize_sketch_experiment",
+    )
     args = parser.parse_args()
     root = args.root.resolve()
 
@@ -35,7 +40,7 @@ def main():
             subprocess.run(
                 [
                     sys.executable,
-                    "scripts/summarize_sketch_experiment.py",
+                    f"scripts/{args.summary_script}.py",
                     "--root",
                     str(root),
                     "--through",

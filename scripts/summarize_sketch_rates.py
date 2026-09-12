@@ -89,6 +89,16 @@ def main():
         root / "evaluation-input-sha256.json",
         root / "evaluation/cases.json",
     ]
+    for name in (
+        "reference-model-sha256.json",
+        "runtime-parity.json",
+        "tests.log",
+        "analysis-source.json",
+    ):
+        if (root / name).exists():
+            files.append(root / name)
+    for path, digest in json.loads((root / "reference-model-sha256.json").read_text()).items():
+        assert sha(Path(path)) == digest, path
     for name, digest in json.loads((root / "evaluation-input-sha256.json").read_text()).items():
         assert sha(root / "evaluation" / name) == digest, name
 

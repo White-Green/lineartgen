@@ -56,4 +56,33 @@ export JAX_COMPILATION_CACHE_DIR="$PWD/runs/sketch-rates-20260912/jax-cache"
 
 準備済みのsource hashと固定入力を各phaseの開始時に検査する。再開は前のプロセス終了を確認した後に限る。`stop`ファイルは完全な更新単位で停止する。完了済み評価は上書きしない。2,000/10,000更新のraw/EMA archive、最終optimizer checkpoint、S/M/L抽出重み、S ONNXと数値照合結果を保存する。
 
-結果は実行後に追記する。
+## 再帰比較の結果（完了）
+
+4条件×3サイズ×2重み×2再帰条件×1,562件＝74,976出力を評価した。全出力が有限で、保護画素の最大誤差は0。全116テストと、実batch16・全6再帰段×3条件のGPU事前確認18更新が成功した。実S重みの32条件でJAXと既存ONNX runtimeも一致し、最大絶対差は1.4931e-5だった。
+
+runtimeの3段に揃えたraw Sの編集領域F1:
+
+| 学習条件 | clean実画像 | clean幾何形状 | 強いblur下描き | 強い太線・重ね描き下描き |
+|---|---:|---:|---:|---:|
+| control | .9485 | .9061 | .2274 | .2718 |
+| tone | .9196 | .8285 | .7757 | .7595 |
+| blur | .9192 | .8162 | .7851 | .7693 |
+| strokes | .9226 | .8119 | .6460 | .7983 |
+
+同じNumPy noiseで比べたraw Sのclean幾何形状F1は、dataset段数→runtime段数でtone .6075→.8285、blur .6043→.8162、strokes .7960→.8119となった。前回のtone/blurの大きな悪化には1段評価の影響が含まれる。strokesが全ての指標で最善とはいえない。
+
+strokes Sのclean幾何形状に対する3段化の対応付きF1差はraw +.0160（95% source-cluster interval [.0082,.0237]）、EMA +.0841（[.0730,.0949]）。rawの白背景MAEは約.01564→.00477に減った。ただしruntime条件のcontrolは.00147であり、背景の誤差は残る。強い太線・重ね描きではrawの白背景MAEがstrokes .01272、blur .03620、tone .03764で、strokesを拡張率調整の出発点にする判断は維持する。
+
+実画像由来の強い下描きで、strokesの3段化によるF1差の区間は0を含む。平均F1の小差だけで改善を断定しない。これらは合成入力・単一学習seedのdev評価であり、最終画質の採用判定ではない。
+
+比較画像（上: dataset段数、下: runtime段数。列は教師・入力・ノイズ入力・control・tone・blur・strokesのS）:
+
+![dataset recursion](assets/sketch-rates-20260912/dataset-raw-case-256.png)
+![runtime recursion](assets/sketch-rates-20260912/runtime-raw-case-256.png)
+
+集計: `benchmarks/sketch-rates-20260912-recursion.json`。全metricsとその他の比較画像はrun rootの`recursion/{dataset,runtime}-{raw,ema}/`。runtimeとの照合記録は`runtime-parity.json`。
+
+## 拡張率比較
+
+上記の結果を確認し、事前に固定した3条件の学習へ進む。結果は完了後に追記する。
+
