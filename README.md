@@ -9,6 +9,8 @@ Krita の Diffusion Drawing は小さな別パッケージ `lineartgen-runtime` 
 
 合成下描きからの復元比較は`configs/sketch.toml`。
 [4条件の10,000更新結果と比較画像](docs/sketch-experiment-20260911.md)に、改善点・副作用・保存モデルをまとめた。
+続く[再帰条件と拡張率75%・50%・25%の比較](docs/sketch-rates-experiment-20260912.md)は
+`configs/sketch-rates.toml`。背景の改善と下描き復元のトレードオフを記録した。
 
 ## 環境を作る
 

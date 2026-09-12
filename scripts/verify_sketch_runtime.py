@@ -14,10 +14,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--methods", nargs="+", default=["control", "tone", "blur", "strokes"])
     args = parser.parse_args()
     root = args.root.resolve()
     records = []
-    for method in ("control", "tone", "blur", "strokes"):
+    for method in args.methods:
         for mode in ("raw", "ema"):
             path = root / "exports/step-10000" / f"{method}-{mode}.onnx"
             model = LineartModel(path, provider="cpu")

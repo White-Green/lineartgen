@@ -1,0 +1,201 @@
+{
+  "method": "p50",
+  "mode": "raw",
+  "step": 10000,
+  "denoise_steps": 1,
+  "records": [
+    {
+      "case": 256,
+      "metadata": {
+        "kind": "curve",
+        "suite": "geometry",
+        "variant": 3,
+        "scale_level": 0,
+        "file": "case-256.npz",
+        "strength": 0.5,
+        "partial": true,
+        "seed": 2026091356
+      },
+      "recursion_levels": 3,
+      "metrics": [
+        {
+          "subnet": 0,
+          "active_mae": 0.003896246198564768,
+          "active_ink_f1": 0.9447017161536366,
+          "active_target_ink_fraction": 0.014131593397719565,
+          "protected_max_error": 0.0,
+          "mask_boundary_mae": 0.0006170774577185512
+        },
+        {
+          "subnet": 1,
+          "active_mae": 0.0040258439257740974,
+          "active_ink_f1": 0.9502883823125515,
+          "active_target_ink_fraction": 0.014131593397719565,
+          "protected_max_error": 0.0,
+          "mask_boundary_mae": 0.0007835391443222761
+        },
+        {
+          "subnet": 2,
+          "active_mae": 0.003783289110288024,
+          "active_ink_f1": 0.9500548847420417,
+          "active_target_ink_fraction": 0.014131593397719565,
+          "protected_max_error": 0.0,
+          "mask_boundary_mae": 0.0007373897242359817
+        }
+      ],
+      "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/sketch-rates-20260912/evaluation/widths-10000-p50-raw/case-256.png",
+      "sha256": "ec574a27d2dd17a19c85ffba225ac0c67da8d96a25ffac1e2f835182287d5e80"
+    },
+    {
+      "case": 479,
+      "metadata": {
+        "kind": "real",
+        "suite": "sketch_real",
+        "source": "0527.png",
+        "crop": [
+          79,
+          288,
+          512
+        ],
+        "scale_level": 0,
+        "matched_crop": "0-1",
+        "file": "case-479.npz",
+        "strength": 0.1,
+        "partial": false,
+        "seed": 2026091779,
+        "family": "blur",
+        "severity": "strong",
+        "corruption_seed": 2026091201
+      },
+      "recursion_levels": 3,
+      "metrics": [
+        {
+          "subnet": 0,
+          "active_mae": 0.06079646199941635,
+          "active_ink_f1": 0.7139310100203955,
+          "active_target_ink_fraction": 0.0515899658203125,
+          "protected_max_error": null,
+          "mask_boundary_mae": null
+        },
+        {
+          "subnet": 1,
+          "active_mae": 0.05760776251554489,
+          "active_ink_f1": 0.7272808188696039,
+          "active_target_ink_fraction": 0.0515899658203125,
+          "protected_max_error": null,
+          "mask_boundary_mae": null
+        },
+        {
+          "subnet": 2,
+          "active_mae": 0.05665977671742439,
+          "active_ink_f1": 0.7246694026447789,
+          "active_target_ink_fraction": 0.0515899658203125,
+          "protected_max_error": null,
+          "mask_boundary_mae": null
+        }
+      ],
+      "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/sketch-rates-20260912/evaluation/widths-10000-p50-raw/case-479.png",
+      "sha256": "1a12feef30dce89556d3c0aacea601cb8e56dba7535a6608208debad9be3fb50"
+    },
+    {
+      "case": 480,
+      "metadata": {
+        "kind": "real",
+        "suite": "sketch_real",
+        "source": "0527.png",
+        "crop": [
+          79,
+          288,
+          512
+        ],
+        "scale_level": 0,
+        "matched_crop": "0-1",
+        "file": "case-480.npz",
+        "strength": 0.5,
+        "partial": false,
+        "seed": 2026091780,
+        "family": "blur",
+        "severity": "strong",
+        "corruption_seed": 2026091201
+      },
+      "recursion_levels": 3,
+      "metrics": [
+        {
+          "subnet": 0,
+          "active_mae": 0.08340779691934586,
+          "active_ink_f1": 0.45467479674796746,
+          "active_target_ink_fraction": 0.0515899658203125,
+          "protected_max_error": null,
+          "mask_boundary_mae": null
+        },
+        {
+          "subnet": 1,
+          "active_mae": 0.0814160704612732,
+          "active_ink_f1": 0.5178260027126526,
+          "active_target_ink_fraction": 0.0515899658203125,
+          "protected_max_error": null,
+          "mask_boundary_mae": null
+        },
+        {
+          "subnet": 2,
+          "active_mae": 0.07863225042819977,
+          "active_ink_f1": 0.5637735849056604,
+          "active_target_ink_fraction": 0.0515899658203125,
+          "protected_max_error": null,
+          "mask_boundary_mae": null
+        }
+      ],
+      "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/sketch-rates-20260912/evaluation/widths-10000-p50-raw/case-480.png",
+      "sha256": "f7f3c28b7410af1cee8ee42c194e59f1758d44e0e1d6634393502f8a66d6f5f3"
+    },
+    {
+      "case": 1376,
+      "metadata": {
+        "kind": "gap",
+        "suite": "sketch_geometry",
+        "variant": 0,
+        "scale_level": 0,
+        "file": "case-1376.npz",
+        "strength": 0.1,
+        "partial": true,
+        "seed": 2026092676,
+        "family": "tone",
+        "severity": "strong",
+        "corruption_seed": 2026091236
+      },
+      "recursion_levels": 3,
+      "metrics": [
+        {
+          "subnet": 0,
+          "active_mae": 0.006026436574757099,
+          "active_ink_f1": 0.0,
+          "active_target_ink_fraction": 0.0020914758228624953,
+          "protected_max_error": 0.0,
+          "mask_boundary_mae": 0.0014294333523139358
+        },
+        {
+          "subnet": 1,
+          "active_mae": 0.005931416992098093,
+          "active_ink_f1": 0.0,
+          "active_target_ink_fraction": 0.0020914758228624953,
+          "protected_max_error": 0.0,
+          "mask_boundary_mae": 0.001391480560414493
+        },
+        {
+          "subnet": 2,
+          "active_mae": 0.004929470829665661,
+          "active_ink_f1": 0.0,
+          "active_target_ink_fraction": 0.0020914758228624953,
+          "protected_max_error": 0.0,
+          "mask_boundary_mae": 0.0011268286034464836
+        }
+      ],
+      "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/sketch-rates-20260912/evaluation/widths-10000-p50-raw/case-1376.png",
+      "sha256": "2bcba606b500222955f98981aec563f1697932faa85db09aea4a75dbe26134e3"
+    }
+  ],
+  "weights_sha256": "f1959bccd4233e8fe60ad023ff2c2104c16d8a07565a41ed0fb9ee6bf791858c",
+  "manifest_sha256": "1a0b834c475434d224e26c0fbb2e8bd22f3a738a1440d2be3fc1d53caf42e4f9",
+  "metrics_sha256": "d4c382e360fcae7a11615a1f74af8c4872fab91e9dc94fef8cdd2b369c5e1e97",
+  "selection": "Illustrations selected after evaluation; numerical metrics reproduce the fixed suite."
+}
