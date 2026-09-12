@@ -122,6 +122,11 @@ def sample(model, clean, key, *, strength, steps, levels):
         target * jnp.sqrt(1 - level) + jax.random.normal(k, target.shape) * jnp.sqrt(level)
         for target, level, k in zip(targets, noise_levels, noise_keys, strict=True)
     )
+    return sample_prepared(model, images, noise_levels, steps=steps)
+
+
+def sample_prepared(model, images, noise_levels, *, steps):
+    """Evolve an already sampled pyramid, permitting paired recursion diagnostics."""
     for step in range(steps):
         current, following = (steps - step) / steps, (steps - step - 1) / steps
         predictions = recursive_forward(

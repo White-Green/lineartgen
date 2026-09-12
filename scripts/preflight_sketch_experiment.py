@@ -22,9 +22,10 @@ def main():
     parser.add_argument("--initialize-from", type=Path, required=True)
     parser.add_argument("--case", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--study", choices=["sketch", "sketch_rates"], default="sketch")
     args = parser.parse_args()
     config = load_config(args.config)
-    variants = comparison_configs(config, study="sketch")
+    variants = comparison_configs(config, study=args.study)
     initial, initial_config = load_inference(args.initialize_from)
     assert initial_config.model == config.model
     with np.load(args.case, allow_pickle=False) as arrays:

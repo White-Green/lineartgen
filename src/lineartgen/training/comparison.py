@@ -16,13 +16,24 @@ def comparison_configs(config, *, study="widths", baseline=False):
         if baseline:
             result["baseline"] = config.model_copy(update={"model": ModelConfig()})
         return result
-    if study == "sketch":
+    if study in ("sketch", "sketch_rates"):
         if baseline or config.model.output_mode != "residual":
             raise ValueError("The sketch study requires residual output and no width baseline")
         if config.matching.method != "independent" or config.sketch.mode != "none":
             raise ValueError("The sketch control must use independent noise and no degradation")
         if config.diffusion.pattern_weights[3]:
             raise ValueError("Use image-independent mask patterns for paired sketch comparisons")
+        if study == "sketch_rates":
+            return {
+                name: config.model_copy(
+                    update={
+                        "sketch": config.sketch.model_copy(
+                            update={"mode": "strokes", "probability": probability}
+                        )
+                    }
+                )
+                for name, probability in (("p75", 0.75), ("p50", 0.50), ("p25", 0.25))
+            }
         return {
             name: config.model_copy(
                 update={"sketch": config.sketch.model_copy(update={"mode": mode})}
@@ -35,7 +46,9 @@ def comparison_configs(config, *, study="widths", baseline=False):
             )
         }
     if study != "methods" or baseline:
-        raise ValueError("Use study=widths, methods or sketch; --baseline is only for widths")
+        raise ValueError(
+            "Use study=widths, methods, sketch or sketch_rates; --baseline is only for widths"
+        )
     if config.model.output_mode != "direct" or config.matching.method != "exact":
         raise ValueError("The methods control must use direct output and exact OT")
     batch = config.train.effective_batch_size

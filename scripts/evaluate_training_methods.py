@@ -15,8 +15,9 @@ from PIL import Image, ImageDraw
 from lineartgen.config import load_config
 from lineartgen.data.images import read_crop
 from lineartgen.data.pipeline import dataset_description, discover, split_experiment
-from lineartgen.diffusion import sample
+from lineartgen.diffusion import sample, sample_prepared
 from lineartgen.evaluation import KINDS, line_case, probe_metrics, protected_metrics
+from lineartgen.evaluation_sampling import background_metrics, runtime_inputs, runtime_levels
 from lineartgen.models.serialization import load_inference, save_inference
 from lineartgen.training.checkpoints import load_run_model
 from lineartgen.training.comparison import comparison_configs
@@ -220,7 +221,12 @@ def main():
     parser.add_argument("--steps", type=int, nargs="+", default=[1, 2, 5])
     parser.add_argument("--limit", type=int)
     parser.add_argument("--snapshot-only", action="store_true")
-    parser.add_argument("--study", choices=["methods", "sketch"], default="methods")
+    parser.add_argument("--study", choices=["methods", "sketch", "sketch_rates"], default="methods")
+    parser.add_argument("--recursion", choices=["dataset", "runtime"], default="dataset")
+    parser.add_argument("--noise-generator", choices=["jax", "numpy"], default="jax")
+    parser.add_argument(
+        "--output", type=Path, help="Separate destination for a new evaluation protocol"
+    )
     parser.add_argument(
         "--initialize-from", type=Path, help="Evaluate common warmstart at step zero"
     )
@@ -230,7 +236,7 @@ def main():
         parser.error("This fixed evaluation suite uses 512px crops")
     manifest = (
         json.loads((args.cases / "cases.json").read_text())
-        if args.study == "sketch"
+        if args.study in ("sketch", "sketch_rates")
         else prepare(config, args.cases, args.legacy_cases)
     )
     if manifest["data_config"] != data_settings(config):
@@ -250,8 +256,12 @@ def main():
         parser.error("steps and limit must be positive")
     mode = "raw" if args.raw else "ema"
     suffix = f"-preflight-{args.limit}" if args.limit is not None else ""
-    output = args.cases / f"step-{args.step}-{mode}{suffix}"
-    output.mkdir(exist_ok=True)
+    if (args.recursion != "dataset" or args.noise_generator != "jax") and not args.output:
+        parser.error("A changed sampling protocol requires a separate --output directory")
+    output = args.output or args.cases / f"step-{args.step}-{mode}{suffix}"
+    output.mkdir(parents=True, exist_ok=True)
+    if (output / "metrics.json").exists() and not args.snapshot_only:
+        raise FileExistsError(f"Refusing to overwrite a completed evaluation: {output}")
     models = {}
     variants = (
         {"initial": config}
@@ -284,6 +294,10 @@ def main():
         ),
         static_argnums=(4, 5),
     )
+    run_prepared = nnx.jit(
+        lambda model, images, masks, steps: sample_prepared(model, images, masks, steps=steps),
+        static_argnums=(3,),
+    )
     results = []
     selected_cases = manifest["cases"][: args.limit]
     for index, case in enumerate(selected_cases):
@@ -297,21 +311,34 @@ def main():
         levels = config.diffusion.levels_for_scale(
             512, config.model.minimum_size, case["scale_level"]
         )
+        if args.recursion == "runtime":
+            levels = runtime_levels(*source.shape[:2], config.model.minimum_size)
         key = jax.random.PRNGKey(case["seed"])
         display_key = key if levels == 1 else jax.random.split(key, levels)[0]
         noisy = np.asarray(
             image * jax.numpy.sqrt(1 - noise)
             + jax.random.normal(display_key, image.shape) * jax.numpy.sqrt(noise)
         )[0]
+        prepared = None
+        if args.noise_generator == "numpy":
+            host_inputs = runtime_inputs(source[None], strength[None], case["seed"], levels)
+            noisy = host_inputs[0][0][0]
+            prepared = jax.device_put(host_inputs)
         for steps in args.steps:
-            pictures = [target, source, noisy] if args.study == "sketch" else [target, noisy]
+            pictures = [target, source, noisy] if args.study != "methods" else [target, noisy]
             labels = (
                 ["target (preserve mask)", "source", "noisy input"]
-                if args.study == "sketch"
+                if args.study != "methods"
                 else ["target", "noisy input"]
             )
             for (method, subnet), model in models.items():
-                prediction = np.asarray(run_sample(model, image, noise, key, steps, levels))[0]
+                prediction = np.asarray(
+                    run_prepared(model, *prepared, steps)
+                    if prepared is not None
+                    else run_sample(model, image, noise, key, steps, levels)
+                )[0]
+                if not np.isfinite(prediction).all():
+                    raise FloatingPointError(f"Nonfinite prediction: {index}/{method}/{subnet}")
                 extra = (
                     probe_metrics(prediction, target, probes, connections)
                     if probes is not None
@@ -334,8 +361,10 @@ def main():
                         method=method,
                         subnet=subnet,
                         denoise_steps=steps,
+                        recursion_levels=levels,
                         **geometry_metrics(prediction, target, strength),
                         **protected_metrics(prediction, target, strength),
+                        **background_metrics(prediction, target, strength),
                         **extra,
                     )
                 )
@@ -362,6 +391,9 @@ def main():
         available_cases=len(manifest["cases"]),
         manifest_sha256=hashlib.sha256((args.cases / "cases.json").read_bytes()).hexdigest(),
         sampling="Independent Gaussian after downsampling; no OT",
+        recursion=args.recursion,
+        noise_generator=args.noise_generator,
+        denoise_steps=args.steps,
         results=results,
         summary=summarize(results),
         limitations=(

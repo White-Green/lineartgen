@@ -36,7 +36,9 @@ def main():
     parser.add_argument("--stop-after", type=int, default=2000)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--baseline", action="store_true")
-    parser.add_argument("--study", choices=["widths", "methods", "sketch"], default="widths")
+    parser.add_argument(
+        "--study", choices=["widths", "methods", "sketch", "sketch_rates"], default="widths"
+    )
     parser.add_argument(
         "--initialize-from", type=Path, help="Shared inference weights; reset optimizer and EMA"
     )
@@ -186,6 +188,8 @@ def main():
             if args.study == "methods"
             else configs["strokes"]
             if args.study == "sketch"
+            else configs["p75"]
+            if args.study == "sketch_rates"
             else config
         )
         sampler = nnx.jit(

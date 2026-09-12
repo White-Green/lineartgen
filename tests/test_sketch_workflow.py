@@ -8,6 +8,7 @@ from pathlib import Path
 import jax
 import numpy as np
 import orbax.checkpoint as ocp
+import pytest
 from flax import nnx
 from PIL import Image
 
@@ -59,7 +60,8 @@ def test_sketch_gate_checks_complete_grid_and_protected_input():
         assert not workflow.pilot_gate([bad, report])["passed"]
 
 
-def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monkeypatch):
+@pytest.mark.parametrize("study", ["sketch", "sketch_rates"])
+def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monkeypatch, study):
     dataset = tmp_path / "dataset" / "images"
     dataset.mkdir(parents=True)
     for index in range(5):
@@ -111,7 +113,7 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
             [
                 "compare_nested_training",
                 "--study",
-                "sketch",
+                study,
                 "--config",
                 str(config_path),
                 "--run-dir",
@@ -122,7 +124,8 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
             ],
         )
         compare.main()
-    for name in ("control", "tone", "blur", "strokes"):
+    names = ("control", "tone", "blur", "strokes") if study == "sketch" else ("p75", "p50", "p25")
+    for name in names:
         archived, _ = load_inference(full / "initial" / name)
         jax.tree.map(
             np.testing.assert_array_equal,
