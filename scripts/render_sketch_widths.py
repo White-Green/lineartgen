@@ -10,17 +10,16 @@ import numpy as np
 from flax import nnx
 from PIL import Image, ImageDraw
 
-from lineartgen.diffusion import sample
+from lineartgen.diffusion import sample, sample_prepared
 from lineartgen.evaluation import protected_metrics
+from lineartgen.evaluation_sampling import runtime_inputs
 from lineartgen.models.serialization import load_inference
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
-    parser.add_argument(
-        "--method", choices=["control", "tone", "blur", "strokes"], default="strokes"
-    )
+    parser.add_argument("--method", default="strokes")
     parser.add_argument("--step", type=int, default=10000)
     parser.add_argument("--mode", choices=["raw", "ema"], default="raw")
     parser.add_argument("--cases", type=int, nargs="+", default=[256, 479, 480, 1376])
@@ -43,6 +42,7 @@ def main():
         lambda m, x, t, key, levels: sample(m, x, key, strength=t, steps=1, levels=levels),
         static_argnums=(4,),
     )
+    infer_prepared = nnx.jit(lambda m, x, t: sample_prepared(m, x, t, steps=1))
     records = []
     for index in args.cases:
         case = manifest["cases"][index]
@@ -50,8 +50,9 @@ def main():
             clean, strength = arrays["image"], arrays["strength"]
             rough = arrays["source"] if "source" in arrays else clean
         target = np.where(strength > 0, clean, rough)
-        levels = config.diffusion.levels_for_scale(
-            512, config.model.minimum_size, case["scale_level"]
+        levels = expected[index, 0].get(
+            "recursion_levels",
+            config.diffusion.levels_for_scale(512, config.model.minimum_size, case["scale_level"]),
         )
         x, t = jax.device_put((rough[None], strength[None]))
         key = jax.random.PRNGKey(case["seed"])
@@ -59,9 +60,18 @@ def main():
         noisy = np.asarray(
             x * jax.numpy.sqrt(1 - t) + jax.random.normal(noise_key, x.shape) * jax.numpy.sqrt(t)
         )[0]
+        prepared = None
+        if report.get("noise_generator") == "numpy":
+            host = runtime_inputs(rough[None], strength[None], case["seed"], levels)
+            noisy = host[0][0][0]
+            prepared = jax.device_put(host)
         pictures, measurements = [target, rough, noisy], []
         for subnet in range(3):
-            prediction = np.asarray(infer(model.extract(subnet), x, t, key, levels))[0]
+            prediction = np.asarray(
+                infer_prepared(model.extract(subnet), *prepared)
+                if prepared is not None
+                else infer(model.extract(subnet), x, t, key, levels)
+            )[0]
             measured = protected_metrics(prediction, target, strength)
             for metric in ("active_ink_f1", "active_mae", "protected_max_error"):
                 reference = expected[index, subnet][metric]
