@@ -60,7 +60,7 @@ def test_sketch_gate_checks_complete_grid_and_protected_input():
         assert not workflow.pilot_gate([bad, report])["passed"]
 
 
-@pytest.mark.parametrize("study", ["sketch", "sketch_rates", "geometry_data"])
+@pytest.mark.parametrize("study", ["sketch", "sketch_rates", "geometry_data", "boundary_loss"])
 def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monkeypatch, study):
     dataset = tmp_path / "dataset" / "images"
     dataset.mkdir(parents=True)
@@ -99,10 +99,17 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
         }
     )
     config_path = tmp_path / "config.json"
-    if study == "geometry_data":
+    if study in ("geometry_data", "boundary_loss"):
         config = config.model_copy(
             update={
                 "sketch": config.sketch.model_copy(update={"mode": "strokes", "probability": 0.5})
+            }
+        )
+    if study == "boundary_loss":
+        config = config.model_copy(
+            update={
+                "geometry": config.geometry.model_copy(update={"probability": 0.2}),
+                "loss": config.loss.model_copy(update={"boundary_weight": 0.2}),
             }
         )
     save_config(config, config_path)
@@ -134,6 +141,7 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
         "sketch": ("control", "tone", "blur", "strokes"),
         "sketch_rates": ("p75", "p50", "p25"),
         "geometry_data": ("control", "geometry20"),
+        "boundary_loss": ("control", "boundary"),
     }[study]
     for name in names:
         archived, _ = load_inference(full / "initial" / name)
@@ -148,3 +156,16 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
             with checkpoints.manager(root / name / "checkpoints") as saved:
                 states.append(saved.restore(3, args=ocp.args.StandardRestore()))
         jax.tree.map(np.testing.assert_array_equal, *states)
+
+    if study == "boundary_loss":
+        paths = [full / name / "checkpoints" for name in names]
+        final_states = []
+        for path in paths:
+            with checkpoints.manager(path) as saved:
+                final_states.append(saved.restore(3, args=ocp.args.StandardRestore()))
+        assert any(
+            not np.array_equal(a, b)
+            for a, b in zip(
+                jax.tree.leaves(final_states[0]), jax.tree.leaves(final_states[1]), strict=True
+            )
+        )

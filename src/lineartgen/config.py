@@ -163,6 +163,8 @@ class GeometryDataConfig(Settings):
 
 
 class LossConfig(Settings):
+    boundary_weight: float = Field(default=0.0, ge=0)
+    boundary_radius: int = Field(default=4, ge=1, le=16)
     balance_tones: bool = True
     identity_weight: float = Field(default=0.1, ge=0)
     edge_weight: float = Field(default=0.1, ge=0)

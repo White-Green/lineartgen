@@ -18,7 +18,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--benchmark", type=Path, required=True)
+    parser.add_argument(
+        "--study", choices=["geometry_data", "boundary_loss"], default="geometry_data"
+    )
     args = parser.parse_args()
+    methods = METHODS if args.study == "geometry_data" else ("control", "boundary")
     root = args.root.resolve()
     benchmark = json.loads(args.benchmark.read_text())
     assert benchmark["through"] == 10000
@@ -39,7 +43,7 @@ def main():
     expected_outputs, details = 0, []
     for step, mode in [(0, "raw"), *itertools.product((2000, 10000), ("raw", "ema"))]:
         report = json.loads((root / "evaluation" / f"step-{step}-{mode}/metrics.json").read_text())
-        validate(report, ("initial",) if step == 0 else METHODS, step, "runtime")
+        validate(report, ("initial",) if step == 0 else methods, step, "runtime")
         assert report["summary"] == summarize(report["results"])
         expected_outputs += len(report["results"])
         groups = {}
@@ -88,13 +92,16 @@ def main():
         step = row["step"] - 1
         rng = np.random.default_rng(np.random.SeedSequence([config.train.seed, step, 0x47454F4D]))
         selected = np.flatnonzero(rng.random(16) < 0.2).tolist()
-        actual = row["generated"]["geometry20"]
-        assert not row["generated"]["control"]
+        actual = row["generated"]["geometry20" if args.study == "geometry_data" else "boundary"]
+        if args.study == "geometry_data":
+            assert not row["generated"]["control"]
+        else:
+            assert row["generated"]["control"] == actual
         assert [r["item"] for r in actual] == selected
         assert all(r["key"] == [config.train.seed, step, r["item"], 0x50415448] for r in actual)
     artifacts = {}
     illustrations = []
-    for method, mode in itertools.product(METHODS, ("raw", "ema")):
+    for method, mode in itertools.product(methods, ("raw", "ema")):
         folder = root / "evaluation" / f"widths-10000-{method}-{mode}"
         record = json.loads((folder / "verification.json").read_text())
         assert [r["case"] for r in record["records"]] == [256, 479, 480, 1376]
@@ -144,7 +151,8 @@ def main():
         destination = args.benchmark.with_name(args.benchmark.stem + suffix)
         destination.write_text(json.dumps(result, indent=2) + "\n")
         files.add(destination.resolve())
-    files.update(p for p in (root / "generator-preview").iterdir() if p.is_file())
+    if (root / "generator-preview").exists():
+        files.update(p for p in (root / "generator-preview").iterdir() if p.is_file())
     files.update(
         (root / name)
         for name in ["initial-reevaluation.json", "workflow-status.json", "finish-status.json"]

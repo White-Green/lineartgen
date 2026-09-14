@@ -15,9 +15,9 @@ from summarize_training_methods import sha
 METHODS = ("control", "geometry20")
 
 
-def pilot_gate(reports, initial):
+def pilot_gate(reports, initial, methods=METHODS):
     for report in reports:
-        validate(report, METHODS, 2000, "runtime")
+        validate(report, methods, 2000, "runtime")
     reference = {(r["subset"], r["subnet"]): r for r in initial["summary"]}
     failures = []
     for row in reports[0]["summary"]:
@@ -37,10 +37,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--reference-root", type=Path, default=Path("runs/sketch-rates-20260912"))
+    parser.add_argument(
+        "--study", choices=["geometry_data", "boundary_loss"], default="geometry_data"
+    )
     args = parser.parse_args()
+    methods = METHODS if args.study == "geometry_data" else ("control", "boundary")
     root, reference = args.root.resolve(), args.reference_root.resolve()
     config, cases, group = root / "config.toml", root / "evaluation", root / "training"
-    initial = reference / "snapshots/step-10000/p50/raw"
+    initial_method = "p50" if args.study == "geometry_data" else "geometry20"
+    initial = reference / "snapshots/step-10000" / initial_method / "raw"
 
     def status(stage, **extra):
         record = dict(
@@ -76,7 +81,7 @@ def main():
                 "evaluate_training_methods",
                 [
                     "--study",
-                    "geometry_data",
+                    args.study,
                     "--config",
                     config,
                     "--cases",
@@ -97,7 +102,7 @@ def main():
                 f"evaluation-{step}-{mode}",
             )
         report = json.loads(path.read_text())
-        validate(report, ("initial",) if step == 0 else METHODS, step, "runtime")
+        validate(report, ("initial",) if step == 0 else methods, step, "runtime")
         assert report["manifest_sha256"] == sha(cases / "cases.json")
         assert report["ema"] == (mode == "ema")
         return report
@@ -120,6 +125,13 @@ def main():
             )
         for name, digest in json.loads((root / "evaluation-input-sha256.json").read_text()).items():
             assert sha(cases / name) == digest, name
+        if args.study == "boundary_loss":
+            from lineartgen.config import load_config
+
+            calibration = json.loads((root / "calibration.json").read_text())
+            assert calibration["coefficient_frozen_before_training"]
+            assert load_config(config).loss.boundary_weight == calibration["coefficient"]
+            assert sha(initial / "weights.npz") == calibration["reference_weights_sha256"]
         initial_report = evaluate(0, "raw")
         for step in (2000, 10000):
             if (root / "stop").exists():
@@ -137,7 +149,7 @@ def main():
                     "compare_nested_training",
                     [
                         "--study",
-                        "geometry_data",
+                        args.study,
                         "--config",
                         config,
                         "--run-dir",
@@ -155,7 +167,7 @@ def main():
                 return
             reports = [evaluate(step, mode) for mode in ("raw", "ema")]
             if step == 2000:
-                gate = pilot_gate(reports, initial_report)
+                gate = pilot_gate(reports, initial_report, methods)
                 (root / "pilot-gate.json").write_text(json.dumps(gate, indent=2) + "\n")
                 status("pilot_evaluated", gate=gate)
         for cpu in (False, True):
@@ -163,7 +175,7 @@ def main():
                 "verify_training_methods",
                 [
                     "--study",
-                    "geometry_data",
+                    args.study,
                     "--root",
                     root,
                     "--exports-only" if cpu else "--check-checkpoints",

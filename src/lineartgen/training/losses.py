@@ -3,6 +3,8 @@
 import jax
 import jax.numpy as jnp
 
+from .boundary import boundary_distance_loss
+
 
 def region_mean(error, weights, region):
     weights = weights * region
@@ -53,4 +55,9 @@ def image_loss(prediction, clean, noise_level, config, min_noise):
     )
     loss = denoise + config.identity_weight * identity
     loss += config.edge_weight * edge + config.contrast_weight * contrast
-    return loss, {"denoise": denoise, "identity": identity, "edge": edge, "contrast": contrast}
+    parts = {"denoise": denoise, "identity": identity, "edge": edge, "contrast": contrast}
+    if config.boundary_weight:
+        boundary = boundary_distance_loss(prediction, clean, active, config.boundary_radius)
+        loss += config.boundary_weight * boundary
+        parts["boundary"] = boundary
+    return loss, parts

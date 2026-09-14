@@ -24,7 +24,9 @@ def main():
     parser.add_argument("--case", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
-        "--study", choices=["sketch", "sketch_rates", "geometry_data"], default="sketch"
+        "--study",
+        choices=["sketch", "sketch_rates", "geometry_data", "boundary_loss"],
+        default="sketch",
     )
     args = parser.parse_args()
     config = load_config(args.config)
@@ -36,7 +38,7 @@ def main():
             np.repeat(arrays["image"][None], config.train.effective_batch_size, axis=0)
         )
     assert clean.shape == (16, 512, 512, 1)
-    gradient, update, _ = make_steps(config)
+    numerical_steps = {name: make_steps(c) for name, c in variants.items()}
     models, preparations = {}, {}
     for name, settings in variants.items():
         model = nnx.clone(initial)
@@ -77,6 +79,7 @@ def main():
                     np.asarray(source)[protected], np.asarray(target)[protected]
                 )
             model, optimizer, ema = models[name]
+            gradient, update, _ = numerical_steps[name]
             metrics, gradients, norm = accumulate_gradients(
                 gradient, model, prepared, settings.train
             )

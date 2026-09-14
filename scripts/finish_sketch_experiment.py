@@ -27,6 +27,9 @@ def main():
         ],
         default="summarize_sketch_experiment",
     )
+    parser.add_argument(
+        "--study", choices=["geometry_data", "boundary_loss"], default="geometry_data"
+    )
     args = parser.parse_args()
     root = args.root.resolve()
 
@@ -51,6 +54,11 @@ def main():
                     str(step),
                     "--output",
                     str(destination),
+                    *(
+                        ["--study", args.study]
+                        if args.summary_script == "summarize_geometry_data"
+                        else []
+                    ),
                 ],
                 env=env,
                 stdout=output,

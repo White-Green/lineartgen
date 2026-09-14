@@ -19,7 +19,11 @@ def main():
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--through", choices=[2000, 10000], type=int, default=10000)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--study", choices=["geometry_data", "boundary_loss"], default="geometry_data"
+    )
     args = parser.parse_args()
+    methods = METHODS if args.study == "geometry_data" else ("control", "boundary")
     root = args.root.resolve()
     manifest = json.loads((root / "evaluation/cases.json").read_text())
     files = [
@@ -34,6 +38,7 @@ def main():
         "runtime-parity.json",
         "tests.log",
         "analysis-source.json",
+        "calibration.json",
     ):
         if (root / name).exists():
             files.append(root / name)
@@ -54,11 +59,11 @@ def main():
         initial = read(root / "evaluation/step-0-raw/metrics.json", ("initial",), 0, "runtime")
         rates["initial"] = summaries(initial)
         progress = json.loads((root / "training/progress.json").read_text())
-        assert progress["step"] >= args.through and progress["runs"] == list(METHODS)
+        assert progress["step"] >= args.through and progress["runs"] == list(methods)
         files.extend([root / "training/initialization.json", root / "pilot-gate.json"])
         reference = Path(json.loads((root / "training/initialization.json").read_text())["source"])
         with np.load(reference / "weights.npz", allow_pickle=False) as expected:
-            for method in METHODS:
+            for method in methods:
                 path = root / "training/initial" / method / "weights.npz"
                 with np.load(path, allow_pickle=False) as actual:
                     assert set(actual.files) == set(expected.files)
@@ -69,7 +74,7 @@ def main():
             (2000,) if args.through == 2000 else (2000, 10000), ("raw", "ema")
         ):
             report = read(
-                root / "evaluation" / f"step-{step}-{mode}/metrics.json", METHODS, step, "runtime"
+                root / "evaluation" / f"step-{step}-{mode}/metrics.json", methods, step, "runtime"
             )
             assert report["ema"] == (mode == "ema")
             rates[f"{step}-{mode}"] = dict(
@@ -78,7 +83,7 @@ def main():
                 paired_minus_initial=contrast(report, initial, manifest, "initial"),
                 strength_slices=strength_slices(report),
             )
-            for method in METHODS:
+            for method in methods:
                 files.extend((root / "snapshots" / f"step-{step}" / method / mode).iterdir())
         rows = [
             json.loads(line)
@@ -87,18 +92,18 @@ def main():
         ]
         assert [r["step"] for r in rows] == list(range(1, args.through + 1))
         assert all(r["recursion_levels"] == r["scale_level"] + 1 for r in rows)
-        assert all(set(r["updates"]) == set(METHODS) for r in rows)
+        assert all(set(r["updates"]) == set(methods) for r in rows)
         timing_path = root / f"timings-through-{args.through}.json"
         timing_path.write_text(json.dumps(rows) + "\n")
         files.append(timing_path)
         timings = dict(
             recorded_seconds=sum(r["seconds_before_evaluation"] for r in rows),
             mean_update_seconds={
-                m: float(np.mean([r["updates"][m] for r in rows[100:]])) for m in METHODS
+                m: float(np.mean([r["updates"][m] for r in rows[100:]])) for m in methods
             },
         )
         exposures = {}
-        for method in METHODS:
+        for method in methods:
             generated = [item for row in rows for item in row["generated"][method]]
             exposures[method] = dict(
                 total=args.through * 16,
@@ -107,8 +112,13 @@ def main():
                 blank=sum(r["kinds"] == ["blank"] for r in generated),
                 kind_groups=dict(Counter(k for r in generated for k in r["kinds"])),
             )
-        assert exposures["control"]["generated"] == 0
-        assert 0.17 < exposures["geometry20"]["generated"] / (args.through * 16) < 0.23
+        if args.study == "geometry_data":
+            assert exposures["control"]["generated"] == 0
+            assert 0.17 < exposures["geometry20"]["generated"] / (args.through * 16) < 0.23
+        else:
+            assert exposures["control"] == exposures["boundary"]
+            assert all(r["generated"]["control"] == r["generated"]["boundary"] for r in rows)
+            assert 0.17 < exposures["boundary"]["generated"] / (args.through * 16) < 0.23
         if args.through == 10000:
             for kind, path in (
                 ("verification", root / "verification/step-10000-raw-ema.json"),
@@ -117,7 +127,7 @@ def main():
                 audit = json.loads(path.read_text())
                 assert audit["step"] == 10000
                 assert {(r["method"], r["mode"]) for r in audit["records"]} == set(
-                    itertools.product(METHODS, ("raw", "ema"))
+                    itertools.product(methods, ("raw", "ema"))
                 )
                 assert len(audit["records"]) == 4
                 for record in audit["records"]:
@@ -134,7 +144,7 @@ def main():
                             [Path(record["onnx"]), Path(record["onnx"]).with_suffix(".json")]
                         )
                 files.append(path)
-            for method in METHODS:
+            for method in methods:
                 files.extend(
                     p
                     for p in (root / "training" / method / "checkpoints/10000").rglob("*")
@@ -145,7 +155,7 @@ def main():
         through=args.through,
         case_count=1562,
         denoise_steps=1,
-        data_comparison=rates,
+        study=args.study,
         exposures=exposures,
         timing=timings,
         artifacts={str(p): sha(p) for p in sorted(set(files))},
@@ -154,6 +164,7 @@ def main():
         "source-cluster intervals conditional on fitted models. Normalized arrays "
         "without BGRA quantization. M/L use internal prefix states in JAX.",
     )
+    result["data_comparison" if args.study == "geometry_data" else "loss_comparison"] = rates
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
     print(args.output, flush=True)

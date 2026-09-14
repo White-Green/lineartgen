@@ -16,6 +16,26 @@ def comparison_configs(config, *, study="widths", baseline=False):
         if baseline:
             result["baseline"] = config.model_copy(update={"model": ModelConfig()})
         return result
+    if study == "boundary_loss":
+        if (
+            baseline
+            or config.model.output_mode != "residual"
+            or config.matching.method != "independent"
+            or config.sketch.mode != "strokes"
+            or config.geometry.probability != 0.2
+            or config.loss.boundary_weight <= 0
+            or config.diffusion.pattern_weights[3]
+        ):
+            raise ValueError(
+                "Boundary comparison requires geometry20, strokes, residual, "
+                "independent noise/masks and a calibrated positive boundary weight"
+            )
+        return {
+            "control": config.model_copy(
+                update={"loss": config.loss.model_copy(update={"boundary_weight": 0.0})}
+            ),
+            "boundary": config,
+        }
     if study == "geometry_data":
         if (
             baseline

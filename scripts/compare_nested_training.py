@@ -39,7 +39,7 @@ def main():
     parser.add_argument("--baseline", action="store_true")
     parser.add_argument(
         "--study",
-        choices=["widths", "methods", "sketch", "sketch_rates", "geometry_data"],
+        choices=["widths", "methods", "sketch", "sketch_rates", "geometry_data", "boundary_loss"],
         default="widths",
     )
     parser.add_argument(
@@ -107,9 +107,9 @@ def main():
     end = min(config.train.steps, completed + args.stop_after)
     with ExitStack() as stack:
         runs = {}
-        # These comparisons preserve the loss and optimizer settings. Reuse the
-        # numerical functions so identical architectures share compiled programs.
-        gradient, update, evaluate = make_steps(config)
+        # Cache by objective and optimizer settings: data comparisons share compiled
+        # programs, while loss comparisons must use their own objective.
+        numerical_steps = {}
         preparations = {}
 
         def preparation(settings):
@@ -129,6 +129,10 @@ def main():
             return preparations[key]
 
         for name, settings in configs.items():
+            numerical_key = (settings.loss, settings.diffusion, settings.train)
+            if numerical_key not in numerical_steps:
+                numerical_steps[numerical_key] = make_steps(settings)
+            gradient, update, evaluate = numerical_steps[numerical_key]
             directory = root / name
             directory.mkdir(exist_ok=True)
             if args.resume:
