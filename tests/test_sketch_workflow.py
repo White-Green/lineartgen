@@ -60,7 +60,7 @@ def test_sketch_gate_checks_complete_grid_and_protected_input():
         assert not workflow.pilot_gate([bad, report])["passed"]
 
 
-@pytest.mark.parametrize("study", ["sketch", "sketch_rates"])
+@pytest.mark.parametrize("study", ["sketch", "sketch_rates", "geometry_data"])
 def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monkeypatch, study):
     dataset = tmp_path / "dataset" / "images"
     dataset.mkdir(parents=True)
@@ -99,6 +99,12 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
         }
     )
     config_path = tmp_path / "config.json"
+    if study == "geometry_data":
+        config = config.model_copy(
+            update={
+                "sketch": config.sketch.model_copy(update={"mode": "strokes", "probability": 0.5})
+            }
+        )
     save_config(config, config_path)
     model = create_model(config.model, rngs=nnx.Rngs(9))
     initial = tmp_path / "warmstart"
@@ -124,7 +130,11 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
             ],
         )
         compare.main()
-    names = ("control", "tone", "blur", "strokes") if study == "sketch" else ("p75", "p50", "p25")
+    names = {
+        "sketch": ("control", "tone", "blur", "strokes"),
+        "sketch_rates": ("p75", "p50", "p25"),
+        "geometry_data": ("control", "geometry20"),
+    }[study]
     for name in names:
         archived, _ = load_inference(full / "initial" / name)
         jax.tree.map(

@@ -221,7 +221,9 @@ def main():
     parser.add_argument("--steps", type=int, nargs="+", default=[1, 2, 5])
     parser.add_argument("--limit", type=int)
     parser.add_argument("--snapshot-only", action="store_true")
-    parser.add_argument("--study", choices=["methods", "sketch", "sketch_rates"], default="methods")
+    parser.add_argument(
+        "--study", choices=["methods", "sketch", "sketch_rates", "geometry_data"], default="methods"
+    )
     parser.add_argument("--recursion", choices=["dataset", "runtime"], default="dataset")
     parser.add_argument("--noise-generator", choices=["jax", "numpy"], default="jax")
     parser.add_argument(
@@ -236,7 +238,7 @@ def main():
         parser.error("This fixed evaluation suite uses 512px crops")
     manifest = (
         json.loads((args.cases / "cases.json").read_text())
-        if args.study in ("sketch", "sketch_rates")
+        if args.study in ("sketch", "sketch_rates", "geometry_data")
         else prepare(config, args.cases, args.legacy_cases)
     )
     if manifest["data_config"] != data_settings(config):

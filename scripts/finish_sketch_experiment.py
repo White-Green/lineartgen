@@ -20,7 +20,11 @@ def main():
     parser.add_argument("--output", type=Path, default=Path("benchmarks/sketch-20260911.json"))
     parser.add_argument(
         "--summary-script",
-        choices=["summarize_sketch_experiment", "summarize_sketch_rates"],
+        choices=[
+            "summarize_sketch_experiment",
+            "summarize_sketch_rates",
+            "summarize_geometry_data",
+        ],
         default="summarize_sketch_experiment",
     )
     args = parser.parse_args()

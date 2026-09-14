@@ -10,6 +10,7 @@ import numpy as np
 from flax import nnx
 
 from lineartgen.config import load_config
+from lineartgen.data.geometry import mix_geometry
 from lineartgen.diffusion import training_inputs
 from lineartgen.models.serialization import load_inference
 from lineartgen.training.comparison import comparison_configs
@@ -22,7 +23,9 @@ def main():
     parser.add_argument("--initialize-from", type=Path, required=True)
     parser.add_argument("--case", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--study", choices=["sketch", "sketch_rates"], default="sketch")
+    parser.add_argument(
+        "--study", choices=["sketch", "sketch_rates", "geometry_data"], default="sketch"
+    )
     args = parser.parse_args()
     config = load_config(args.config)
     variants = comparison_configs(config, study=args.study)
@@ -51,7 +54,16 @@ def main():
         reference = None
         for name, settings in variants.items():
             started = time.perf_counter()
-            prepared = preparations[name](clean, jax.random.PRNGKey(0xAB00 + levels), levels)
+            source, generated = mix_geometry(
+                np.asarray(clean),
+                settings.geometry,
+                seed=settings.train.seed,
+                step=levels,
+                image_scale=settings.data.image_scale,
+            )
+            prepared = preparations[name](
+                jax.device_put(source), jax.random.PRNGKey(0xAB00 + levels), levels
+            )
             jax.block_until_ready(prepared)
             prep_seconds = time.perf_counter() - started
             if reference is not None:
@@ -75,6 +87,7 @@ def main():
             models[name] = model, optimizer, ema
             record = dict(
                 method=name,
+                generated=generated,
                 levels=levels,
                 loss=float(metrics["loss"]),
                 gradient_norm=float(norm),

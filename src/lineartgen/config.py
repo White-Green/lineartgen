@@ -146,6 +146,22 @@ class SketchAugmentationConfig(Settings):
         return self
 
 
+class GeometryDataConfig(Settings):
+    """Replace a fraction of clean training targets with independently generated paths."""
+
+    probability: float = Field(default=0.0, ge=0, le=1)
+    blank_probability: float = Field(default=0.05, ge=0, le=1)
+    supersampling: int = Field(default=4, ge=2, le=8)
+    minimum_width: float = Field(default=0.6, gt=0)
+    maximum_width: float = Field(default=12.0, gt=0)
+
+    @model_validator(mode="after")
+    def validate_widths(self):
+        if self.minimum_width > self.maximum_width:
+            raise ValueError("Geometry width bounds must be ordered")
+        return self
+
+
 class LossConfig(Settings):
     balance_tones: bool = True
     identity_weight: float = Field(default=0.1, ge=0)
@@ -194,6 +210,7 @@ class ExperimentConfig(Settings):
     diffusion: DiffusionConfig = DiffusionConfig()
     matching: NoiseMatchingConfig = NoiseMatchingConfig()
     sketch: SketchAugmentationConfig = SketchAugmentationConfig()
+    geometry: GeometryDataConfig = GeometryDataConfig()
     loss: LossConfig = LossConfig()
     train: TrainConfig = TrainConfig()
 

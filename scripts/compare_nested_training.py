@@ -19,6 +19,7 @@ from flax import nnx
 from tensorboardX import SummaryWriter
 
 from lineartgen.config import load_config, save_config
+from lineartgen.data.geometry import mix_geometry
 from lineartgen.data.pipeline import batches, dataset_description, discover, split_experiment
 from lineartgen.diffusion import sample, training_inputs
 from lineartgen.models import create_model
@@ -37,7 +38,9 @@ def main():
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--baseline", action="store_true")
     parser.add_argument(
-        "--study", choices=["widths", "methods", "sketch", "sketch_rates"], default="widths"
+        "--study",
+        choices=["widths", "methods", "sketch", "sketch_rates", "geometry_data"],
+        default="widths",
     )
     parser.add_argument(
         "--initialize-from", type=Path, help="Shared inference weights; reset optimizer and EMA"
@@ -110,7 +113,7 @@ def main():
         preparations = {}
 
         def preparation(settings):
-            key = (settings.diffusion, settings.matching, settings.sketch)
+            key = (settings.diffusion, settings.matching, settings.sketch, settings.geometry)
             if key not in preparations:
                 preparations[key] = jax.jit(
                     lambda x, rng, levels: training_inputs(
@@ -219,10 +222,18 @@ def main():
                 config.data.crop_size, config.model.minimum_size, batch.scale_level
             )
             prepared_at = time.perf_counter()
-            prepared_batches = {
-                key: prepare(clean, jax.random.fold_in(root_key, step), levels)
-                for key, prepare in preparations.items()
-            }
+            prepared_batches, generated = {}, {}
+            for key, prepare in preparations.items():
+                images, records = mix_geometry(
+                    batch.images,
+                    key[3],
+                    seed=config.train.seed,
+                    step=step,
+                    image_scale=config.data.image_scale,
+                )
+                source = clean if not records else jax.device_put(images)
+                generated[key] = records
+                prepared_batches[key] = prepare(source, jax.random.fold_in(root_key, step), levels)
             jax.block_until_ready(tuple(prepared_batches.values()))
             preparation_seconds = time.perf_counter() - prepared_at
             timings = {}
@@ -233,9 +244,13 @@ def main():
             for name in order:
                 run = runs[name]
                 settings = run["config"]
-                prepared = prepared_batches[
-                    (settings.diffusion, settings.matching, settings.sketch)
-                ]
+                preparation_key = (
+                    settings.diffusion,
+                    settings.matching,
+                    settings.sketch,
+                    settings.geometry,
+                )
+                prepared = prepared_batches[preparation_key]
                 update_at = time.perf_counter()
                 metrics, gradients, norm = accumulate_gradients(
                     run["gradient"], run["model"], prepared, config.train
@@ -254,6 +269,7 @@ def main():
                         scale_level=batch.scale_level,
                         recursion_levels=levels,
                         update_seconds=timings[name],
+                        generated_examples=len(generated[preparation_key]),
                     )
                     run["trainer"]._log(run["writer"], step + 1, "train", logged)
             with (root / "timings.jsonl").open("a") as output:
@@ -266,6 +282,10 @@ def main():
                             "input_seconds": input_seconds,
                             "preparation_seconds": preparation_seconds,
                             "updates": timings,
+                            "generated": {
+                                name: generated[(s.diffusion, s.matching, s.sketch, s.geometry)]
+                                for name, s in configs.items()
+                            },
                             "seconds_before_evaluation": time.perf_counter() - started,
                         }
                     )

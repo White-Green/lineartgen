@@ -16,6 +16,25 @@ def comparison_configs(config, *, study="widths", baseline=False):
         if baseline:
             result["baseline"] = config.model_copy(update={"model": ModelConfig()})
         return result
+    if study == "geometry_data":
+        if (
+            baseline
+            or config.model.output_mode != "residual"
+            or config.matching.method != "independent"
+            or config.sketch.mode != "strokes"
+            or config.geometry.probability != 0
+            or config.diffusion.pattern_weights[3]
+        ):
+            raise ValueError(
+                "Geometry data control requires residual, independent noise, "
+                "strokes and image-independent masks, with geometry disabled"
+            )
+        return {
+            "control": config,
+            "geometry20": config.model_copy(
+                update={"geometry": config.geometry.model_copy(update={"probability": 0.2})}
+            ),
+        }
     if study in ("sketch", "sketch_rates"):
         if baseline or config.model.output_mode != "residual":
             raise ValueError("The sketch study requires residual output and no width baseline")

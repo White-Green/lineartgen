@@ -258,7 +258,9 @@ def main():
     parser.add_argument("--modes", choices=["raw", "ema"], nargs="+", default=["raw", "ema"])
     parser.add_argument("--exports-only", action="store_true")
     parser.add_argument("--check-checkpoints", action="store_true")
-    parser.add_argument("--study", choices=["methods", "sketch", "sketch_rates"], default="methods")
+    parser.add_argument(
+        "--study", choices=["methods", "sketch", "sketch_rates", "geometry_data"], default="methods"
+    )
     args = parser.parse_args()
     if args.exports_only:
         exports(args.root, args.step, args.modes, study=args.study)

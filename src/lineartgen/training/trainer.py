@@ -18,6 +18,7 @@ from rich.console import Console
 from tensorboardX import SummaryWriter
 
 from lineartgen.config import load_config, save_config
+from lineartgen.data.geometry import mix_geometry
 from lineartgen.data.pipeline import batches, dataset_description, discover, split_experiment
 from lineartgen.diffusion import sample, training_inputs
 from lineartgen.models import create_model
@@ -110,7 +111,14 @@ class Trainer:
                 try:
                     for step in range(completed, end):
                         batch = next(stream)
-                        clean = jax.device_put(batch.images)
+                        images, generated = mix_geometry(
+                            batch.images,
+                            config.geometry,
+                            seed=train.seed,
+                            step=step,
+                            image_scale=config.data.image_scale,
+                        )
+                        clean = jax.device_put(images)
                         levels = config.diffusion.levels_for_scale(
                             config.data.crop_size,
                             config.model.minimum_size,
@@ -134,6 +142,7 @@ class Trainer:
                                 learning_rate=float(schedule(step)),
                                 scale_level=batch.scale_level,
                                 recursion_levels=levels,
+                                generated_examples=len(generated),
                             )
                             self._log(writer, completed, "train", logged)
                         if completed % train.evaluate_every == 0 or completed == end:
