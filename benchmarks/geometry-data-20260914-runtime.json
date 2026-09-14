@@ -1,0 +1,169 @@
+{
+  "records": [
+    {
+      "method": "control",
+      "mode": "raw",
+      "case": 167,
+      "levels": 3,
+      "max_abs_error": 1.6689300537109375e-06,
+      "protected_exact": true,
+      "onnx_sha256": "59c8b315d60f2b9c72ca3df319213b384dffa2f6cb4d98e6cd950a8c327fc553",
+      "weights_sha256": "c50c590b02f414829b6223871fb379a34c57c55864a0e92be51d77028e59bfa0"
+    },
+    {
+      "method": "control",
+      "mode": "raw",
+      "case": 256,
+      "levels": 3,
+      "max_abs_error": 8.940696716308594e-07,
+      "protected_exact": true,
+      "onnx_sha256": "59c8b315d60f2b9c72ca3df319213b384dffa2f6cb4d98e6cd950a8c327fc553",
+      "weights_sha256": "c50c590b02f414829b6223871fb379a34c57c55864a0e92be51d77028e59bfa0"
+    },
+    {
+      "method": "control",
+      "mode": "raw",
+      "case": 479,
+      "levels": 3,
+      "max_abs_error": 1.7881393432617188e-06,
+      "protected_exact": true,
+      "onnx_sha256": "59c8b315d60f2b9c72ca3df319213b384dffa2f6cb4d98e6cd950a8c327fc553",
+      "weights_sha256": "c50c590b02f414829b6223871fb379a34c57c55864a0e92be51d77028e59bfa0"
+    },
+    {
+      "method": "control",
+      "mode": "raw",
+      "case": 1376,
+      "levels": 3,
+      "max_abs_error": 3.5762786865234375e-07,
+      "protected_exact": true,
+      "onnx_sha256": "59c8b315d60f2b9c72ca3df319213b384dffa2f6cb4d98e6cd950a8c327fc553",
+      "weights_sha256": "c50c590b02f414829b6223871fb379a34c57c55864a0e92be51d77028e59bfa0"
+    },
+    {
+      "method": "control",
+      "mode": "ema",
+      "case": 167,
+      "levels": 3,
+      "max_abs_error": 1.4007091522216797e-06,
+      "protected_exact": true,
+      "onnx_sha256": "d16c333f5569978538fc49fba1c2bef8371c33a9e848f0e9b2bf8c02339ae0fc",
+      "weights_sha256": "44d5782c364dd6c83cf4baab8aea26e67fa6c0d8d93bc282f70dda7542786728"
+    },
+    {
+      "method": "control",
+      "mode": "ema",
+      "case": 256,
+      "levels": 3,
+      "max_abs_error": 1.0132789611816406e-06,
+      "protected_exact": true,
+      "onnx_sha256": "d16c333f5569978538fc49fba1c2bef8371c33a9e848f0e9b2bf8c02339ae0fc",
+      "weights_sha256": "44d5782c364dd6c83cf4baab8aea26e67fa6c0d8d93bc282f70dda7542786728"
+    },
+    {
+      "method": "control",
+      "mode": "ema",
+      "case": 479,
+      "levels": 3,
+      "max_abs_error": 1.8328428268432617e-06,
+      "protected_exact": true,
+      "onnx_sha256": "d16c333f5569978538fc49fba1c2bef8371c33a9e848f0e9b2bf8c02339ae0fc",
+      "weights_sha256": "44d5782c364dd6c83cf4baab8aea26e67fa6c0d8d93bc282f70dda7542786728"
+    },
+    {
+      "method": "control",
+      "mode": "ema",
+      "case": 1376,
+      "levels": 3,
+      "max_abs_error": 2.980232238769531e-07,
+      "protected_exact": true,
+      "onnx_sha256": "d16c333f5569978538fc49fba1c2bef8371c33a9e848f0e9b2bf8c02339ae0fc",
+      "weights_sha256": "44d5782c364dd6c83cf4baab8aea26e67fa6c0d8d93bc282f70dda7542786728"
+    },
+    {
+      "method": "geometry20",
+      "mode": "raw",
+      "case": 167,
+      "levels": 3,
+      "max_abs_error": 1.9669532775878906e-06,
+      "protected_exact": true,
+      "onnx_sha256": "822750b0031c90133b48f24300291f766d1b73cf0ab065381d356cec06dc312e",
+      "weights_sha256": "633dce456396df534445fd8e762884a8d42b4f4026742925c19bd16af97223c0"
+    },
+    {
+      "method": "geometry20",
+      "mode": "raw",
+      "case": 256,
+      "levels": 3,
+      "max_abs_error": 1.430511474609375e-06,
+      "protected_exact": true,
+      "onnx_sha256": "822750b0031c90133b48f24300291f766d1b73cf0ab065381d356cec06dc312e",
+      "weights_sha256": "633dce456396df534445fd8e762884a8d42b4f4026742925c19bd16af97223c0"
+    },
+    {
+      "method": "geometry20",
+      "mode": "raw",
+      "case": 479,
+      "levels": 3,
+      "max_abs_error": 1.1920928955078125e-06,
+      "protected_exact": true,
+      "onnx_sha256": "822750b0031c90133b48f24300291f766d1b73cf0ab065381d356cec06dc312e",
+      "weights_sha256": "633dce456396df534445fd8e762884a8d42b4f4026742925c19bd16af97223c0"
+    },
+    {
+      "method": "geometry20",
+      "mode": "raw",
+      "case": 1376,
+      "levels": 3,
+      "max_abs_error": 4.172325134277344e-07,
+      "protected_exact": true,
+      "onnx_sha256": "822750b0031c90133b48f24300291f766d1b73cf0ab065381d356cec06dc312e",
+      "weights_sha256": "633dce456396df534445fd8e762884a8d42b4f4026742925c19bd16af97223c0"
+    },
+    {
+      "method": "geometry20",
+      "mode": "ema",
+      "case": 167,
+      "levels": 3,
+      "max_abs_error": 2.0265579223632812e-06,
+      "protected_exact": true,
+      "onnx_sha256": "974bcbfbf8543d5616ae91a318861c91a5b6adcb4f50e2b161ecce5a602f3038",
+      "weights_sha256": "3698fe0870542377be83aeb272af94d00d3efda6cdaa37cafe82db084472db45"
+    },
+    {
+      "method": "geometry20",
+      "mode": "ema",
+      "case": 256,
+      "levels": 3,
+      "max_abs_error": 1.0132789611816406e-06,
+      "protected_exact": true,
+      "onnx_sha256": "974bcbfbf8543d5616ae91a318861c91a5b6adcb4f50e2b161ecce5a602f3038",
+      "weights_sha256": "3698fe0870542377be83aeb272af94d00d3efda6cdaa37cafe82db084472db45"
+    },
+    {
+      "method": "geometry20",
+      "mode": "ema",
+      "case": 479,
+      "levels": 3,
+      "max_abs_error": 1.7881393432617188e-06,
+      "protected_exact": true,
+      "onnx_sha256": "974bcbfbf8543d5616ae91a318861c91a5b6adcb4f50e2b161ecce5a602f3038",
+      "weights_sha256": "3698fe0870542377be83aeb272af94d00d3efda6cdaa37cafe82db084472db45"
+    },
+    {
+      "method": "geometry20",
+      "mode": "ema",
+      "case": 1376,
+      "levels": 3,
+      "max_abs_error": 1.0728836059570312e-06,
+      "protected_exact": true,
+      "onnx_sha256": "974bcbfbf8543d5616ae91a318861c91a5b6adcb4f50e2b161ecce5a602f3038",
+      "weights_sha256": "3698fe0870542377be83aeb272af94d00d3efda6cdaa37cafe82db084472db45"
+    }
+  ],
+  "manifest_sha256": "1a0b834c475434d224e26c0fbb2e8bd22f3a738a1440d2be3fc1d53caf42e4f9",
+  "devices": [
+    "cpu:0"
+  ],
+  "scope": "Normalized arrays, actual S ONNX and unchanged runtime sampling; no BGRA conversion"
+}

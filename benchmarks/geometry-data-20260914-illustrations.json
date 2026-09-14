@@ -1,0 +1,808 @@
+{
+  "records": [
+    {
+      "method": "control",
+      "mode": "raw",
+      "step": 10000,
+      "denoise_steps": 1,
+      "records": [
+        {
+          "case": 256,
+          "metadata": {
+            "kind": "curve",
+            "suite": "geometry",
+            "variant": 3,
+            "scale_level": 0,
+            "file": "case-256.npz",
+            "strength": 0.5,
+            "partial": true,
+            "seed": 2026091356
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.004522460978478193,
+              "active_ink_f1": 0.9372475087530299,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007246577297337353
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.00482561532407999,
+              "active_ink_f1": 0.941781749255348,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0009406769531778991
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.005316272843629122,
+              "active_ink_f1": 0.9337268580627851,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0012985391076654196
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-control-raw/case-256.png",
+          "sha256": "fc873fc642c4470c8fed939a1203b56447ffaf5e1800692aa9911e2bd9c61ff7"
+        },
+        {
+          "case": 479,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-479.npz",
+            "strength": 0.1,
+            "partial": false,
+            "seed": 2026091779,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.05861010402441025,
+              "active_ink_f1": 0.7910593568051268,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.05584185570478439,
+              "active_ink_f1": 0.8037838050005888,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.05513201653957367,
+              "active_ink_f1": 0.807349166904306,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-control-raw/case-479.png",
+          "sha256": "8c898dd54ceb38540f0f2a4205c38cdbbf63188c9c1b7790a65ae87fb6d7ec14"
+        },
+        {
+          "case": 480,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-480.npz",
+            "strength": 0.5,
+            "partial": false,
+            "seed": 2026091780,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.08349741250276566,
+              "active_ink_f1": 0.523572501878287,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.0834638923406601,
+              "active_ink_f1": 0.5797798868243996,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.08663768321275711,
+              "active_ink_f1": 0.6056282203725724,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-control-raw/case-480.png",
+          "sha256": "0fa652c4f6aa053732669ae94307157ee5e9f84171b48311b1bee815474010e0"
+        },
+        {
+          "case": 1376,
+          "metadata": {
+            "kind": "gap",
+            "suite": "sketch_geometry",
+            "variant": 0,
+            "scale_level": 0,
+            "file": "case-1376.npz",
+            "strength": 0.1,
+            "partial": true,
+            "seed": 2026092676,
+            "family": "tone",
+            "severity": "strong",
+            "corruption_seed": 2026091236
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.006027995143085718,
+              "active_ink_f1": 0.0,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0013484434457495809
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.005665129981935024,
+              "active_ink_f1": 0.0,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0011993830557912588
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.004789000377058983,
+              "active_ink_f1": 0.0,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0010219875257462263
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-control-raw/case-1376.png",
+          "sha256": "aded8154db04a6a5322dc938cfd55ebeb0c5b73ab711d4f77d9eb942123c5651"
+        }
+      ],
+      "weights_sha256": "c50c590b02f414829b6223871fb379a34c57c55864a0e92be51d77028e59bfa0",
+      "manifest_sha256": "1a0b834c475434d224e26c0fbb2e8bd22f3a738a1440d2be3fc1d53caf42e4f9",
+      "metrics_sha256": "d7e159b2d28f910625087a2abddeb84e25ad607b7878f00cd98f1b2b917f7e25",
+      "selection": "Illustrations selected after evaluation; numerical metrics reproduce the fixed suite."
+    },
+    {
+      "method": "control",
+      "mode": "ema",
+      "step": 10000,
+      "denoise_steps": 1,
+      "records": [
+        {
+          "case": 256,
+          "metadata": {
+            "kind": "curve",
+            "suite": "geometry",
+            "variant": 3,
+            "scale_level": 0,
+            "file": "case-256.npz",
+            "strength": 0.5,
+            "partial": true,
+            "seed": 2026091356
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.004021685570478439,
+              "active_ink_f1": 0.9440217391304347,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0006261469679884613
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.0042793829925358295,
+              "active_ink_f1": 0.9462776111262613,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007888507680036128
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.004167758394032717,
+              "active_ink_f1": 0.9419424850786761,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0008064103312790394
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-control-ema/case-256.png",
+          "sha256": "6da7f72ae13d3606d2b4efe63fc1192dbb5b24ca0ea88a14c72e6277eb9ffba6"
+        },
+        {
+          "case": 479,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-479.npz",
+            "strength": 0.1,
+            "partial": false,
+            "seed": 2026091779,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.059593066573143005,
+              "active_ink_f1": 0.7920560747663551,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.0556643046438694,
+              "active_ink_f1": 0.8039937353171496,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.05322028696537018,
+              "active_ink_f1": 0.8180770300886363,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-control-ema/case-479.png",
+          "sha256": "5e37ac4a0df1b6103315ee92ef96de6d4db4ace742f19428d149ad95b690a4ea"
+        },
+        {
+          "case": 480,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-480.npz",
+            "strength": 0.5,
+            "partial": false,
+            "seed": 2026091780,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.08485612273216248,
+              "active_ink_f1": 0.5514337632407038,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.08445152640342712,
+              "active_ink_f1": 0.5989787736844326,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.0821860283613205,
+              "active_ink_f1": 0.6337294142172191,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-control-ema/case-480.png",
+          "sha256": "442739633436e34261183ebb23de0ac75db21636c74f5ef3e50db6848a8a4614"
+        },
+        {
+          "case": 1376,
+          "metadata": {
+            "kind": "gap",
+            "suite": "sketch_geometry",
+            "variant": 0,
+            "scale_level": 0,
+            "file": "case-1376.npz",
+            "strength": 0.1,
+            "partial": true,
+            "seed": 2026092676,
+            "family": "tone",
+            "severity": "strong",
+            "corruption_seed": 2026091236
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.006012889090925455,
+              "active_ink_f1": 0.0,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.001289173262193799
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.005634182132780552,
+              "active_ink_f1": 0.0,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0011260234750807285
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.004662107676267624,
+              "active_ink_f1": 0.0,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0009325474384240806
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-control-ema/case-1376.png",
+          "sha256": "f509a1b4fafa1cdc6d86ee8b649b90dab84fe8e053e3127e6ce0ac1e7f9a2474"
+        }
+      ],
+      "weights_sha256": "44d5782c364dd6c83cf4baab8aea26e67fa6c0d8d93bc282f70dda7542786728",
+      "manifest_sha256": "1a0b834c475434d224e26c0fbb2e8bd22f3a738a1440d2be3fc1d53caf42e4f9",
+      "metrics_sha256": "9df048b28061b7a09e4dff429602cd8fea0217f5e148584ebaab07e71f1f1eae",
+      "selection": "Illustrations selected after evaluation; numerical metrics reproduce the fixed suite."
+    },
+    {
+      "method": "geometry20",
+      "mode": "raw",
+      "step": 10000,
+      "denoise_steps": 1,
+      "records": [
+        {
+          "case": 256,
+          "metadata": {
+            "kind": "curve",
+            "suite": "geometry",
+            "variant": 3,
+            "scale_level": 0,
+            "file": "case-256.npz",
+            "strength": 0.5,
+            "partial": true,
+            "seed": 2026091356
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.004660633858293295,
+              "active_ink_f1": 0.9425162689804772,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007550598820671439
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.005115221254527569,
+              "active_ink_f1": 0.9393040194227138,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0012124788481742144
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.005222191568464041,
+              "active_ink_f1": 0.9300960512273212,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0010175673523917794
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-geometry20-raw/case-256.png",
+          "sha256": "e8ab2c83475fd163824560c7f8dc93bfe5d8be1a5ce57f8364d05b4760a5b39f"
+        },
+        {
+          "case": 479,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-479.npz",
+            "strength": 0.1,
+            "partial": false,
+            "seed": 2026091779,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.06278172135353088,
+              "active_ink_f1": 0.802489718795154,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.05666679888963699,
+              "active_ink_f1": 0.8161315409398956,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.054504137486219406,
+              "active_ink_f1": 0.8294502086179523,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-geometry20-raw/case-479.png",
+          "sha256": "48f6d0ada50418941c2382449f76505facdfb1697fed89ea3f92f43b71671fa9"
+        },
+        {
+          "case": 480,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-480.npz",
+            "strength": 0.5,
+            "partial": false,
+            "seed": 2026091780,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.08875323832035065,
+              "active_ink_f1": 0.6730586254848862,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.08837629854679108,
+              "active_ink_f1": 0.6932092626793579,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.0888054370880127,
+              "active_ink_f1": 0.7012147474603964,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-geometry20-raw/case-480.png",
+          "sha256": "ab278dea76ad7508fb89b06f5621d701f7496ed978708842ebab5f525e187e6c"
+        },
+        {
+          "case": 1376,
+          "metadata": {
+            "kind": "gap",
+            "suite": "sketch_geometry",
+            "variant": 0,
+            "scale_level": 0,
+            "file": "case-1376.npz",
+            "strength": 0.1,
+            "partial": true,
+            "seed": 2026092676,
+            "family": "tone",
+            "severity": "strong",
+            "corruption_seed": 2026091236
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.005086530931293964,
+              "active_ink_f1": 0.022900763358778626,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0010913934092968702
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.00412740046158433,
+              "active_ink_f1": 0.1299638989169675,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007651179330423474
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.003695529419928789,
+              "active_ink_f1": 0.22602739726027396,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007275476236827672
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-geometry20-raw/case-1376.png",
+          "sha256": "00912e53969c7b4609fb0f837d7236f4fc236ce10f8bfd90506ed66e97e4ba2a"
+        }
+      ],
+      "weights_sha256": "633dce456396df534445fd8e762884a8d42b4f4026742925c19bd16af97223c0",
+      "manifest_sha256": "1a0b834c475434d224e26c0fbb2e8bd22f3a738a1440d2be3fc1d53caf42e4f9",
+      "metrics_sha256": "d7e159b2d28f910625087a2abddeb84e25ad607b7878f00cd98f1b2b917f7e25",
+      "selection": "Illustrations selected after evaluation; numerical metrics reproduce the fixed suite."
+    },
+    {
+      "method": "geometry20",
+      "mode": "ema",
+      "step": 10000,
+      "denoise_steps": 1,
+      "records": [
+        {
+          "case": 256,
+          "metadata": {
+            "kind": "curve",
+            "suite": "geometry",
+            "variant": 3,
+            "scale_level": 0,
+            "file": "case-256.npz",
+            "strength": 0.5,
+            "partial": true,
+            "seed": 2026091356
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.004418905824422836,
+              "active_ink_f1": 0.9429037520391517,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007107512792572379
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.004755410831421614,
+              "active_ink_f1": 0.9445652173913044,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0008971828501671553
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.004588488955050707,
+              "active_ink_f1": 0.9398435392500675,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007573229377157986
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-geometry20-ema/case-256.png",
+          "sha256": "88664e23ef6da93f3cddc46ab4e2ba92eb6aa71f147c8d214dccd959de33e0c0"
+        },
+        {
+          "case": 479,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-479.npz",
+            "strength": 0.1,
+            "partial": false,
+            "seed": 2026091779,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.06230480968952179,
+              "active_ink_f1": 0.8043050658749304,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.05530230700969696,
+              "active_ink_f1": 0.8201885577978872,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.053775347769260406,
+              "active_ink_f1": 0.8335918290145641,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-geometry20-ema/case-479.png",
+          "sha256": "cb8c5ec24f1cb214339307a4cbb43812447dc05f4d58994ac0ce75ad345e7759"
+        },
+        {
+          "case": 480,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-480.npz",
+            "strength": 0.5,
+            "partial": false,
+            "seed": 2026091780,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.09090369194746017,
+              "active_ink_f1": 0.6730789336121276,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.08957397937774658,
+              "active_ink_f1": 0.6916882668049076,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.08753461390733719,
+              "active_ink_f1": 0.7041928721174004,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-geometry20-ema/case-480.png",
+          "sha256": "92e8c2dbc35430698e638fc412f285238861fd4d2425e730ad2ac83fa25aaee9"
+        },
+        {
+          "case": 1376,
+          "metadata": {
+            "kind": "gap",
+            "suite": "sketch_geometry",
+            "variant": 0,
+            "scale_level": 0,
+            "file": "case-1376.npz",
+            "strength": 0.1,
+            "partial": true,
+            "seed": 2026092676,
+            "family": "tone",
+            "severity": "strong",
+            "corruption_seed": 2026091236
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.0050077359192073345,
+              "active_ink_f1": 0.030418250950570342,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.001065018936060369
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.004186943639069796,
+              "active_ink_f1": 0.11636363636363636,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007841027691029012
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.003715334925800562,
+              "active_ink_f1": 0.22602739726027396,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.00073088682256639
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/geometry-data-20260914/evaluation/widths-10000-geometry20-ema/case-1376.png",
+          "sha256": "1c8b676e8bfa0b7d8d66fef6a6e142534d5d0c655a346ceb2ceef564e1587c3f"
+        }
+      ],
+      "weights_sha256": "3698fe0870542377be83aeb272af94d00d3efda6cdaa37cafe82db084472db45",
+      "manifest_sha256": "1a0b834c475434d224e26c0fbb2e8bd22f3a738a1440d2be3fc1d53caf42e4f9",
+      "metrics_sha256": "9df048b28061b7a09e4dff429602cd8fea0217f5e148584ebaab07e71f1f1eae",
+      "selection": "Illustrations selected after evaluation; numerical metrics reproduce the fixed suite."
+    }
+  ]
+}
