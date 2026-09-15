@@ -4,6 +4,9 @@
 実装と実行手順は [nested-models.md](nested-models.md) を参照。
 測定値・比較画像・次の判断は [実験結果](nested-experiment-20260910.md) に記録した。
 
+2026-09-15 L1b: [半係数の追試](boundary-half-experiment-20260915.md)を開始した。
+同係数の短い再実行と入力・source監査を通し、1条件だけ追加学習して前回の2条件と比較する。
+
 2026-09-15 追記: [L1の局所距離場loss比較](boundary-loss-experiment-20260914.md) を
 2条件とも追加10,000更新まで完了した。線幅誤差は減少したが、EMAで切断増加と
 強いblurのF1低下があり、採用は保留。次は半分の係数を1条件だけ追加し、
