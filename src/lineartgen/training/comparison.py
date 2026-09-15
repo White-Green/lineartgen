@@ -16,7 +16,7 @@ def comparison_configs(config, *, study="widths", baseline=False):
         if baseline:
             result["baseline"] = config.model_copy(update={"model": ModelConfig()})
         return result
-    if study == "boundary_loss":
+    if study in ("boundary_loss", "boundary_half"):
         if (
             baseline
             or config.model.output_mode != "residual"
@@ -30,6 +30,8 @@ def comparison_configs(config, *, study="widths", baseline=False):
                 "Boundary comparison requires geometry20, strokes, residual, "
                 "independent noise/masks and a calibrated positive boundary weight"
             )
+        if study == "boundary_half":
+            return {"half": config}
         return {
             "control": config.model_copy(
                 update={"loss": config.loss.model_copy(update={"boundary_weight": 0.0})}

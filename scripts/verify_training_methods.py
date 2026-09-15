@@ -260,7 +260,14 @@ def main():
     parser.add_argument("--check-checkpoints", action="store_true")
     parser.add_argument(
         "--study",
-        choices=["methods", "sketch", "sketch_rates", "geometry_data", "boundary_loss"],
+        choices=[
+            "methods",
+            "sketch",
+            "sketch_rates",
+            "geometry_data",
+            "boundary_loss",
+            "boundary_half",
+        ],
         default="methods",
     )
     args = parser.parse_args()

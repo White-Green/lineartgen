@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 from evaluate_training_methods import summarize
-from run_geometry_data import METHODS
+from run_geometry_data import study_methods
 from run_sketch_rates import validate
 from summarize_sketch_experiment import subset
 from summarize_training_methods import sha
@@ -19,10 +19,12 @@ def main():
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--benchmark", type=Path, required=True)
     parser.add_argument(
-        "--study", choices=["geometry_data", "boundary_loss"], default="geometry_data"
+        "--study",
+        choices=["geometry_data", "boundary_loss", "boundary_half"],
+        default="geometry_data",
     )
     args = parser.parse_args()
-    methods = METHODS if args.study == "geometry_data" else ("control", "boundary")
+    methods = study_methods(args.study)
     root = args.root.resolve()
     benchmark = json.loads(args.benchmark.read_text())
     assert benchmark["through"] == 10000
@@ -81,7 +83,11 @@ def main():
                     **values,
                 )
             )
-    assert expected_outputs == 42174
+    assert expected_outputs == 4686 + 4 * 4686 * len(methods)
+    if args.study == "boundary_half":
+        from boundary_reuse import verify_reuse
+
+        verify_reuse(root, 10000)
     timings = [json.loads(x) for x in (root / "training/timings.jsonl").read_text().splitlines()]
     assert [r["step"] for r in timings] == list(range(1, 10001))
     from lineartgen.config import load_config
@@ -92,10 +98,10 @@ def main():
         step = row["step"] - 1
         rng = np.random.default_rng(np.random.SeedSequence([config.train.seed, step, 0x47454F4D]))
         selected = np.flatnonzero(rng.random(16) < 0.2).tolist()
-        actual = row["generated"]["geometry20" if args.study == "geometry_data" else "boundary"]
+        actual = row["generated"][methods[-1]]
         if args.study == "geometry_data":
             assert not row["generated"]["control"]
-        else:
+        elif args.study == "boundary_loss":
             assert row["generated"]["control"] == actual
         assert [r["item"] for r in actual] == selected
         assert all(r["key"] == [config.train.seed, step, r["item"], 0x50415448] for r in actual)
@@ -122,7 +128,7 @@ def main():
     ]:
         path = root / name
         audit = json.loads(path.read_text())
-        assert len(audit["records"]) == 16
+        assert len(audit["records"]) == 8 * len(methods)
         if name == "runtime-parity.json":
             assert max(r["max_abs_error"] for r in audit["records"]) < 2e-5
             assert all(r["protected_exact"] and r["levels"] == 3 for r in audit["records"])

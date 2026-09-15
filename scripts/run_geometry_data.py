@@ -15,6 +15,14 @@ from summarize_training_methods import sha
 METHODS = ("control", "geometry20")
 
 
+def study_methods(study):
+    return {
+        "geometry_data": METHODS,
+        "boundary_loss": ("control", "boundary"),
+        "boundary_half": ("half",),
+    }[study]
+
+
 def pilot_gate(reports, initial, methods=METHODS):
     for report in reports:
         validate(report, methods, 2000, "runtime")
@@ -38,14 +46,20 @@ def main():
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--reference-root", type=Path, default=Path("runs/sketch-rates-20260912"))
     parser.add_argument(
-        "--study", choices=["geometry_data", "boundary_loss"], default="geometry_data"
+        "--study",
+        choices=["geometry_data", "boundary_loss", "boundary_half"],
+        default="geometry_data",
     )
     args = parser.parse_args()
-    methods = METHODS if args.study == "geometry_data" else ("control", "boundary")
+    methods = study_methods(args.study)
     root, reference = args.root.resolve(), args.reference_root.resolve()
     config, cases, group = root / "config.toml", root / "evaluation", root / "training"
     initial_method = "p50" if args.study == "geometry_data" else "geometry20"
     initial = reference / "snapshots/step-10000" / initial_method / "raw"
+    if args.study == "boundary_half":
+        initial = Path(
+            json.loads((reference / "training/initialization.json").read_text())["source"]
+        )
 
     def status(stage, **extra):
         record = dict(
@@ -125,14 +139,24 @@ def main():
             )
         for name, digest in json.loads((root / "evaluation-input-sha256.json").read_text()).items():
             assert sha(cases / name) == digest, name
-        if args.study == "boundary_loss":
+        if args.study in ("boundary_loss", "boundary_half"):
             from lineartgen.config import load_config
 
             calibration = json.loads((root / "calibration.json").read_text())
             assert calibration["coefficient_frozen_before_training"]
             assert load_config(config).loss.boundary_weight == calibration["coefficient"]
             assert sha(initial / "weights.npz") == calibration["reference_weights_sha256"]
+        if args.study == "boundary_half":
+            from boundary_reuse import verify_reuse
+
+            verify_reuse(root)
         initial_report = evaluate(0, "raw")
+        if args.study == "boundary_half":
+            previous = json.loads((reference / "evaluation/step-0-raw/metrics.json").read_text())
+            assert initial_report["results"] == previous["results"]
+            (root / "initial-reevaluation.json").write_text(
+                json.dumps(dict(outputs=len(initial_report["results"]), exact=True)) + "\n"
+            )
         for step in (2000, 10000):
             if (root / "stop").exists():
                 status("stop_requested")

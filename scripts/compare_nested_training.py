@@ -39,7 +39,15 @@ def main():
     parser.add_argument("--baseline", action="store_true")
     parser.add_argument(
         "--study",
-        choices=["widths", "methods", "sketch", "sketch_rates", "geometry_data", "boundary_loss"],
+        choices=[
+            "widths",
+            "methods",
+            "sketch",
+            "sketch_rates",
+            "geometry_data",
+            "boundary_loss",
+            "boundary_half",
+        ],
         default="widths",
     )
     parser.add_argument(

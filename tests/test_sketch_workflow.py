@@ -60,7 +60,9 @@ def test_sketch_gate_checks_complete_grid_and_protected_input():
         assert not workflow.pilot_gate([bad, report])["passed"]
 
 
-@pytest.mark.parametrize("study", ["sketch", "sketch_rates", "geometry_data", "boundary_loss"])
+@pytest.mark.parametrize(
+    "study", ["sketch", "sketch_rates", "geometry_data", "boundary_loss", "boundary_half"]
+)
 def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monkeypatch, study):
     dataset = tmp_path / "dataset" / "images"
     dataset.mkdir(parents=True)
@@ -99,13 +101,13 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
         }
     )
     config_path = tmp_path / "config.json"
-    if study in ("geometry_data", "boundary_loss"):
+    if study in ("geometry_data", "boundary_loss", "boundary_half"):
         config = config.model_copy(
             update={
                 "sketch": config.sketch.model_copy(update={"mode": "strokes", "probability": 0.5})
             }
         )
-    if study == "boundary_loss":
+    if study in ("boundary_loss", "boundary_half"):
         config = config.model_copy(
             update={
                 "geometry": config.geometry.model_copy(update={"probability": 0.2}),
@@ -142,6 +144,7 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
         "sketch_rates": ("p75", "p50", "p25"),
         "geometry_data": ("control", "geometry20"),
         "boundary_loss": ("control", "boundary"),
+        "boundary_half": ("half",),
     }[study]
     for name in names:
         archived, _ = load_inference(full / "initial" / name)
@@ -169,3 +172,29 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
                 jax.tree.leaves(final_states[0]), jax.tree.leaves(final_states[1]), strict=True
             )
         )
+
+    if study == "boundary_half":
+        # Compare single-arm execution with the unchanged two-arm runner, including
+        # model, optimizer and EMA states, not merely logged losses.
+        paired = tmp_path / "paired"
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "compare_nested_training",
+                "--study",
+                "boundary_loss",
+                "--config",
+                str(config_path),
+                "--run-dir",
+                str(paired),
+                "--stop-after",
+                "3",
+                "--initialize-from",
+                str(initial),
+            ],
+        )
+        compare.main()
+        with checkpoints.manager(paired / "boundary/checkpoints") as saved:
+            paired_state = saved.restore(3, args=ocp.args.StandardRestore())
+        jax.tree.map(np.testing.assert_array_equal, states[0], paired_state)

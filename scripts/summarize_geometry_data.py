@@ -7,7 +7,7 @@ from collections import Counter
 from pathlib import Path
 
 import numpy as np
-from run_geometry_data import METHODS
+from run_geometry_data import study_methods
 from run_sketch_rates import validate
 from summarize_sketch_experiment import strength_slices
 from summarize_sketch_rates import contrast, summaries
@@ -20,11 +20,18 @@ def main():
     parser.add_argument("--through", choices=[2000, 10000], type=int, default=10000)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
-        "--study", choices=["geometry_data", "boundary_loss"], default="geometry_data"
+        "--study",
+        choices=["geometry_data", "boundary_loss", "boundary_half"],
+        default="geometry_data",
     )
     args = parser.parse_args()
-    methods = METHODS if args.study == "geometry_data" else ("control", "boundary")
+    methods = study_methods(args.study)
     root = args.root.resolve()
+    reused = None
+    if args.study == "boundary_half":
+        from boundary_reuse import verify_reuse
+
+        reused = verify_reuse(root, args.through)
     manifest = json.loads((root / "evaluation/cases.json").read_text())
     files = [
         root / "config.toml",
@@ -39,6 +46,7 @@ def main():
         "tests.log",
         "analysis-source.json",
         "calibration.json",
+        "reference-reuse.json",
     ):
         if (root / name).exists():
             files.append(root / name)
@@ -77,12 +85,26 @@ def main():
                 root / "evaluation" / f"step-{step}-{mode}/metrics.json", methods, step, "runtime"
             )
             assert report["ema"] == (mode == "ema")
+            comparison = report
+            if reused is not None:
+                old = read(
+                    reused / "evaluation" / f"step-{step}-{mode}/metrics.json",
+                    ("control", "boundary"),
+                    step,
+                    "runtime",
+                )
+                assert old["ema"] == report["ema"]
+                comparison = dict(report, results=old["results"] + report["results"])
             rates[f"{step}-{mode}"] = dict(
-                summary=summaries(report),
-                paired_minus_control=contrast(report, report, manifest, "control"),
-                paired_minus_initial=contrast(report, initial, manifest, "initial"),
-                strength_slices=strength_slices(report),
+                summary=summaries(comparison),
+                paired_minus_control=contrast(comparison, comparison, manifest, "control"),
+                paired_minus_initial=contrast(comparison, initial, manifest, "initial"),
+                strength_slices=strength_slices(comparison),
             )
+            if reused is not None:
+                rates[f"{step}-{mode}"]["half_minus_boundary"] = contrast(
+                    report, old, manifest, "boundary"
+                )
             for method in methods:
                 files.extend((root / "snapshots" / f"step-{step}" / method / mode).iterdir())
         rows = [
@@ -115,10 +137,12 @@ def main():
         if args.study == "geometry_data":
             assert exposures["control"]["generated"] == 0
             assert 0.17 < exposures["geometry20"]["generated"] / (args.through * 16) < 0.23
-        else:
+        elif args.study == "boundary_loss":
             assert exposures["control"] == exposures["boundary"]
             assert all(r["generated"]["control"] == r["generated"]["boundary"] for r in rows)
             assert 0.17 < exposures["boundary"]["generated"] / (args.through * 16) < 0.23
+        if reused is not None:
+            assert 0.17 < exposures["half"]["generated"] / (args.through * 16) < 0.23
         if args.through == 10000:
             for kind, path in (
                 ("verification", root / "verification/step-10000-raw-ema.json"),
@@ -129,7 +153,7 @@ def main():
                 assert {(r["method"], r["mode"]) for r in audit["records"]} == set(
                     itertools.product(methods, ("raw", "ema"))
                 )
-                assert len(audit["records"]) == 4
+                assert len(audit["records"]) == 2 * len(methods)
                 for record in audit["records"]:
                     if kind == "verification":
                         assert record["checkpoint_and_optimizer_step"] == 10000
@@ -152,6 +176,9 @@ def main():
                 )
     result = dict(
         synthetic_only=True,
+        newly_trained_methods=list(methods),
+        reused_methods=["control", "boundary"] if reused else [],
+        reference_root=str(reused) if reused else None,
         through=args.through,
         case_count=1562,
         denoise_steps=1,
