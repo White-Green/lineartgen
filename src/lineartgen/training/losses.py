@@ -4,6 +4,7 @@ import jax
 import jax.numpy as jnp
 
 from .boundary import boundary_distance_loss
+from .cldice import centerline_loss
 
 
 def region_mean(error, weights, region):
@@ -60,4 +61,8 @@ def image_loss(prediction, clean, noise_level, config, min_noise):
         boundary = boundary_distance_loss(prediction, clean, active, config.boundary_radius)
         loss += config.boundary_weight * boundary
         parts["boundary"] = boundary
+    if config.cldice_weight:
+        centerline = centerline_loss(prediction, clean, active, config.cldice_iterations)
+        loss += config.cldice_weight * centerline
+        parts["centerline"] = centerline
     return loss, parts

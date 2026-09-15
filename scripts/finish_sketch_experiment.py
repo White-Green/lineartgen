@@ -29,7 +29,7 @@ def main():
     )
     parser.add_argument(
         "--study",
-        choices=["geometry_data", "boundary_loss", "boundary_half"],
+        choices=["geometry_data", "boundary_loss", "boundary_half", "cldice_loss"],
         default="geometry_data",
     )
     args = parser.parse_args()

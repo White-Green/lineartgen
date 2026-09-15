@@ -20,7 +20,7 @@ def main():
     parser.add_argument("--benchmark", type=Path, required=True)
     parser.add_argument(
         "--study",
-        choices=["geometry_data", "boundary_loss", "boundary_half"],
+        choices=["geometry_data", "boundary_loss", "boundary_half", "cldice_loss"],
         default="geometry_data",
     )
     args = parser.parse_args()
@@ -101,7 +101,7 @@ def main():
         actual = row["generated"][methods[-1]]
         if args.study == "geometry_data":
             assert not row["generated"]["control"]
-        elif args.study == "boundary_loss":
+        elif args.study in ("boundary_loss", "cldice_loss"):
             assert row["generated"]["control"] == actual
         assert [r["item"] for r in actual] == selected
         assert all(r["key"] == [config.train.seed, step, r["item"], 0x50415448] for r in actual)

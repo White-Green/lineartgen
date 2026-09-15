@@ -21,7 +21,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
         "--study",
-        choices=["geometry_data", "boundary_loss", "boundary_half"],
+        choices=["geometry_data", "boundary_loss", "boundary_half", "cldice_loss"],
         default="geometry_data",
     )
     args = parser.parse_args()
@@ -137,10 +137,11 @@ def main():
         if args.study == "geometry_data":
             assert exposures["control"]["generated"] == 0
             assert 0.17 < exposures["geometry20"]["generated"] / (args.through * 16) < 0.23
-        elif args.study == "boundary_loss":
-            assert exposures["control"] == exposures["boundary"]
-            assert all(r["generated"]["control"] == r["generated"]["boundary"] for r in rows)
-            assert 0.17 < exposures["boundary"]["generated"] / (args.through * 16) < 0.23
+        elif args.study in ("boundary_loss", "cldice_loss"):
+            variant = methods[-1]
+            assert exposures["control"] == exposures[variant]
+            assert all(r["generated"]["control"] == r["generated"][variant] for r in rows)
+            assert 0.17 < exposures[variant]["generated"] / (args.through * 16) < 0.23
         if reused is not None:
             assert 0.17 < exposures["half"]["generated"] / (args.through * 16) < 0.23
         if args.through == 10000:

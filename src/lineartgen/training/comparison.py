@@ -16,6 +16,27 @@ def comparison_configs(config, *, study="widths", baseline=False):
         if baseline:
             result["baseline"] = config.model_copy(update={"model": ModelConfig()})
         return result
+    if study == "cldice_loss":
+        if (
+            baseline
+            or config.model.output_mode != "residual"
+            or config.matching.method != "independent"
+            or config.sketch.mode != "strokes"
+            or config.geometry.probability != 0.2
+            or config.loss.boundary_weight != 0
+            or config.loss.cldice_weight <= 0
+            or config.diffusion.pattern_weights[3]
+        ):
+            raise ValueError(
+                "Centerline comparison requires geometry20, strokes, residual, "
+                "independent noise/masks, positive cldice weight and no distance loss"
+            )
+        return {
+            "control": config.model_copy(
+                update={"loss": config.loss.model_copy(update={"cldice_weight": 0.0})}
+            ),
+            "centerline": config,
+        }
     if study in ("boundary_loss", "boundary_half"):
         if (
             baseline

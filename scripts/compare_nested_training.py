@@ -47,6 +47,7 @@ def main():
             "geometry_data",
             "boundary_loss",
             "boundary_half",
+            "cldice_loss",
         ],
         default="widths",
     )

@@ -25,7 +25,14 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
         "--study",
-        choices=["sketch", "sketch_rates", "geometry_data", "boundary_loss", "boundary_half"],
+        choices=[
+            "sketch",
+            "sketch_rates",
+            "geometry_data",
+            "boundary_loss",
+            "boundary_half",
+            "cldice_loss",
+        ],
         default="sketch",
     )
     args = parser.parse_args()

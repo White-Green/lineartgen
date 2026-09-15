@@ -114,8 +114,8 @@ def main():
                 weights_sha256=hashlib.sha256((source / "weights.npz").read_bytes()).hexdigest(),
                 manifest_sha256=hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
                 metrics_sha256=hashlib.sha256(report_path.read_bytes()).hexdigest(),
-                selection="Illustrations selected after evaluation; "
-                "numerical metrics reproduce the fixed suite.",
+                selection="Explicit case indices; numerical metrics reproduce the fixed suite. "
+                "See the experiment report for the selection timing.",
             ),
             indent=2,
             allow_nan=False,

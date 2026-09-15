@@ -230,6 +230,7 @@ def main():
             "geometry_data",
             "boundary_loss",
             "boundary_half",
+            "cldice_loss",
         ],
         default="methods",
     )
@@ -248,7 +249,14 @@ def main():
     manifest = (
         json.loads((args.cases / "cases.json").read_text())
         if args.study
-        in ("sketch", "sketch_rates", "geometry_data", "boundary_loss", "boundary_half")
+        in (
+            "sketch",
+            "sketch_rates",
+            "geometry_data",
+            "boundary_loss",
+            "boundary_half",
+            "cldice_loss",
+        )
         else prepare(config, args.cases, args.legacy_cases)
     )
     if manifest["data_config"] != data_settings(config):

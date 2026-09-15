@@ -163,6 +163,8 @@ class GeometryDataConfig(Settings):
 
 
 class LossConfig(Settings):
+    cldice_weight: float = Field(default=0.0, ge=0)
+    cldice_iterations: int = Field(default=16, ge=1, le=64)
     boundary_weight: float = Field(default=0.0, ge=0)
     boundary_radius: int = Field(default=4, ge=1, le=16)
     balance_tones: bool = True

@@ -20,6 +20,7 @@ def study_methods(study):
         "geometry_data": METHODS,
         "boundary_loss": ("control", "boundary"),
         "boundary_half": ("half",),
+        "cldice_loss": ("control", "centerline"),
     }[study]
 
 
@@ -47,7 +48,7 @@ def main():
     parser.add_argument("--reference-root", type=Path, default=Path("runs/sketch-rates-20260912"))
     parser.add_argument(
         "--study",
-        choices=["geometry_data", "boundary_loss", "boundary_half"],
+        choices=["geometry_data", "boundary_loss", "boundary_half", "cldice_loss"],
         default="geometry_data",
     )
     args = parser.parse_args()
@@ -139,21 +140,38 @@ def main():
             )
         for name, digest in json.loads((root / "evaluation-input-sha256.json").read_text()).items():
             assert sha(cases / name) == digest, name
-        if args.study in ("boundary_loss", "boundary_half"):
+        if args.study in ("boundary_loss", "boundary_half", "cldice_loss"):
             from lineartgen.config import load_config
 
             calibration = json.loads((root / "calibration.json").read_text())
             assert calibration["coefficient_frozen_before_training"]
-            assert load_config(config).loss.boundary_weight == calibration["coefficient"]
+            weight = (
+                load_config(config).loss.cldice_weight
+                if args.study == "cldice_loss"
+                else load_config(config).loss.boundary_weight
+            )
+            assert weight == calibration["coefficient"]
             assert sha(initial / "weights.npz") == calibration["reference_weights_sha256"]
         if args.study == "boundary_half":
             from boundary_reuse import verify_reuse
 
             verify_reuse(root)
         initial_report = evaluate(0, "raw")
-        if args.study == "boundary_half":
-            previous = json.loads((reference / "evaluation/step-0-raw/metrics.json").read_text())
-            assert initial_report["results"] == previous["results"]
+        if args.study in ("boundary_half", "cldice_loss"):
+            if args.study == "cldice_loss":
+                previous = json.loads(
+                    (reference / "evaluation/step-10000-raw/metrics.json").read_text()
+                )
+                previous_rows = [
+                    dict(row, method="initial")
+                    for row in previous["results"]
+                    if row["method"] == "geometry20"
+                ]
+            else:
+                previous_rows = json.loads(
+                    (reference / "evaluation/step-0-raw/metrics.json").read_text()
+                )["results"]
+            assert initial_report["results"] == previous_rows
             (root / "initial-reevaluation.json").write_text(
                 json.dumps(dict(outputs=len(initial_report["results"]), exact=True)) + "\n"
             )

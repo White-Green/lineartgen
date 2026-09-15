@@ -27,15 +27,15 @@ def main():
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--initialize-from", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--auxiliary", choices=["boundary", "centerline"], default="boundary")
     args = parser.parse_args()
+    field = "boundary_weight" if args.auxiliary == "boundary" else "cldice_weight"
     assert not args.output.exists(), "Do not overwrite a completed calibration"
     config = load_config(args.config)
     model, saved = load_inference(args.initialize_from)
-    assert saved.model == config.model and config.loss.boundary_weight == 1
+    assert saved.model == config.model and getattr(config.loss, field) == 1
     initial = flattened(nnx.state(model, nnx.Param)).copy()
-    base = config.model_copy(
-        update={"loss": config.loss.model_copy(update={"boundary_weight": 0.0})}
-    )
+    base = config.model_copy(update={"loss": config.loss.model_copy(update={field: 0.0})})
     gradients = [make_steps(c)[0] for c in (base, config)]
     calibration_seed = config.train.seed + 1000
     train, _, _ = split_experiment(discover(config.data), config.data, config.train.seed)
@@ -76,7 +76,7 @@ def main():
                 dataset_scale=batch.scale_level,
                 generated=generated,
                 base_loss=float(parts[0][0]["loss"]),
-                auxiliary_loss=float(parts[1][0]["boundary"]),
+                auxiliary_loss=float(parts[1][0][args.auxiliary]),
                 base_gradient_norm=norm0,
                 auxiliary_gradient_norm=norm_aux,
                 unweighted_ratio=norm_aux / norm0,
@@ -94,6 +94,7 @@ def main():
     exact = min(0.1 / np.median(ratios), 0.5 / ratios.max())
     coefficient = float(f"{exact:.6g}")
     result = dict(
+        auxiliary=args.auxiliary,
         coefficient=coefficient,
         selection="min(.10 / median(unweighted_ratio), .50 / max(unweighted_ratio)); "
         "six significant digits",
@@ -113,13 +114,12 @@ def main():
     )
     args.output.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
     source = args.config.read_text()
-    assert (
-        "boundary_weight = 1.0 # Placeholder; calibration must replace before training." in source
-    )
+    placeholder = f"{field} = 1.0 # Placeholder; calibration must replace before training."
+    assert placeholder in source
     args.config.write_text(
         source.replace(
-            "boundary_weight = 1.0 # Placeholder; calibration must replace before training.",
-            f"boundary_weight = {coefficient} # Fixed by training-only gradient calibration.",
+            placeholder,
+            f"{field} = {coefficient} # Fixed by training-only gradient calibration.",
         )
     )
     print(f"Fixed coefficient: {coefficient}", flush=True)
