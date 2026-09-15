@@ -15,6 +15,8 @@ Krita の Diffusion Drawing は小さな別パッケージ `lineartgen-runtime` 
 [境界近傍loss](docs/boundary-loss-experiment-20260914.md)の比較も完了した。
 [半係数の追試](docs/boundary-half-experiment-20260915.md)では、EMAの線幅改善を一部残し、
 切断増加を抑えた。解消には至らず、rawも含む全面採用は保留している。
+[灰色線画向けの中心線loss比較](docs/cldice-loss-experiment-20260915.md)を実行中。
+係数を学習データだけで校正し、補助lossの有無を同じ初期重み・データ列で比較する。
 
 ## 環境を作る
 
