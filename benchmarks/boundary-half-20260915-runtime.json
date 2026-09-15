@@ -1,0 +1,89 @@
+{
+  "records": [
+    {
+      "method": "half",
+      "mode": "raw",
+      "case": 167,
+      "levels": 3,
+      "max_abs_error": 3.2782554626464844e-06,
+      "protected_exact": true,
+      "onnx_sha256": "a70b1c6a43616999a2b2fa7099e74c2bd92591e692ebc13a4d145f0a9c35cc4a",
+      "weights_sha256": "1c9207a8ae5358478be46d1d492025996386c3ed22e29525dd8b18bff423c3a8"
+    },
+    {
+      "method": "half",
+      "mode": "raw",
+      "case": 256,
+      "levels": 3,
+      "max_abs_error": 4.589557647705078e-06,
+      "protected_exact": true,
+      "onnx_sha256": "a70b1c6a43616999a2b2fa7099e74c2bd92591e692ebc13a4d145f0a9c35cc4a",
+      "weights_sha256": "1c9207a8ae5358478be46d1d492025996386c3ed22e29525dd8b18bff423c3a8"
+    },
+    {
+      "method": "half",
+      "mode": "raw",
+      "case": 479,
+      "levels": 3,
+      "max_abs_error": 1.7285346984863281e-06,
+      "protected_exact": true,
+      "onnx_sha256": "a70b1c6a43616999a2b2fa7099e74c2bd92591e692ebc13a4d145f0a9c35cc4a",
+      "weights_sha256": "1c9207a8ae5358478be46d1d492025996386c3ed22e29525dd8b18bff423c3a8"
+    },
+    {
+      "method": "half",
+      "mode": "raw",
+      "case": 1376,
+      "levels": 3,
+      "max_abs_error": 1.0132789611816406e-06,
+      "protected_exact": true,
+      "onnx_sha256": "a70b1c6a43616999a2b2fa7099e74c2bd92591e692ebc13a4d145f0a9c35cc4a",
+      "weights_sha256": "1c9207a8ae5358478be46d1d492025996386c3ed22e29525dd8b18bff423c3a8"
+    },
+    {
+      "method": "half",
+      "mode": "ema",
+      "case": 167,
+      "levels": 3,
+      "max_abs_error": 1.430511474609375e-06,
+      "protected_exact": true,
+      "onnx_sha256": "7fc1c27bdb5ea3fc4db38d696f36bf066c0937291318d197141f32ec31d7131b",
+      "weights_sha256": "df90a75e037c54318130d4284ac5f48d24e9722bff26a16be2ee9038662ad187"
+    },
+    {
+      "method": "half",
+      "mode": "ema",
+      "case": 256,
+      "levels": 3,
+      "max_abs_error": 1.0132789611816406e-06,
+      "protected_exact": true,
+      "onnx_sha256": "7fc1c27bdb5ea3fc4db38d696f36bf066c0937291318d197141f32ec31d7131b",
+      "weights_sha256": "df90a75e037c54318130d4284ac5f48d24e9722bff26a16be2ee9038662ad187"
+    },
+    {
+      "method": "half",
+      "mode": "ema",
+      "case": 479,
+      "levels": 3,
+      "max_abs_error": 1.6093254089355469e-06,
+      "protected_exact": true,
+      "onnx_sha256": "7fc1c27bdb5ea3fc4db38d696f36bf066c0937291318d197141f32ec31d7131b",
+      "weights_sha256": "df90a75e037c54318130d4284ac5f48d24e9722bff26a16be2ee9038662ad187"
+    },
+    {
+      "method": "half",
+      "mode": "ema",
+      "case": 1376,
+      "levels": 3,
+      "max_abs_error": 8.344650268554688e-07,
+      "protected_exact": true,
+      "onnx_sha256": "7fc1c27bdb5ea3fc4db38d696f36bf066c0937291318d197141f32ec31d7131b",
+      "weights_sha256": "df90a75e037c54318130d4284ac5f48d24e9722bff26a16be2ee9038662ad187"
+    }
+  ],
+  "manifest_sha256": "1a0b834c475434d224e26c0fbb2e8bd22f3a738a1440d2be3fc1d53caf42e4f9",
+  "devices": [
+    "cpu:0"
+  ],
+  "scope": "Normalized arrays, actual S ONNX and unchanged runtime sampling; no BGRA conversion"
+}

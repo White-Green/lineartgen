@@ -13,7 +13,8 @@ Krita の Diffusion Drawing は小さな別パッケージ `lineartgen-runtime` 
 `configs/sketch-rates.toml`。背景の改善と下描き復元のトレードオフを記録した。
 [生成線画20%の追加](docs/geometry-data-experiment-20260914.md)と
 [境界近傍loss](docs/boundary-loss-experiment-20260914.md)の比較も完了した。
-続く[半係数の追試](docs/boundary-half-experiment-20260915.md)で、線幅と切断の折り合いを調べる。
+[半係数の追試](docs/boundary-half-experiment-20260915.md)では、EMAの線幅改善を一部残し、
+切断増加を抑えた。解消には至らず、rawも含む全面採用は保留している。
 
 ## 環境を作る
 

@@ -1,0 +1,111 @@
+{
+  "checkpoint_step": 10000,
+  "provider": "CPUExecutionProvider",
+  "records": [
+    {
+      "method": "half",
+      "mode": "raw",
+      "width": 33,
+      "height": 17,
+      "denoise_steps": 1,
+      "recursion_levels": 1,
+      "identity_exact": true,
+      "deterministic": true,
+      "protected_bgra_exact": true,
+      "output_sha256": "a718be736be4eb36463c4ae821b0288bce5926f75f52f9d8f13ee48943e21877",
+      "model_sha256": "a70b1c6a43616999a2b2fa7099e74c2bd92591e692ebc13a4d145f0a9c35cc4a"
+    },
+    {
+      "method": "half",
+      "mode": "raw",
+      "width": 33,
+      "height": 17,
+      "denoise_steps": 5,
+      "recursion_levels": 1,
+      "identity_exact": true,
+      "deterministic": true,
+      "protected_bgra_exact": true,
+      "output_sha256": "bf1722d42cdc0a8c955e97325d7b75208752b9b888faef10edac6b1e0860498a",
+      "model_sha256": "a70b1c6a43616999a2b2fa7099e74c2bd92591e692ebc13a4d145f0a9c35cc4a"
+    },
+    {
+      "method": "half",
+      "mode": "raw",
+      "width": 512,
+      "height": 512,
+      "denoise_steps": 1,
+      "recursion_levels": 3,
+      "identity_exact": true,
+      "deterministic": true,
+      "protected_bgra_exact": true,
+      "output_sha256": "a64477b7d6526141b6a2e96ffcc2b7022715f778c714f54e8ba6f9edb3600612",
+      "model_sha256": "a70b1c6a43616999a2b2fa7099e74c2bd92591e692ebc13a4d145f0a9c35cc4a"
+    },
+    {
+      "method": "half",
+      "mode": "raw",
+      "width": 512,
+      "height": 512,
+      "denoise_steps": 5,
+      "recursion_levels": 3,
+      "identity_exact": true,
+      "deterministic": true,
+      "protected_bgra_exact": true,
+      "output_sha256": "98f4e3e246c32978e3ede33b492a3392bb53652052c346e3725974109f85adc5",
+      "model_sha256": "a70b1c6a43616999a2b2fa7099e74c2bd92591e692ebc13a4d145f0a9c35cc4a"
+    },
+    {
+      "method": "half",
+      "mode": "ema",
+      "width": 33,
+      "height": 17,
+      "denoise_steps": 1,
+      "recursion_levels": 1,
+      "identity_exact": true,
+      "deterministic": true,
+      "protected_bgra_exact": true,
+      "output_sha256": "6a6b2b70ce35b9abcce84925bdc94f416af6ae69aba3941a0c89c5be3dcc1ac5",
+      "model_sha256": "7fc1c27bdb5ea3fc4db38d696f36bf066c0937291318d197141f32ec31d7131b"
+    },
+    {
+      "method": "half",
+      "mode": "ema",
+      "width": 33,
+      "height": 17,
+      "denoise_steps": 5,
+      "recursion_levels": 1,
+      "identity_exact": true,
+      "deterministic": true,
+      "protected_bgra_exact": true,
+      "output_sha256": "130ffea942adcbf09d50f973fe4425c6da07eda79c03540e28c09a631c6cfcb5",
+      "model_sha256": "7fc1c27bdb5ea3fc4db38d696f36bf066c0937291318d197141f32ec31d7131b"
+    },
+    {
+      "method": "half",
+      "mode": "ema",
+      "width": 512,
+      "height": 512,
+      "denoise_steps": 1,
+      "recursion_levels": 3,
+      "identity_exact": true,
+      "deterministic": true,
+      "protected_bgra_exact": true,
+      "output_sha256": "920915295f46f6d32e30408435606fd1b2a9d16de7ac64773f5cefb902fe1e9f",
+      "model_sha256": "7fc1c27bdb5ea3fc4db38d696f36bf066c0937291318d197141f32ec31d7131b"
+    },
+    {
+      "method": "half",
+      "mode": "ema",
+      "width": 512,
+      "height": 512,
+      "denoise_steps": 5,
+      "recursion_levels": 3,
+      "identity_exact": true,
+      "deterministic": true,
+      "protected_bgra_exact": true,
+      "output_sha256": "92d313239f1d612ad856e027d191618b94a62c300732f2e7ac1d2aac26bf4261",
+      "model_sha256": "7fc1c27bdb5ea3fc4db38d696f36bf066c0937291318d197141f32ec31d7131b"
+    }
+  ],
+  "note": "Preservation is relative to existing prepare_input/to_bgra behavior, including image_scale, quantization and alpha threshold. This is an API check, not a quality benchmark."
+}

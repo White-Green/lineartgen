@@ -1,0 +1,406 @@
+{
+  "records": [
+    {
+      "method": "half",
+      "mode": "raw",
+      "step": 10000,
+      "denoise_steps": 1,
+      "records": [
+        {
+          "case": 256,
+          "metadata": {
+            "kind": "curve",
+            "suite": "geometry",
+            "variant": 3,
+            "scale_level": 0,
+            "file": "case-256.npz",
+            "strength": 0.5,
+            "partial": true,
+            "seed": 2026091356
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.005389596335589886,
+              "active_ink_f1": 0.9363538295577131,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0008507411694154143
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.0059278435073792934,
+              "active_ink_f1": 0.9315141787051899,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0010595227358862758
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.005703553091734648,
+              "active_ink_f1": 0.9249535932113497,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0009831334464251995
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-raw/case-256.png",
+          "sha256": "e297b87fb0437a938417c2ae346445dfcb3f9bcdaa1c1a51f2e36ceec054ec82"
+        },
+        {
+          "case": 479,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-479.npz",
+            "strength": 0.1,
+            "partial": false,
+            "seed": 2026091779,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.06315719336271286,
+              "active_ink_f1": 0.806311370961697,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.05785632133483887,
+              "active_ink_f1": 0.8203371970495258,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.05630865693092346,
+              "active_ink_f1": 0.835262958758986,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-raw/case-479.png",
+          "sha256": "9538382863baca8ada32a70e0fbfef4a82665f97e273d685a5ae2fc2cff207cf"
+        },
+        {
+          "case": 480,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-480.npz",
+            "strength": 0.5,
+            "partial": false,
+            "seed": 2026091780,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.09715502709150314,
+              "active_ink_f1": 0.6847862335756686,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.09668783843517303,
+              "active_ink_f1": 0.6895676783448814,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.09036942571401596,
+              "active_ink_f1": 0.7003735325506937,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-raw/case-480.png",
+          "sha256": "faa9e9c26a9ef8369873c87164c7452c257de48661ef5fe8fa6d0f68a8c026b1"
+        },
+        {
+          "case": 1376,
+          "metadata": {
+            "kind": "gap",
+            "suite": "sketch_geometry",
+            "variant": 0,
+            "scale_level": 0,
+            "file": "case-1376.npz",
+            "strength": 0.1,
+            "partial": true,
+            "seed": 2026092676,
+            "family": "tone",
+            "severity": "strong",
+            "corruption_seed": 2026091236
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.004892866592854261,
+              "active_ink_f1": 0.06716417910447761,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0010498404735699296
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.004065745510160923,
+              "active_ink_f1": 0.2013888888888889,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0008042809786275029
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.003678432200103998,
+              "active_ink_f1": 0.2440677966101695,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007361377356573939
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-raw/case-1376.png",
+          "sha256": "c8d7035670743b3d727b43b626813998e495e422ac9a886b58ea03623568ae3c"
+        }
+      ],
+      "weights_sha256": "1c9207a8ae5358478be46d1d492025996386c3ed22e29525dd8b18bff423c3a8",
+      "manifest_sha256": "1a0b834c475434d224e26c0fbb2e8bd22f3a738a1440d2be3fc1d53caf42e4f9",
+      "metrics_sha256": "21c3fe61704087f88fae2055e61becd841e0007e1a6336069a28b20902a87a54",
+      "selection": "Illustrations selected after evaluation; numerical metrics reproduce the fixed suite."
+    },
+    {
+      "method": "half",
+      "mode": "ema",
+      "step": 10000,
+      "denoise_steps": 1,
+      "records": [
+        {
+          "case": 256,
+          "metadata": {
+            "kind": "curve",
+            "suite": "geometry",
+            "variant": 3,
+            "scale_level": 0,
+            "file": "case-256.npz",
+            "strength": 0.5,
+            "partial": true,
+            "seed": 2026091356
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.004223240073770285,
+              "active_ink_f1": 0.9449891067538126,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0006683595711365342
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.004331144969910383,
+              "active_ink_f1": 0.9463361481885045,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007192546036094427
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.004297508858144283,
+              "active_ink_f1": 0.9395574743658931,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007073102751746774
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-ema/case-256.png",
+          "sha256": "014f08ba57b5159b24aed4ba053a09b6b5577dcfcc9c59bf314ab3f8ea3f4688"
+        },
+        {
+          "case": 479,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-479.npz",
+            "strength": 0.1,
+            "partial": false,
+            "seed": 2026091779,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.06061459332704544,
+              "active_ink_f1": 0.8071923581194981,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.05368655547499657,
+              "active_ink_f1": 0.8214820790595828,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.05145791172981262,
+              "active_ink_f1": 0.8361291313193352,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-ema/case-479.png",
+          "sha256": "53abe1a4ef27a386e1ac4d5258582e40035d2e192bd31073e2e4a86a91f46d42"
+        },
+        {
+          "case": 480,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-480.npz",
+            "strength": 0.5,
+            "partial": false,
+            "seed": 2026091780,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.08907634019851685,
+              "active_ink_f1": 0.6830110000718959,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.0861474946141243,
+              "active_ink_f1": 0.7020648967551623,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.08225349336862564,
+              "active_ink_f1": 0.7136595790922592,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-ema/case-480.png",
+          "sha256": "b56fecf28886bb0cc5e7c917f2116efbe9aaa3961511a23bd766ea1566c52590"
+        },
+        {
+          "case": 1376,
+          "metadata": {
+            "kind": "gap",
+            "suite": "sketch_geometry",
+            "variant": 0,
+            "scale_level": 0,
+            "file": "case-1376.npz",
+            "strength": 0.1,
+            "partial": true,
+            "seed": 2026092676,
+            "family": "tone",
+            "severity": "strong",
+            "corruption_seed": 2026091236
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.004937521182000637,
+              "active_ink_f1": 0.045283018867924525,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0010627247393131256
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.004100656136870384,
+              "active_ink_f1": 0.1824561403508772,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007973422179929912
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.0036871086340397596,
+              "active_ink_f1": 0.26174496644295303,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007020095945335925
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-ema/case-1376.png",
+          "sha256": "54690c1d74fda9c56e137885d0da45415cd10dccd67e6ee7d523cfc3fa7281eb"
+        }
+      ],
+      "weights_sha256": "df90a75e037c54318130d4284ac5f48d24e9722bff26a16be2ee9038662ad187",
+      "manifest_sha256": "1a0b834c475434d224e26c0fbb2e8bd22f3a738a1440d2be3fc1d53caf42e4f9",
+      "metrics_sha256": "ea1eab565a98599f4f41dc8dc4e57460f59a6478f35988eb871cc0fc0493dbac",
+      "selection": "Illustrations selected after evaluation; numerical metrics reproduce the fixed suite."
+    }
+  ]
+}

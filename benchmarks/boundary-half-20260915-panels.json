@@ -1,0 +1,125 @@
+{
+  "records": [
+    {
+      "case": 256,
+      "mode": "raw",
+      "output": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/three-conditions/three-raw-case-256.png",
+      "sha256": "f5132cb96668de3eaadda6819f70e65f78538550f9dfb597ec54a3b6d4a02f66",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-raw/case-256.png": "fecf1dd119854aa75be8a4351016693a54d597e4ecbd54f31bb1c3ba3750796e",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-raw/verification.json": "40ec2c3a365ad57cc575364c9406c7faf8999980ce76cc51bb38a2f3c325297b",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-raw/case-256.png": "e297b87fb0437a938417c2ae346445dfcb3f9bcdaa1c1a51f2e36ceec054ec82",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-raw/verification.json": "93af10fbc90f18ef19a93492686d78fddd31d6dbcb54712f782acf65dd552d7d",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-raw/case-256.png": "8253587012ce320ccb510e61da6d185f30e6b028e397520dd0a602ca98f5893c",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-raw/verification.json": "2c7598940099ebd42d15616fb18c7da3548309a03d8cd9fa6da780cfa9b65a16"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 479,
+      "mode": "raw",
+      "output": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/three-conditions/three-raw-case-479.png",
+      "sha256": "02779527b704678263d8d801d7fac939ff8249c62bec780b9f72ce95853a61b8",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-raw/case-479.png": "872c49c37d51d3ba86e16cd9ad1a2273cb3be8ae79d4a5d5562a423c322dc7ab",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-raw/verification.json": "40ec2c3a365ad57cc575364c9406c7faf8999980ce76cc51bb38a2f3c325297b",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-raw/case-479.png": "9538382863baca8ada32a70e0fbfef4a82665f97e273d685a5ae2fc2cff207cf",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-raw/verification.json": "93af10fbc90f18ef19a93492686d78fddd31d6dbcb54712f782acf65dd552d7d",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-raw/case-479.png": "9489c08e064a085f0c1de85812ce37c284b44531526bc635c9f71c71f7512cae",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-raw/verification.json": "2c7598940099ebd42d15616fb18c7da3548309a03d8cd9fa6da780cfa9b65a16"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 480,
+      "mode": "raw",
+      "output": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/three-conditions/three-raw-case-480.png",
+      "sha256": "4429c1541523c5c632841e49dc899d78de5491f72f64e3c1375901e086977080",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-raw/case-480.png": "377190fbbbcdb4ace3504156c7c3f806c1a4b08589f7250b5e1946c344e9389d",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-raw/verification.json": "40ec2c3a365ad57cc575364c9406c7faf8999980ce76cc51bb38a2f3c325297b",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-raw/case-480.png": "faa9e9c26a9ef8369873c87164c7452c257de48661ef5fe8fa6d0f68a8c026b1",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-raw/verification.json": "93af10fbc90f18ef19a93492686d78fddd31d6dbcb54712f782acf65dd552d7d",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-raw/case-480.png": "f78d77dc69a27054b462030a5a331b2aa1ead691377e5309d94aad2f570632ae",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-raw/verification.json": "2c7598940099ebd42d15616fb18c7da3548309a03d8cd9fa6da780cfa9b65a16"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 1376,
+      "mode": "raw",
+      "output": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/three-conditions/three-raw-case-1376.png",
+      "sha256": "3cb95a943fa66b3bcb86bc98c41f2c428262e27f1d8a0c38a905642a26b6b6f4",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-raw/case-1376.png": "328abb0c26d40ce1da4a6b1ab2f93afbcc6b6672921453639ff90ccbc6c576d4",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-raw/verification.json": "40ec2c3a365ad57cc575364c9406c7faf8999980ce76cc51bb38a2f3c325297b",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-raw/case-1376.png": "c8d7035670743b3d727b43b626813998e495e422ac9a886b58ea03623568ae3c",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-raw/verification.json": "93af10fbc90f18ef19a93492686d78fddd31d6dbcb54712f782acf65dd552d7d",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-raw/case-1376.png": "0d07db61d4ed3f5139dc0c3235bf3e6b70c8d2655c094a8f1e177d9f0fbbf84d",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-raw/verification.json": "2c7598940099ebd42d15616fb18c7da3548309a03d8cd9fa6da780cfa9b65a16"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 256,
+      "mode": "ema",
+      "output": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/three-conditions/three-ema-case-256.png",
+      "sha256": "e3601d63b10b81e8ff8628352ec02e7bc09d5a2861bdba97ace0703f1f1f7362",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-ema/case-256.png": "49950e0568ecac6a412f28774601106e2d021a72dfff020cae97e0e20422a7f5",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-ema/verification.json": "60c0d2f0d087cfd57572a38a9d91d94ccf52ae64c0a7505d2863e4fe14ed2613",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-ema/case-256.png": "014f08ba57b5159b24aed4ba053a09b6b5577dcfcc9c59bf314ab3f8ea3f4688",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-ema/verification.json": "6136c0504f2e5af3bd30576994f731058fc3dab00ab7fde97a371b0403c6be2b",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-ema/case-256.png": "c92bd1a9d33e3e12b491875b14b59c583a6ce321a9032c2b71cf49d64370fbaa",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-ema/verification.json": "fb9eec61a7380254def079141ce42aaea6ad1634b8d67268cef4831c1dc922a6"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 479,
+      "mode": "ema",
+      "output": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/three-conditions/three-ema-case-479.png",
+      "sha256": "c2cdc7158545c7ac24f66ecb7ad96ea7f02fc75764cdb9a6d9bef17c3329ceae",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-ema/case-479.png": "7a5af89b3f7830ed1297a8888e85831b7bbfe555f6e4ba64162701a2015fd6d0",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-ema/verification.json": "60c0d2f0d087cfd57572a38a9d91d94ccf52ae64c0a7505d2863e4fe14ed2613",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-ema/case-479.png": "53abe1a4ef27a386e1ac4d5258582e40035d2e192bd31073e2e4a86a91f46d42",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-ema/verification.json": "6136c0504f2e5af3bd30576994f731058fc3dab00ab7fde97a371b0403c6be2b",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-ema/case-479.png": "8a5d1bf0ed1f74574b93955b20618aa320c46ced56861f1654c5ddd2d5975de4",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-ema/verification.json": "fb9eec61a7380254def079141ce42aaea6ad1634b8d67268cef4831c1dc922a6"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 480,
+      "mode": "ema",
+      "output": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/three-conditions/three-ema-case-480.png",
+      "sha256": "d8ca587478d38258e2b857ec6b04cc75bae47f6a680db50cb52496bd241d6031",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-ema/case-480.png": "c0c265acd18973c1635955738b531b9475a44b80c04bf89f73c7439553285693",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-ema/verification.json": "60c0d2f0d087cfd57572a38a9d91d94ccf52ae64c0a7505d2863e4fe14ed2613",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-ema/case-480.png": "b56fecf28886bb0cc5e7c917f2116efbe9aaa3961511a23bd766ea1566c52590",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-ema/verification.json": "6136c0504f2e5af3bd30576994f731058fc3dab00ab7fde97a371b0403c6be2b",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-ema/case-480.png": "b66977b9dce092769b5314685b7c659f444912162acfaa46fc7daee4d9f59266",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-ema/verification.json": "fb9eec61a7380254def079141ce42aaea6ad1634b8d67268cef4831c1dc922a6"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 1376,
+      "mode": "ema",
+      "output": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/three-conditions/three-ema-case-1376.png",
+      "sha256": "20e49e64aa3a8d8811f232064e100479b6a3bac18814bd2f527a6b9d736ccfb0",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-ema/case-1376.png": "df96497d38f0c974bd215a883dbf54a5d1ee543dd1328b26b073e8973cdc69e0",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-control-ema/verification.json": "60c0d2f0d087cfd57572a38a9d91d94ccf52ae64c0a7505d2863e4fe14ed2613",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-ema/case-1376.png": "54690c1d74fda9c56e137885d0da45415cd10dccd67e6ee7d523cfc3fa7281eb",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-half-20260915/evaluation/widths-10000-half-ema/verification.json": "6136c0504f2e5af3bd30576994f731058fc3dab00ab7fde97a371b0403c6be2b",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-ema/case-1376.png": "c62cabe4748841128df8d6831af28859190407c303140d3767f67af4c7e7cabe",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/boundary-loss-20260914/evaluation/widths-10000-boundary-ema/verification.json": "fb9eec61a7380254def079141ce42aaea6ad1634b8d67268cef4831c1dc922a6"
+      },
+      "inputs_exact": true
+    }
+  ],
+  "source_sha256": "09e730eb24ab72306c31f19ff4e04d014785c3183121f72a6183e06a05ecd130"
+}
