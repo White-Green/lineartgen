@@ -1,0 +1,30 @@
+{
+  "records": [
+    {
+      "source": "runs/cldice-loss-20260915/evaluation/step-10000-raw/case-256-steps-1.png",
+      "image": "docs/assets/cldice-loss-20260915/paired-raw-case-256.png",
+      "sha256": "05342248d44c58816deacd9cf82c529e0d242a465561d74db1dded0043319d93"
+    },
+    {
+      "source": "runs/cldice-loss-20260915/evaluation/step-10000-raw/case-480-steps-1.png",
+      "image": "docs/assets/cldice-loss-20260915/paired-raw-case-480.png",
+      "sha256": "deace9ba77741b725a07b553150d08fbf74e5fd5438c8b6eb1acf983cea87672"
+    },
+    {
+      "source": "runs/cldice-loss-20260915/evaluation/step-10000-ema/case-480-steps-1.png",
+      "image": "docs/assets/cldice-loss-20260915/paired-ema-case-480.png",
+      "sha256": "8c1b8352b06e9b8bdb366aca7789c6b15e207bdb7aa38310c2ad1815f295404c"
+    },
+    {
+      "source": "runs/cldice-loss-20260915/evaluation/widths-10000-centerline-raw/case-1376.png",
+      "image": "docs/assets/cldice-loss-20260915/centerline-raw-widths-case-1376.png",
+      "sha256": "63855b025c6df204aea2ef8f121e6213917637611a4fc237ccfeb5c541967aca"
+    },
+    {
+      "source": "runs/cldice-loss-20260915/evaluation/widths-10000-centerline-ema/case-1376.png",
+      "image": "docs/assets/cldice-loss-20260915/centerline-ema-widths-case-1376.png",
+      "sha256": "f8bd88c4f2ed03a5939605d2459fda84b39d30a61eea3737f7a7f53646e8929b"
+    }
+  ],
+  "selection": "Cases selected before training; copied without image transformation."
+}

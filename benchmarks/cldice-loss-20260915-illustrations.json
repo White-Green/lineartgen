@@ -1,0 +1,808 @@
+{
+  "records": [
+    {
+      "method": "control",
+      "mode": "raw",
+      "step": 10000,
+      "denoise_steps": 1,
+      "records": [
+        {
+          "case": 256,
+          "metadata": {
+            "kind": "curve",
+            "suite": "geometry",
+            "variant": 3,
+            "scale_level": 0,
+            "file": "case-256.npz",
+            "strength": 0.5,
+            "partial": true,
+            "seed": 2026091356
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.0049257054924964905,
+              "active_ink_f1": 0.9393611261505144,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0008159484132193029
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.005128094460815191,
+              "active_ink_f1": 0.9377861567465661,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0009073733235709369
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.0052198139019310474,
+              "active_ink_f1": 0.9318728292813251,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0009551793918944895
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-control-raw/case-256.png",
+          "sha256": "fecf1dd119854aa75be8a4351016693a54d597e4ecbd54f31bb1c3ba3750796e"
+        },
+        {
+          "case": 479,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-479.npz",
+            "strength": 0.1,
+            "partial": false,
+            "seed": 2026091779,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.06371527165174484,
+              "active_ink_f1": 0.8044641840337091,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.05798895284533501,
+              "active_ink_f1": 0.8177343689917711,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.05644054710865021,
+              "active_ink_f1": 0.8330113592458079,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-control-raw/case-479.png",
+          "sha256": "872c49c37d51d3ba86e16cd9ad1a2273cb3be8ae79d4a5d5562a423c322dc7ab"
+        },
+        {
+          "case": 480,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-480.npz",
+            "strength": 0.5,
+            "partial": false,
+            "seed": 2026091780,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.09728089720010757,
+              "active_ink_f1": 0.6792944477851273,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.09534825384616852,
+              "active_ink_f1": 0.6904903319474691,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.08922785520553589,
+              "active_ink_f1": 0.7036384578901009,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-control-raw/case-480.png",
+          "sha256": "377190fbbbcdb4ace3504156c7c3f806c1a4b08589f7250b5e1946c344e9389d"
+        },
+        {
+          "case": 1376,
+          "metadata": {
+            "kind": "gap",
+            "suite": "sketch_geometry",
+            "variant": 0,
+            "scale_level": 0,
+            "file": "case-1376.npz",
+            "strength": 0.1,
+            "partial": true,
+            "seed": 2026092676,
+            "family": "tone",
+            "severity": "strong",
+            "corruption_seed": 2026091236
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.004908549599349499,
+              "active_ink_f1": 0.0599250936329588,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0010543173411861062
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.0041249897330999374,
+              "active_ink_f1": 0.15,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.00080497917952016
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.003700206521898508,
+              "active_ink_f1": 0.22602739726027396,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007207484450191259
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-control-raw/case-1376.png",
+          "sha256": "328abb0c26d40ce1da4a6b1ab2f93afbcc6b6672921453639ff90ccbc6c576d4"
+        }
+      ],
+      "weights_sha256": "09915f2ea1942c2c8d4ba5c9607d15d1e0b0f6c812d9e961e97717e56d351c59",
+      "manifest_sha256": "1a0b834c475434d224e26c0fbb2e8bd22f3a738a1440d2be3fc1d53caf42e4f9",
+      "metrics_sha256": "0211c8bef20f470299da59bd8c6664cbecba8c702ba3fdebc389e6bd940cfd76",
+      "selection": "Explicit case indices; numerical metrics reproduce the fixed suite. See the experiment report for the selection timing."
+    },
+    {
+      "method": "control",
+      "mode": "ema",
+      "step": 10000,
+      "denoise_steps": 1,
+      "records": [
+        {
+          "case": 256,
+          "metadata": {
+            "kind": "curve",
+            "suite": "geometry",
+            "variant": 3,
+            "scale_level": 0,
+            "file": "case-256.npz",
+            "strength": 0.5,
+            "partial": true,
+            "seed": 2026091356
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.004286828450858593,
+              "active_ink_f1": 0.9442176870748299,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0006689663277938962
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.00442117266356945,
+              "active_ink_f1": 0.9437652811735942,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007377424626611173
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.004451069049537182,
+              "active_ink_f1": 0.9380387931034483,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007470883429050446
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-control-ema/case-256.png",
+          "sha256": "49950e0568ecac6a412f28774601106e2d021a72dfff020cae97e0e20422a7f5"
+        },
+        {
+          "case": 479,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-479.npz",
+            "strength": 0.1,
+            "partial": false,
+            "seed": 2026091779,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.06147559732198715,
+              "active_ink_f1": 0.8064564228733319,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.05432058125734329,
+              "active_ink_f1": 0.8211058355031399,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.05205145105719566,
+              "active_ink_f1": 0.8363136176066025,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-control-ema/case-479.png",
+          "sha256": "7a5af89b3f7830ed1297a8888e85831b7bbfe555f6e4ba64162701a2015fd6d0"
+        },
+        {
+          "case": 480,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-480.npz",
+            "strength": 0.5,
+            "partial": false,
+            "seed": 2026091780,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.09145301580429077,
+              "active_ink_f1": 0.679980379791185,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.0890723466873169,
+              "active_ink_f1": 0.6972311117295116,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.08490580320358276,
+              "active_ink_f1": 0.7110260770975056,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-control-ema/case-480.png",
+          "sha256": "c0c265acd18973c1635955738b531b9475a44b80c04bf89f73c7439553285693"
+        },
+        {
+          "case": 1376,
+          "metadata": {
+            "kind": "gap",
+            "suite": "sketch_geometry",
+            "variant": 0,
+            "scale_level": 0,
+            "file": "case-1376.npz",
+            "strength": 0.1,
+            "partial": true,
+            "seed": 2026092676,
+            "family": "tone",
+            "severity": "strong",
+            "corruption_seed": 2026091236
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.004971607588231564,
+              "active_ink_f1": 0.0599250936329588,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0010816189460456371
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.004103970713913441,
+              "active_ink_f1": 0.1888111888111888,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007975276093930006
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.0036803570110350847,
+              "active_ink_f1": 0.2733333333333333,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0006971511757001281
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-control-ema/case-1376.png",
+          "sha256": "df96497d38f0c974bd215a883dbf54a5d1ee543dd1328b26b073e8973cdc69e0"
+        }
+      ],
+      "weights_sha256": "8ccf025ada6d4b269d6bef509648faa42ebe8fa92a42bb22897f18a2e6afab36",
+      "manifest_sha256": "1a0b834c475434d224e26c0fbb2e8bd22f3a738a1440d2be3fc1d53caf42e4f9",
+      "metrics_sha256": "ac3be332fa3b2bbc2bea8ef8d568a59b9ddc0e745be97549ae99c789261858bd",
+      "selection": "Explicit case indices; numerical metrics reproduce the fixed suite. See the experiment report for the selection timing."
+    },
+    {
+      "method": "centerline",
+      "mode": "raw",
+      "step": 10000,
+      "denoise_steps": 1,
+      "records": [
+        {
+          "case": 256,
+          "metadata": {
+            "kind": "curve",
+            "suite": "geometry",
+            "variant": 3,
+            "scale_level": 0,
+            "file": "case-256.npz",
+            "strength": 0.5,
+            "partial": true,
+            "seed": 2026091356
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.004357519093900919,
+              "active_ink_f1": 0.9370780448285174,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0005973749211989343
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.004493577405810356,
+              "active_ink_f1": 0.9357354127453616,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0006267190328799188
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.004901454783976078,
+              "active_ink_f1": 0.9291044776119403,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0008204784244298935
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-centerline-raw/case-256.png",
+          "sha256": "24be63c98a6e547ba93b5f1b661806ab97b3b6a5b8f74e6a0045b32d1ec245e6"
+        },
+        {
+          "case": 479,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-479.npz",
+            "strength": 0.1,
+            "partial": false,
+            "seed": 2026091779,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.06138450652360916,
+              "active_ink_f1": 0.8039758716188019,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.055634066462516785,
+              "active_ink_f1": 0.8183395673466239,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.05418232083320618,
+              "active_ink_f1": 0.8309771632748174,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-centerline-raw/case-479.png",
+          "sha256": "a08fba1a71795390edf38ce187c090bbbf40ab0933889cb91741d4c2f6d759c6"
+        },
+        {
+          "case": 480,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-480.npz",
+            "strength": 0.5,
+            "partial": false,
+            "seed": 2026091780,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.09236577153205872,
+              "active_ink_f1": 0.6801480306634946,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.08994083106517792,
+              "active_ink_f1": 0.6896732712242488,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.08440063893795013,
+              "active_ink_f1": 0.7038176715247015,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-centerline-raw/case-480.png",
+          "sha256": "65da889b242f2302bdb18e40d60162aa86270c53e9fc3cac8697808282311918"
+        },
+        {
+          "case": 1376,
+          "metadata": {
+            "kind": "gap",
+            "suite": "sketch_geometry",
+            "variant": 0,
+            "scale_level": 0,
+            "file": "case-1376.npz",
+            "strength": 0.1,
+            "partial": true,
+            "seed": 2026092676,
+            "family": "tone",
+            "severity": "strong",
+            "corruption_seed": 2026091236
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.0047687869518995285,
+              "active_ink_f1": 0.08856088560885608,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0009524001507088542
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.004132088739424944,
+              "active_ink_f1": 0.1951219512195122,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0008022019756026566
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.003720650216564536,
+              "active_ink_f1": 0.26174496644295303,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0007393600535579026
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-centerline-raw/case-1376.png",
+          "sha256": "63855b025c6df204aea2ef8f121e6213917637611a4fc237ccfeb5c541967aca"
+        }
+      ],
+      "weights_sha256": "ccd5b1393345713674381112a2664fc850aba4fca59f7884ddadf15f4325b99a",
+      "manifest_sha256": "1a0b834c475434d224e26c0fbb2e8bd22f3a738a1440d2be3fc1d53caf42e4f9",
+      "metrics_sha256": "0211c8bef20f470299da59bd8c6664cbecba8c702ba3fdebc389e6bd940cfd76",
+      "selection": "Explicit case indices; numerical metrics reproduce the fixed suite. See the experiment report for the selection timing."
+    },
+    {
+      "method": "centerline",
+      "mode": "ema",
+      "step": 10000,
+      "denoise_steps": 1,
+      "records": [
+        {
+          "case": 256,
+          "metadata": {
+            "kind": "curve",
+            "suite": "geometry",
+            "variant": 3,
+            "scale_level": 0,
+            "file": "case-256.npz",
+            "strength": 0.5,
+            "partial": true,
+            "seed": 2026091356
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.0037831608206033707,
+              "active_ink_f1": 0.9442176870748299,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0005014247726649046
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.003936026245355606,
+              "active_ink_f1": 0.9442176870748299,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0005469813477247953
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.004211152903735638,
+              "active_ink_f1": 0.9393040194227138,
+              "active_target_ink_fraction": 0.014131593397719565,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0006370750488713384
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-centerline-ema/case-256.png",
+          "sha256": "f94df85bca95e9e35b3acb03778a63fe6707eb47cdd7ad325e511dc11e2d83a6"
+        },
+        {
+          "case": 479,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-479.npz",
+            "strength": 0.1,
+            "partial": false,
+            "seed": 2026091779,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.0586765818297863,
+              "active_ink_f1": 0.8070031050091654,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.05271720886230469,
+              "active_ink_f1": 0.8201139688895734,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.050784144550561905,
+              "active_ink_f1": 0.8347545517400322,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-centerline-ema/case-479.png",
+          "sha256": "c859497195f7387f8360d0278c0bba1a9c029bc5d646a12f45613ae074483031"
+        },
+        {
+          "case": 480,
+          "metadata": {
+            "kind": "real",
+            "suite": "sketch_real",
+            "source": "0527.png",
+            "crop": [
+              79,
+              288,
+              512
+            ],
+            "scale_level": 0,
+            "matched_crop": "0-1",
+            "file": "case-480.npz",
+            "strength": 0.5,
+            "partial": false,
+            "seed": 2026091780,
+            "family": "blur",
+            "severity": "strong",
+            "corruption_seed": 2026091201
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.08697148412466049,
+              "active_ink_f1": 0.6779172379847415,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.0844770222902298,
+              "active_ink_f1": 0.6970387243735763,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.08080197870731354,
+              "active_ink_f1": 0.7120661392630604,
+              "active_target_ink_fraction": 0.0515899658203125,
+              "protected_max_error": null,
+              "mask_boundary_mae": null
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-centerline-ema/case-480.png",
+          "sha256": "680b84921fc76973ab060e1ecc3ae0f9aadf92723b17bd042bdcaa51f26ff5fa"
+        },
+        {
+          "case": 1376,
+          "metadata": {
+            "kind": "gap",
+            "suite": "sketch_geometry",
+            "variant": 0,
+            "scale_level": 0,
+            "file": "case-1376.npz",
+            "strength": 0.1,
+            "partial": true,
+            "seed": 2026092676,
+            "family": "tone",
+            "severity": "strong",
+            "corruption_seed": 2026091236
+          },
+          "recursion_levels": 3,
+          "metrics": [
+            {
+              "subnet": 0,
+              "active_mae": 0.004853466060012579,
+              "active_ink_f1": 0.045283018867924525,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0009651418658904731
+            },
+            {
+              "subnet": 1,
+              "active_mae": 0.004183189012110233,
+              "active_ink_f1": 0.1824561403508772,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.000768928206525743
+            },
+            {
+              "subnet": 2,
+              "active_mae": 0.003699842607602477,
+              "active_ink_f1": 0.3016393442622951,
+              "active_target_ink_fraction": 0.0020914758228624953,
+              "protected_max_error": 0.0,
+              "mask_boundary_mae": 0.0006651604198850691
+            }
+          ],
+          "image": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/cldice-loss-20260915/evaluation/widths-10000-centerline-ema/case-1376.png",
+          "sha256": "f8bd88c4f2ed03a5939605d2459fda84b39d30a61eea3737f7a7f53646e8929b"
+        }
+      ],
+      "weights_sha256": "b2cc5da189894eeb50f0ad5ebc530ab0e99d8ea6c04ff7cd5253332034673317",
+      "manifest_sha256": "1a0b834c475434d224e26c0fbb2e8bd22f3a738a1440d2be3fc1d53caf42e4f9",
+      "metrics_sha256": "ac3be332fa3b2bbc2bea8ef8d568a59b9ddc0e745be97549ae99c789261858bd",
+      "selection": "Explicit case indices; numerical metrics reproduce the fixed suite. See the experiment report for the selection timing."
+    }
+  ]
+}
