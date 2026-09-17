@@ -143,7 +143,9 @@ def test_sampling_audit_replays_training_keys_and_detects_changed_strength(tmp_p
     clean = jnp.ones((16, 32, 32, 1))
     rows = []
     for step in range(1, 4):
-        key = jax.random.fold_in(jax.random.PRNGKey(config.train.seed), step)
+        # The training loop folds its zero-based update index into the key;
+        # timings.jsonl stores the completed (one-based) update count.
+        key = jax.random.fold_in(jax.random.PRNGKey(config.train.seed), step - 1)
         strengths = {}
         for name, settings in variants.items():
             prepared = diffusion.training_inputs(

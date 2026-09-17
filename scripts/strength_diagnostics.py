@@ -59,7 +59,7 @@ def audit_sampling(root, through):
                     jax.random.split(jax.random.fold_in(key, i))[0], (16, 10, 1, 1, 1)
                 )
             )
-        )(np.arange(1, through + 1, dtype=np.uint32))
+        )(np.arange(through, dtype=np.uint32))
     )
     u, identity = (
         draws[:, :, 0, 0, 0, 0],
