@@ -17,7 +17,8 @@ Krita の Diffusion Drawing は小さな別パッケージ `lineartgen-runtime` 
 切断増加を抑えた。解消には至らず、rawも含む全面採用は保留している。
 [灰色線画向けの中心線loss比較](docs/cldice-loss-experiment-20260915.md)も2条件10,000更新まで完了。
 背景は改善したが細線消失が全サイズで増え、EMA S/Mでは切断も増えたため、今回の設定は採用しない。
-次は利用域に合わせたノイズ強度samplingを比較する。
+[N1 ノイズ強度sampling比較](docs/noise-strength-experiment-20260917.md)を開始する。
+一様分布と、80%を強度0.5以下に割り当てる分布を各10,000更新で比較する。
 
 ## 環境を作る
 

@@ -50,11 +50,23 @@ def recursive_forward(model, images, noise_levels):
     return recursive_forward_all(model, images, noise_levels)[-1]
 
 
+def strength_from_uniform(uniform, config: DiffusionConfig):
+    """Inverse CDF for training strengths, leaving all other random draws unchanged."""
+    if config.strength_sampling == "uniform":
+        return config.min_noise + uniform * (1 - config.min_noise)
+    p, split = config.low_strength_probability, config.low_strength_max
+    return jnp.where(
+        uniform < p,
+        config.min_noise + (uniform / p) * (split - config.min_noise),
+        split + ((uniform - p) / (1 - p)) * (1 - split),
+    )
+
+
 def noise_map(clean, key, config: DiffusionConfig):
     """Full, band, rectangle and region-with-protected-lines patterns, entirely on device."""
     batch, height, width, _ = clean.shape
     random = jax.random.uniform(key, (batch, 10, 1, 1, 1))
-    base = config.min_noise + random[:, 0] * (1 - config.min_noise)
+    base = strength_from_uniform(random[:, 0], config)
     weights = jnp.asarray(config.pattern_weights)
     boundaries = jnp.cumsum(weights) / weights.sum()
     pattern = (random[:, 1, None] > boundaries[None, :, None, None, None]).sum(axis=1)

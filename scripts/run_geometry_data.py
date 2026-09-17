@@ -21,6 +21,7 @@ def study_methods(study):
         "boundary_loss": ("control", "boundary"),
         "boundary_half": ("half",),
         "cldice_loss": ("control", "centerline"),
+        "noise_strength": ("control", "low80"),
     }[study]
 
 
@@ -48,7 +49,13 @@ def main():
     parser.add_argument("--reference-root", type=Path, default=Path("runs/sketch-rates-20260912"))
     parser.add_argument(
         "--study",
-        choices=["geometry_data", "boundary_loss", "boundary_half", "cldice_loss"],
+        choices=[
+            "geometry_data",
+            "boundary_loss",
+            "boundary_half",
+            "cldice_loss",
+            "noise_strength",
+        ],
         default="geometry_data",
     )
     args = parser.parse_args()
@@ -88,8 +95,9 @@ def main():
                 check=True,
             )
 
-    def evaluate(step, mode):
-        folder = cases / f"step-{step}-{mode}"
+    def evaluate(step, mode, *, high_strength=False):
+        inputs = root / "high-strength" if high_strength else cases
+        folder = inputs / f"step-{step}-{mode}"
         path = folder / "metrics.json"
         if not path.exists():
             run(
@@ -100,7 +108,7 @@ def main():
                     "--config",
                     config,
                     "--cases",
-                    cases,
+                    inputs,
                     "--step",
                     step,
                     "--steps",
@@ -114,11 +122,17 @@ def main():
                     *(["--initialize-from", initial] if step == 0 else ["--run-group", group]),
                     *(["--raw"] if mode == "raw" else []),
                 ],
-                f"evaluation-{step}-{mode}",
+                f"{'high-strength' if high_strength else 'evaluation'}-{step}-{mode}",
             )
         report = json.loads(path.read_text())
-        validate(report, ("initial",) if step == 0 else methods, step, "runtime")
-        assert report["manifest_sha256"] == sha(cases / "cases.json")
+        validate(
+            report,
+            ("initial",) if step == 0 else methods,
+            step,
+            "runtime",
+            case_count=616 if high_strength else 1562,
+        )
+        assert report["manifest_sha256"] == sha(inputs / "cases.json")
         assert report["ema"] == (mode == "ema")
         return report
 
@@ -140,6 +154,11 @@ def main():
             )
         for name, digest in json.loads((root / "evaluation-input-sha256.json").read_text()).items():
             assert sha(cases / name) == digest, name
+        if args.study == "noise_strength":
+            for name, digest in json.loads(
+                (root / "high-strength-input-sha256.json").read_text()
+            ).items():
+                assert sha(root / "high-strength" / name) == digest, name
         if args.study in ("boundary_loss", "boundary_half", "cldice_loss"):
             from lineartgen.config import load_config
 
@@ -157,8 +176,8 @@ def main():
 
             verify_reuse(root)
         initial_report = evaluate(0, "raw")
-        if args.study in ("boundary_half", "cldice_loss"):
-            if args.study == "cldice_loss":
+        if args.study in ("boundary_half", "cldice_loss", "noise_strength"):
+            if args.study in ("cldice_loss", "noise_strength"):
                 previous = json.loads(
                     (reference / "evaluation/step-10000-raw/metrics.json").read_text()
                 )
@@ -175,6 +194,8 @@ def main():
             (root / "initial-reevaluation.json").write_text(
                 json.dumps(dict(outputs=len(initial_report["results"]), exact=True)) + "\n"
             )
+        if args.study == "noise_strength":
+            evaluate(0, "raw", high_strength=True)
         for step in (2000, 10000):
             if (root / "stop").exists():
                 status("stop_requested")
@@ -212,6 +233,9 @@ def main():
                 gate = pilot_gate(reports, initial_report, methods)
                 (root / "pilot-gate.json").write_text(json.dumps(gate, indent=2) + "\n")
                 status("pilot_evaluated", gate=gate)
+        if args.study == "noise_strength":
+            for mode in ("raw", "ema"):
+                evaluate(10000, mode, high_strength=True)
         for cpu in (False, True):
             run(
                 "verify_training_methods",

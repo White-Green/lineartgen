@@ -62,7 +62,15 @@ def test_sketch_gate_checks_complete_grid_and_protected_input():
 
 @pytest.mark.parametrize(
     "study",
-    ["sketch", "sketch_rates", "geometry_data", "boundary_loss", "boundary_half", "cldice_loss"],
+    [
+        "sketch",
+        "sketch_rates",
+        "geometry_data",
+        "boundary_loss",
+        "boundary_half",
+        "cldice_loss",
+        "noise_strength",
+    ],
 )
 def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monkeypatch, study):
     dataset = tmp_path / "dataset" / "images"
@@ -102,7 +110,13 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
         }
     )
     config_path = tmp_path / "config.json"
-    if study in ("geometry_data", "boundary_loss", "boundary_half", "cldice_loss"):
+    if study in (
+        "geometry_data",
+        "boundary_loss",
+        "boundary_half",
+        "cldice_loss",
+        "noise_strength",
+    ):
         config = config.model_copy(
             update={
                 "sketch": config.sketch.model_copy(update={"mode": "strokes", "probability": 0.5})
@@ -118,6 +132,15 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
                         if study == "cldice_loss"
                         else {"boundary_weight": 0.2}
                     )
+                ),
+            }
+        )
+    if study == "noise_strength":
+        config = config.model_copy(
+            update={
+                "geometry": config.geometry.model_copy(update={"probability": 0.2}),
+                "diffusion": config.diffusion.model_copy(
+                    update={"strength_sampling": "low_mixture"}
                 ),
             }
         )
@@ -153,6 +176,7 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
         "boundary_loss": ("control", "boundary"),
         "boundary_half": ("half",),
         "cldice_loss": ("control", "centerline"),
+        "noise_strength": ("control", "low80"),
     }[study]
     for name in names:
         archived, _ = load_inference(full / "initial" / name)
@@ -168,7 +192,7 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
                 states.append(saved.restore(3, args=ocp.args.StandardRestore()))
         jax.tree.map(np.testing.assert_array_equal, *states)
 
-    if study in ("boundary_loss", "cldice_loss"):
+    if study in ("boundary_loss", "cldice_loss", "noise_strength"):
         paths = [full / name / "checkpoints" for name in names]
         final_states = []
         for path in paths:

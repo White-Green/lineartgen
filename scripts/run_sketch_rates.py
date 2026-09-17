@@ -21,10 +21,10 @@ from summarize_training_methods import sha
 METHODS = ("p75", "p50", "p25")
 
 
-def validate(report, methods, step, recursion):
-    expected = set(itertools.product(range(1562), methods, range(3), (1,)))
+def validate(report, methods, step, recursion, *, case_count=1562):
+    expected = set(itertools.product(range(case_count), methods, range(3), (1,)))
     actual = [(r["case"], r["method"], r["subnet"], r["denoise_steps"]) for r in report["results"]]
-    assert report["checkpoint_step"] == step and report["cases"] == 1562
+    assert report["checkpoint_step"] == step and report["cases"] == case_count
     assert report["recursion"] == recursion and report["noise_generator"] == "numpy"
     assert len(actual) == len(expected) and set(actual) == expected
     for row in report["results"]:

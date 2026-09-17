@@ -268,6 +268,7 @@ def main():
             "boundary_loss",
             "boundary_half",
             "cldice_loss",
+            "noise_strength",
         ],
         default="methods",
     )

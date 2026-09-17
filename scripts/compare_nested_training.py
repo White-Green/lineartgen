@@ -48,6 +48,7 @@ def main():
             "boundary_loss",
             "boundary_half",
             "cldice_loss",
+            "noise_strength",
         ],
         default="widths",
     )
@@ -206,6 +207,8 @@ def main():
             if args.study == "sketch"
             else configs["p75"]
             if args.study == "sketch_rates"
+            else configs["control"]
+            if args.study == "noise_strength"
             else config
         )
         sampler = nnx.jit(
@@ -236,15 +239,21 @@ def main():
             )
             prepared_at = time.perf_counter()
             prepared_batches, generated = {}, {}
+            sources_by_geometry = {}
             for key, prepare in preparations.items():
-                images, records = mix_geometry(
-                    batch.images,
-                    key[3],
-                    seed=config.train.seed,
-                    step=step,
-                    image_scale=config.data.image_scale,
-                )
-                source = clean if not records else jax.device_put(images)
+                if key[3] not in sources_by_geometry:
+                    images, records = mix_geometry(
+                        batch.images,
+                        key[3],
+                        seed=config.train.seed,
+                        step=step,
+                        image_scale=config.data.image_scale,
+                    )
+                    sources_by_geometry[key[3]] = (
+                        clean if not records else jax.device_put(images),
+                        records,
+                    )
+                source, records = sources_by_geometry[key[3]]
                 generated[key] = records
                 prepared_batches[key] = prepare(source, jax.random.fold_in(root_key, step), levels)
             jax.block_until_ready(tuple(prepared_batches.values()))
@@ -295,6 +304,18 @@ def main():
                             "input_seconds": input_seconds,
                             "preparation_seconds": preparation_seconds,
                             "updates": timings,
+                            "strengths": {
+                                name: np.asarray(
+                                    prepared_batches[
+                                        (s.diffusion, s.matching, s.sketch, s.geometry)
+                                    ]
+                                    .noise_levels[0]
+                                    .max((1, 2, 3))
+                                ).tolist()
+                                for name, s in configs.items()
+                            }
+                            if args.study == "noise_strength"
+                            else None,
                             "generated": {
                                 name: generated[(s.diffusion, s.matching, s.sketch, s.geometry)]
                                 for name, s in configs.items()

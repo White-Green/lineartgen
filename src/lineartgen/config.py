@@ -93,6 +93,9 @@ class DiffusionConfig(Settings):
     original_steps: int = Field(default=1, ge=1)
     stop_size: int = Field(default=0, ge=0)
     min_noise: float = Field(default=0.001, gt=0, lt=1)
+    strength_sampling: Literal["uniform", "low_mixture"] = "uniform"
+    low_strength_max: float = Field(default=0.5, gt=0, lt=1)
+    low_strength_probability: float = Field(default=0.8, gt=0, lt=1)
     identity_probability: float = Field(default=0.1, ge=0, le=1)
     pattern_weights: tuple[float, float, float, float] = (1, 1, 1, 1)
     scale_loss_multiplier: float = Field(default=0.0, ge=0)
@@ -100,6 +103,8 @@ class DiffusionConfig(Settings):
 
     @model_validator(mode="after")
     def validate_weights(self):
+        if self.strength_sampling == "low_mixture" and self.low_strength_max <= self.min_noise:
+            raise ValueError("low_strength_max must exceed min_noise")
         if min(self.pattern_weights) < 0 or sum(self.pattern_weights) <= 0:
             raise ValueError("pattern_weights must be nonnegative with a positive sum")
         return self

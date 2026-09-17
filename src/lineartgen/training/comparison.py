@@ -16,6 +16,32 @@ def comparison_configs(config, *, study="widths", baseline=False):
         if baseline:
             result["baseline"] = config.model_copy(update={"model": ModelConfig()})
         return result
+    if study == "noise_strength":
+        if (
+            baseline
+            or config.model.output_mode != "residual"
+            or config.matching.method != "independent"
+            or config.sketch.mode != "strokes"
+            or config.geometry.probability != 0.2
+            or config.loss.boundary_weight != 0
+            or config.loss.cldice_weight != 0
+            or config.diffusion.pattern_weights[3]
+            or config.diffusion.strength_sampling != "low_mixture"
+        ):
+            raise ValueError(
+                "Strength comparison requires geometry20, strokes, residual, "
+                "independent noise/masks, low_mixture and no auxiliary loss"
+            )
+        return {
+            "control": config.model_copy(
+                update={
+                    "diffusion": config.diffusion.model_copy(
+                        update={"strength_sampling": "uniform"}
+                    )
+                }
+            ),
+            "low80": config,
+        }
     if study == "cldice_loss":
         if (
             baseline

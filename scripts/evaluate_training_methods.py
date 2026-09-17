@@ -231,6 +231,7 @@ def main():
             "boundary_loss",
             "boundary_half",
             "cldice_loss",
+            "noise_strength",
         ],
         default="methods",
     )
@@ -256,6 +257,7 @@ def main():
             "boundary_loss",
             "boundary_half",
             "cldice_loss",
+            "noise_strength",
         )
         else prepare(config, args.cases, args.legacy_cases)
     )

@@ -32,6 +32,7 @@ def main():
             "boundary_loss",
             "boundary_half",
             "cldice_loss",
+            "noise_strength",
         ],
         default="sketch",
     )
@@ -76,8 +77,22 @@ def main():
             jax.block_until_ready(prepared)
             prep_seconds = time.perf_counter() - started
             if reference is not None:
-                jax.tree.map(np.testing.assert_array_equal, reference, prepared.noise_levels)
-            reference = prepared.noise_levels
+                if args.study == "noise_strength":
+                    jax.tree.map(
+                        lambda a, b: np.testing.assert_array_equal(a == 0, b == 0),
+                        reference.noise_levels,
+                        prepared.noise_levels,
+                    )
+                    jax.tree.map(np.testing.assert_array_equal, reference.targets, prepared.targets)
+                    assert all(
+                        np.all(np.asarray(b) <= np.asarray(a) + 1e-6)
+                        for a, b in zip(reference.noise_levels, prepared.noise_levels, strict=True)
+                    )
+                else:
+                    jax.tree.map(
+                        np.testing.assert_array_equal, reference.noise_levels, prepared.noise_levels
+                    )
+            reference = prepared
             for source, target, mask in zip(
                 prepared.noisy, prepared.targets, prepared.noise_levels, strict=True
             ):
@@ -113,6 +128,7 @@ def main():
                 records=records,
                 batch_size=16,
                 shared_masks=True,
+                shared_strengths=args.study != "noise_strength",
                 protected_teacher_exact=True,
             ),
             indent=2,
