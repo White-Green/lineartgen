@@ -1,0 +1,80 @@
+{
+  "records": [
+    {
+      "case": 256,
+      "mode": "raw",
+      "output": "docs/assets/noise-strength-20260917/paired-raw-case-256.png",
+      "sha256": "9812184e2ad9fb7a4a7da46c4fb9e28d9b5cd7905e5e455978d94a258d79e306",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/noise-strength-20260917/evaluation/widths-10000-control-raw/case-256.png": "fecf1dd119854aa75be8a4351016693a54d597e4ecbd54f31bb1c3ba3750796e",
+        "runs/noise-strength-20260917/evaluation/widths-10000-control-raw/verification.json": "f2cea84c41b0a29527029deff1c56f37dd228b284045832eb934ac3358be9133",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/noise-strength-20260917/evaluation/widths-10000-low80-raw/case-256.png": "245105742d51e19a35cfbff1e62b50428b48fe2b66a32f730291cb736c65b2a3",
+        "runs/noise-strength-20260917/evaluation/widths-10000-low80-raw/verification.json": "946bddcc44ebfa20770720af2e07dca07f0b9a79a08cebafec98d2771010b776"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 480,
+      "mode": "raw",
+      "output": "docs/assets/noise-strength-20260917/paired-raw-case-480.png",
+      "sha256": "21d47044fc0bffacbe8c3a10d1bf3adff427a3e4492a9f9b0b8069885657e45c",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/noise-strength-20260917/evaluation/widths-10000-control-raw/case-480.png": "377190fbbbcdb4ace3504156c7c3f806c1a4b08589f7250b5e1946c344e9389d",
+        "runs/noise-strength-20260917/evaluation/widths-10000-control-raw/verification.json": "f2cea84c41b0a29527029deff1c56f37dd228b284045832eb934ac3358be9133",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/noise-strength-20260917/evaluation/widths-10000-low80-raw/case-480.png": "6f299da5481b7967165cf4fe76c78b6954931719c7685880733dfc2aac608659",
+        "runs/noise-strength-20260917/evaluation/widths-10000-low80-raw/verification.json": "946bddcc44ebfa20770720af2e07dca07f0b9a79a08cebafec98d2771010b776"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 480,
+      "mode": "ema",
+      "output": "docs/assets/noise-strength-20260917/paired-ema-case-480.png",
+      "sha256": "5abad730faaede57b3b1d4e97fa4a592c815b7222206820aefbe7f4da09a7151",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/noise-strength-20260917/evaluation/widths-10000-control-ema/case-480.png": "c0c265acd18973c1635955738b531b9475a44b80c04bf89f73c7439553285693",
+        "runs/noise-strength-20260917/evaluation/widths-10000-control-ema/verification.json": "357fdb7c7e420d57ce5058163b43bdf937c3d7c07cc0e21fdb33d471b2ad7495",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/noise-strength-20260917/evaluation/widths-10000-low80-ema/case-480.png": "f9e96017eca81ce49f1cb14649d2380b0c864f623b5a52088b1b01e0a50ae57f",
+        "runs/noise-strength-20260917/evaluation/widths-10000-low80-ema/verification.json": "a6c8a051357ac81160aeb923b5dbb57479075400630c849728a529d5557d7a29"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 479,
+      "mode": "ema",
+      "output": "docs/assets/noise-strength-20260917/paired-ema-case-479.png",
+      "sha256": "2e26feadc0471b6489984e75f41ff733f5a942468ed4586ecb31b174be6a2a4d",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/noise-strength-20260917/evaluation/widths-10000-control-ema/case-479.png": "7a5af89b3f7830ed1297a8888e85831b7bbfe555f6e4ba64162701a2015fd6d0",
+        "runs/noise-strength-20260917/evaluation/widths-10000-control-ema/verification.json": "357fdb7c7e420d57ce5058163b43bdf937c3d7c07cc0e21fdb33d471b2ad7495",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/noise-strength-20260917/evaluation/widths-10000-low80-ema/case-479.png": "0591d1901303565d949863f2f603299ef6f1091a651420202bb70d86b3f77bc0",
+        "runs/noise-strength-20260917/evaluation/widths-10000-low80-ema/verification.json": "a6c8a051357ac81160aeb923b5dbb57479075400630c849728a529d5557d7a29"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 1376,
+      "mode": "raw",
+      "output": "docs/assets/noise-strength-20260917/low80-raw-widths-case-1376.png",
+      "sha256": "ac6f6b18ee66fd79261707c33bca23f22024de98022c5dbf4f5d6006fd891a63",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/noise-strength-20260917/evaluation/widths-10000-low80-raw/case-1376.png": "ac6f6b18ee66fd79261707c33bca23f22024de98022c5dbf4f5d6006fd891a63",
+        "runs/noise-strength-20260917/evaluation/widths-10000-low80-raw/verification.json": "946bddcc44ebfa20770720af2e07dca07f0b9a79a08cebafec98d2771010b776"
+      },
+      "copied_exact": true
+    },
+    {
+      "case": 1376,
+      "mode": "ema",
+      "output": "docs/assets/noise-strength-20260917/low80-ema-widths-case-1376.png",
+      "sha256": "096c1c3796a8ab3c2707d190196d9a8c81a395aa91cf337d8fc6088c224897a0",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/noise-strength-20260917/evaluation/widths-10000-low80-ema/case-1376.png": "096c1c3796a8ab3c2707d190196d9a8c81a395aa91cf337d8fc6088c224897a0",
+        "runs/noise-strength-20260917/evaluation/widths-10000-low80-ema/verification.json": "a6c8a051357ac81160aeb923b5dbb57479075400630c849728a529d5557d7a29"
+      },
+      "copied_exact": true
+    }
+  ],
+  "source": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/scripts/render_strength_comparison.py",
+  "source_sha256": "68fa3d221ebf3fe72b780f1a2fb368a92a30d595c63386588822a43e79e8d56b"
+}
