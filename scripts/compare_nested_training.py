@@ -37,6 +37,7 @@ def main():
     parser.add_argument("--stop-after", type=int, default=2000)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--baseline", action="store_true")
+    parser.add_argument("--only-method", help="Train one named arm; other arms remain untouched")
     parser.add_argument(
         "--study",
         choices=[
@@ -49,6 +50,7 @@ def main():
             "boundary_half",
             "cldice_loss",
             "noise_strength",
+            "mask_sampling",
         ],
         default="widths",
     )
@@ -67,6 +69,11 @@ def main():
         parser.error("--initialize-from requires a fresh methods/sketch study")
     config = load_config(args.config)
     configs = comparison_configs(config, study=args.study, baseline=args.baseline)
+    all_configs = configs
+    if args.only_method:
+        if args.only_method not in configs:
+            parser.error("--only-method must name an arm in this comparison")
+        configs = {args.only_method: configs[args.only_method]}
     for candidate in configs.values():
         for scale in config.data.resolved_scale_levels:
             if candidate.diffusion.levels_for_scale(
@@ -207,8 +214,8 @@ def main():
             if args.study == "sketch"
             else configs["p75"]
             if args.study == "sketch_rates"
-            else configs["control"]
-            if args.study == "noise_strength"
+            else all_configs["control"]
+            if args.study in ("noise_strength", "mask_sampling")
             else config
         )
         sampler = nnx.jit(
@@ -314,7 +321,20 @@ def main():
                                 ).tolist()
                                 for name, s in configs.items()
                             }
-                            if args.study == "noise_strength"
+                            if args.study in ("noise_strength", "mask_sampling")
+                            else None,
+                            "mask_areas": {
+                                name: np.asarray(
+                                    (
+                                        prepared_batches[
+                                            (s.diffusion, s.matching, s.sketch, s.geometry)
+                                        ].noise_levels[0]
+                                        > 0
+                                    ).sum((1, 2, 3))
+                                ).tolist()
+                                for name, s in configs.items()
+                            }
+                            if args.study == "mask_sampling"
                             else None,
                             "generated": {
                                 name: generated[(s.diffusion, s.matching, s.sketch, s.geometry)]

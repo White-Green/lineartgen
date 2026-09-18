@@ -27,12 +27,18 @@ def main():
             "boundary_half",
             "cldice_loss",
             "noise_strength",
+            "mask_sampling",
         ],
         default="geometry_data",
     )
     args = parser.parse_args()
     methods = study_methods(args.study)
     root = args.root.resolve()
+    mask_reference = None
+    if args.study == "mask_sampling":
+        from mask_reuse import verify
+
+        mask_reference = verify(root)
     reused = None
     if args.study == "boundary_half":
         from boundary_reuse import verify_reuse
@@ -73,7 +79,8 @@ def main():
         initial = read(root / "evaluation/step-0-raw/metrics.json", ("initial",), 0, "runtime")
         rates["initial"] = summaries(initial)
         progress = json.loads((root / "training/progress.json").read_text())
-        assert progress["step"] >= args.through and progress["runs"] == list(methods)
+        trained = ["boundary8"] if mask_reference else list(methods)
+        assert progress["step"] >= args.through and progress["runs"] == trained
         files.extend([root / "training/initialization.json", root / "pilot-gate.json"])
         reference = Path(json.loads((root / "training/initialization.json").read_text())["source"])
         with np.load(reference / "weights.npz", allow_pickle=False) as expected:
@@ -118,6 +125,10 @@ def main():
             for line in (root / "training/timings.jsonl").read_text().splitlines()
             if json.loads(line)["step"] <= args.through
         ]
+        if mask_reference:
+            from mask_reuse import paired_timings
+
+            rows = paired_timings(root, args.through)
         assert [r["step"] for r in rows] == list(range(1, args.through + 1))
         assert all(r["recursion_levels"] == r["scale_level"] + 1 for r in rows)
         assert all(set(r["updates"]) == set(methods) for r in rows)
@@ -130,6 +141,11 @@ def main():
                 m: float(np.mean([r["updates"][m] for r in rows[100:]])) for m in methods
             },
         )
+        if mask_reference:
+            timings["note"] = (
+                "Recorded seconds cover newly trained boundary8 only; "
+                "control update times are historical, not paired."
+            )
         exposures = {}
         for method in methods:
             generated = [item for row in rows for item in row["generated"][method]]
@@ -143,7 +159,7 @@ def main():
         if args.study == "geometry_data":
             assert exposures["control"]["generated"] == 0
             assert 0.17 < exposures["geometry20"]["generated"] / (args.through * 16) < 0.23
-        elif args.study in ("boundary_loss", "cldice_loss", "noise_strength"):
+        elif args.study in ("boundary_loss", "cldice_loss", "noise_strength", "mask_sampling"):
             variant = methods[-1]
             assert exposures["control"] == exposures[variant]
             assert all(r["generated"]["control"] == r["generated"][variant] for r in rows)
@@ -183,9 +199,9 @@ def main():
                 )
     result = dict(
         synthetic_only=True,
-        newly_trained_methods=list(methods),
-        reused_methods=["control", "boundary"] if reused else [],
-        reference_root=str(reused) if reused else None,
+        newly_trained_methods=["boundary8"] if mask_reference else list(methods),
+        reused_methods=["control"] if mask_reference else ["control", "boundary"] if reused else [],
+        reference_root=str(mask_reference or reused) if (mask_reference or reused) else None,
         through=args.through,
         case_count=1562,
         denoise_steps=1,

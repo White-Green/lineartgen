@@ -19,7 +19,8 @@ Krita の Diffusion Drawing は小さな別パッケージ `lineartgen-runtime` 
 背景は改善したが細線消失が全サイズで増え、EMA S/Mでは切断も増えたため、今回の設定は採用しない。
 [N1 ノイズ強度sampling比較](docs/noise-strength-experiment-20260917.md)も2条件10,000更新まで完了。
 低〜中強度80%の案は細線消失・切断が増え、高強度の復元も悪化したため採用しない。
-次はN2のmask／線の境界を含む例のsamplingを比較する。
+[N2の矩形mask境界sampling](docs/mask-sampling-experiment-20260918.md)を開始する。
+矩形の面積と強度を保ち、下描きの線が境界を横切る位置を8候補から選ぶ。
 
 ## 環境を作る
 

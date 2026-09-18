@@ -10,6 +10,8 @@ from run_sketch_rates import METHODS, validate
 from summarize_sketch_experiment import clustered_delta, strength_slices, subset
 from summarize_training_methods import sha
 
+from lineartgen.evaluation import BOUNDARY_METRICS
+
 METRICS = (
     "active_ink_f1",
     "active_mae",
@@ -23,7 +25,14 @@ METRICS = (
 )
 
 
+def report_metrics(report):
+    return METRICS + (
+        BOUNDARY_METRICS if any("edit_boundary_mae" in row for row in report["results"]) else ()
+    )
+
+
 def summaries(report):
+    metrics = report_metrics(report)
     groups = {}
     for row in report["results"]:
         name = subset(row)
@@ -39,7 +48,7 @@ def summaries(report):
                 metric: float(np.mean([r[metric] for r in rows if r.get(metric) is not None]))
                 if any(r.get(metric) is not None for r in rows)
                 else None
-                for metric in METRICS
+                for metric in metrics
             },
         )
         for (name, method, subnet), rows in sorted(groups.items())
@@ -47,6 +56,7 @@ def summaries(report):
 
 
 def contrast(report, reference, manifest, baseline=None):
+    metrics = report_metrics(report)
     lookup = {(r["case"], r["method"], r["subnet"]): r for r in reference["results"]}
     groups = {}
     for row in report["results"]:
@@ -56,7 +66,7 @@ def contrast(report, reference, manifest, baseline=None):
         ref = lookup[row["case"], baseline or row["method"], row["subnet"]]
         case = manifest["cases"][row["case"]]
         cluster = case["source"] if case["kind"] == "real" else (case["kind"], case["variant"])
-        for metric in METRICS:
+        for metric in metrics:
             if row.get(metric) is not None and ref.get(metric) is not None:
                 groups.setdefault((name, row["method"], row["subnet"], metric), {}).setdefault(
                     cluster, []

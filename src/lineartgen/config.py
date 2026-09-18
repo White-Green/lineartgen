@@ -96,6 +96,8 @@ class DiffusionConfig(Settings):
     strength_sampling: Literal["uniform", "low_mixture"] = "uniform"
     low_strength_max: float = Field(default=0.5, gt=0, lt=1)
     low_strength_probability: float = Field(default=0.8, gt=0, lt=1)
+    mask_sampling: Literal["uniform", "boundary_rect"] = "uniform"
+    boundary_candidates: int = Field(default=8, ge=1, le=32)
     identity_probability: float = Field(default=0.1, ge=0, le=1)
     pattern_weights: tuple[float, float, float, float] = (1, 1, 1, 1)
     scale_loss_multiplier: float = Field(default=0.0, ge=0)
@@ -103,6 +105,8 @@ class DiffusionConfig(Settings):
 
     @model_validator(mode="after")
     def validate_weights(self):
+        if self.mask_sampling == "boundary_rect" and self.pattern_weights[3]:
+            raise ValueError("boundary_rect requires the protected-lines pattern to be disabled")
         if self.strength_sampling == "low_mixture" and self.low_strength_max <= self.min_noise:
             raise ValueError("low_strength_max must exceed min_noise")
         if min(self.pattern_weights) < 0 or sum(self.pattern_weights) <= 0:

@@ -16,6 +16,32 @@ def comparison_configs(config, *, study="widths", baseline=False):
         if baseline:
             result["baseline"] = config.model_copy(update={"model": ModelConfig()})
         return result
+    if study == "mask_sampling":
+        if (
+            baseline
+            or config.model.output_mode != "residual"
+            or config.matching.method != "independent"
+            or config.sketch.mode != "strokes"
+            or config.geometry.probability != 0.2
+            or config.loss.boundary_weight != 0
+            or config.loss.cldice_weight != 0
+            or config.diffusion.pattern_weights != (1, 1, 1, 0)
+            or config.diffusion.strength_sampling != "uniform"
+            or config.diffusion.mask_sampling != "boundary_rect"
+            or config.diffusion.boundary_candidates != 8
+        ):
+            raise ValueError(
+                "Mask comparison requires geometry20, strokes, residual, uniform "
+                "independent noise, boundary_rect with 8 candidates and no auxiliary loss"
+            )
+        return {
+            "control": config.model_copy(
+                update={
+                    "diffusion": config.diffusion.model_copy(update={"mask_sampling": "uniform"})
+                }
+            ),
+            "boundary8": config,
+        }
     if study == "noise_strength":
         if (
             baseline

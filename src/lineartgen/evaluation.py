@@ -11,6 +11,36 @@ from scipy import ndimage
 
 KINDS = ("straight", "thin", "curve", "corner", "junction", "parallel", "gap", "taper")
 
+BOUNDARY_METRICS = (
+    "edit_boundary_mae",
+    "edit_boundary_ink_mae",
+    "edit_boundary_background_mae",
+    "edit_boundary_ink_f1",
+)
+
+
+def edit_boundary_metrics(prediction, target, strength):
+    """Three-pixel editable seam; foreground scores require target ink there."""
+    p, t, active = prediction[..., 0], target[..., 0], strength[..., 0] > 0
+    edge = active & ndimage.binary_dilation(~active, iterations=3)
+    ink, background = edge & (t < 0), edge & (t >= 0)
+    error = np.abs(p - t)
+    predicted = edge & (p < 0)
+    return {
+        "edit_boundary_mae": float(error[edge].mean()) if edge.any() else None,
+        "edit_boundary_ink_mae": float(error[ink].mean()) if ink.any() else None,
+        "edit_boundary_background_mae": float(error[background].mean())
+        if background.any()
+        else None,
+        "edit_boundary_ink_f1": 2
+        * int((predicted & ink).sum())
+        / (int(predicted.sum()) + int(ink.sum()))
+        if ink.any()
+        else None,
+        "edit_boundary_pixels": int(edge.sum()),
+        "edit_boundary_ink_pixels": int(ink.sum()),
+    }
+
 
 def line_case(kind, variant, *, size=512):
     random = np.random.default_rng(20260911 + KINDS.index(kind) * 100 + variant)

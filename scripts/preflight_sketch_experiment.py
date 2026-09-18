@@ -33,6 +33,7 @@ def main():
             "boundary_half",
             "cldice_loss",
             "noise_strength",
+            "mask_sampling",
         ],
         default="sketch",
     )
@@ -88,6 +89,10 @@ def main():
                         np.all(np.asarray(b) <= np.asarray(a) + 1e-6)
                         for a, b in zip(reference.noise_levels, prepared.noise_levels, strict=True)
                     )
+                elif args.study == "mask_sampling":
+                    a, b = reference.noise_levels[0], prepared.noise_levels[0]
+                    np.testing.assert_array_equal(a.max((1, 2, 3)), b.max((1, 2, 3)))
+                    np.testing.assert_array_equal((a > 0).sum((1, 2, 3)), (b > 0).sum((1, 2, 3)))
                 else:
                     jax.tree.map(
                         np.testing.assert_array_equal, reference.noise_levels, prepared.noise_levels
@@ -127,7 +132,7 @@ def main():
                 devices=[str(x) for x in jax.devices()],
                 records=records,
                 batch_size=16,
-                shared_masks=True,
+                shared_masks=args.study != "mask_sampling",
                 shared_strengths=args.study != "noise_strength",
                 protected_teacher_exact=True,
             ),

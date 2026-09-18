@@ -16,7 +16,13 @@ from lineartgen.config import load_config
 from lineartgen.data.images import read_crop
 from lineartgen.data.pipeline import dataset_description, discover, split_experiment
 from lineartgen.diffusion import sample, sample_prepared
-from lineartgen.evaluation import KINDS, line_case, probe_metrics, protected_metrics
+from lineartgen.evaluation import (
+    KINDS,
+    edit_boundary_metrics,
+    line_case,
+    probe_metrics,
+    protected_metrics,
+)
 from lineartgen.evaluation_sampling import background_metrics, runtime_inputs, runtime_levels
 from lineartgen.models.serialization import load_inference, save_inference
 from lineartgen.training.checkpoints import load_run_model
@@ -232,6 +238,7 @@ def main():
             "boundary_half",
             "cldice_loss",
             "noise_strength",
+            "mask_sampling",
         ],
         default="methods",
     )
@@ -258,6 +265,7 @@ def main():
             "boundary_half",
             "cldice_loss",
             "noise_strength",
+            "mask_sampling",
         )
         else prepare(config, args.cases, args.legacy_cases)
     )
@@ -388,6 +396,11 @@ def main():
                         **protected_metrics(prediction, target, strength),
                         **background_metrics(prediction, target, strength),
                         **extra,
+                        **(
+                            edit_boundary_metrics(prediction, target, strength)
+                            if args.study == "mask_sampling"
+                            else {}
+                        ),
                     )
                 )
                 if subnet == 0:

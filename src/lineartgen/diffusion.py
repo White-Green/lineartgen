@@ -6,6 +6,7 @@ import jax
 import jax.numpy as jnp
 
 from lineartgen.config import DiffusionConfig
+from lineartgen.masks import boundary_rectangle
 from lineartgen.noise_matching import match_noise
 from lineartgen.sketch import augment_sketch, restoration_target
 
@@ -79,6 +80,8 @@ def noise_map(clean, key, config: DiffusionConfig):
     y0 = random[:, 4] * (1 - span_y)
     x0 = random[:, 5] * (1 - span_x)
     rectangle = (ys >= y0) & (ys < y0 + span_y) & (xs >= x0) & (xs < x0 + span_x)
+    if config.mask_sampling == "boundary_rect":
+        rectangle = boundary_rectangle(clean, rectangle, key, config.boundary_candidates)
     side = jnp.floor(random[:, 6] * 4)
     band = jnp.where(
         side < 1,

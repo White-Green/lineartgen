@@ -70,6 +70,7 @@ def test_sketch_gate_checks_complete_grid_and_protected_input():
         "boundary_half",
         "cldice_loss",
         "noise_strength",
+        "mask_sampling",
     ],
 )
 def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monkeypatch, study):
@@ -116,6 +117,7 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
         "boundary_half",
         "cldice_loss",
         "noise_strength",
+        "mask_sampling",
     ):
         config = config.model_copy(
             update={
@@ -135,12 +137,14 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
                 ),
             }
         )
-    if study == "noise_strength":
+    if study in ("noise_strength", "mask_sampling"):
         config = config.model_copy(
             update={
                 "geometry": config.geometry.model_copy(update={"probability": 0.2}),
                 "diffusion": config.diffusion.model_copy(
                     update={"strength_sampling": "low_mixture"}
+                    if study == "noise_strength"
+                    else {"mask_sampling": "boundary_rect"}
                 ),
             }
         )
@@ -177,6 +181,7 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
         "boundary_half": ("half",),
         "cldice_loss": ("control", "centerline"),
         "noise_strength": ("control", "low80"),
+        "mask_sampling": ("control", "boundary8"),
     }[study]
     for name in names:
         archived, _ = load_inference(full / "initial" / name)
@@ -192,7 +197,7 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
                 states.append(saved.restore(3, args=ocp.args.StandardRestore()))
         jax.tree.map(np.testing.assert_array_equal, *states)
 
-    if study in ("boundary_loss", "cldice_loss", "noise_strength"):
+    if study in ("boundary_loss", "cldice_loss", "noise_strength", "mask_sampling"):
         paths = [full / name / "checkpoints" for name in names]
         final_states = []
         for path in paths:
@@ -204,6 +209,34 @@ def test_paired_warmstart_resumes_model_optimizer_and_ema_exactly(tmp_path, monk
                 jax.tree.leaves(final_states[0]), jax.tree.leaves(final_states[1]), strict=True
             )
         )
+
+    if study == "mask_sampling":
+        isolated = tmp_path / "isolated-control"
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "compare_nested_training",
+                "--study",
+                study,
+                "--config",
+                str(config_path),
+                "--run-dir",
+                str(isolated),
+                "--stop-after",
+                "3",
+                "--initialize-from",
+                str(initial),
+                "--only-method",
+                "control",
+            ],
+        )
+        compare.main()
+        states = []
+        for group in (full, isolated):
+            with checkpoints.manager(group / "control/checkpoints") as saved:
+                states.append(saved.restore(3, args=ocp.args.StandardRestore()))
+        jax.tree.map(np.testing.assert_array_equal, *states)
 
     if study == "boundary_half":
         # Compare single-arm execution with the unchanged two-arm runner, including

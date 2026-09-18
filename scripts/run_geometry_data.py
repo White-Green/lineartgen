@@ -22,6 +22,7 @@ def study_methods(study):
         "boundary_half": ("half",),
         "cldice_loss": ("control", "centerline"),
         "noise_strength": ("control", "low80"),
+        "mask_sampling": ("control", "boundary8"),
     }[study]
 
 
@@ -55,6 +56,7 @@ def main():
             "boundary_half",
             "cldice_loss",
             "noise_strength",
+            "mask_sampling",
         ],
         default="geometry_data",
     )
@@ -134,6 +136,10 @@ def main():
         )
         assert report["manifest_sha256"] == sha(inputs / "cases.json")
         assert report["ema"] == (mode == "ema")
+        if args.study == "mask_sampling" and step:
+            from mask_reuse import verify_reevaluation
+
+            verify_reevaluation(root, report, step, mode)
         return report
 
     try:
@@ -175,9 +181,13 @@ def main():
             from boundary_reuse import verify_reuse
 
             verify_reuse(root)
+        if args.study == "mask_sampling":
+            from mask_reuse import verify
+
+            verify(root)
         initial_report = evaluate(0, "raw")
-        if args.study in ("boundary_half", "cldice_loss", "noise_strength"):
-            if args.study in ("cldice_loss", "noise_strength"):
+        if args.study in ("boundary_half", "cldice_loss", "noise_strength", "mask_sampling"):
+            if args.study in ("cldice_loss", "noise_strength", "mask_sampling"):
                 previous = json.loads(
                     (reference / "evaluation/step-10000-raw/metrics.json").read_text()
                 )
@@ -190,7 +200,11 @@ def main():
                 previous_rows = json.loads(
                     (reference / "evaluation/step-0-raw/metrics.json").read_text()
                 )["results"]
-            assert initial_report["results"] == previous_rows
+            initial_rows = [
+                {k: v for k, v in row.items() if not k.startswith("edit_boundary_")}
+                for row in initial_report["results"]
+            ]
+            assert initial_rows == previous_rows
             (root / "initial-reevaluation.json").write_text(
                 json.dumps(dict(outputs=len(initial_report["results"]), exact=True)) + "\n"
             )
@@ -221,6 +235,7 @@ def main():
                         root / "stop",
                         "--stop-after",
                         step - progress,
+                        *(["--only-method", "boundary8"] if args.study == "mask_sampling" else []),
                         *(["--resume"] if progress else ["--initialize-from", initial]),
                     ],
                     f"training-{step}",
@@ -228,6 +243,10 @@ def main():
             if (root / "stop").exists():
                 status("stop_requested")
                 return
+            if args.study == "mask_sampling":
+                from mask_reuse import populate
+
+                populate(root)
             reports = [evaluate(step, mode) for mode in ("raw", "ema")]
             if step == 2000:
                 gate = pilot_gate(reports, initial_report, methods)

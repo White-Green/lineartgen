@@ -1,4 +1,4 @@
-"""Assemble N1 report figures from verified inference pixels without rescaling."""
+"""Assemble sampling report figures from verified inference pixels without rescaling."""
 
 import argparse
 import json
@@ -15,6 +15,7 @@ def main():
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--manifest", type=Path, required=True)
+    parser.add_argument("--variant", default="low80")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     records = []
@@ -40,7 +41,7 @@ def main():
 
     for case, mode in ((256, "raw"), (480, "raw"), (480, "ema"), (479, "ema")):
         _, a, sources = verified("control", mode, case)
-        _, b, other = verified("low80", mode, case)
+        _, b, other = verified(args.variant, mode, case)
         np.testing.assert_array_equal(a[:, :1536], b[:, :1536])
         sources.update(other)
         pixels = np.concatenate((a[:, :2048], b[:, 1536:2048]), axis=1)
@@ -53,7 +54,7 @@ def main():
                 "rough source",
                 "noisy input",
                 f"S uniform {mode}",
-                f"S low80 {mode}",
+                f"S {args.variant} {mode}",
             )
         ):
             draw.text((i * 512 + 8, 5), label, fill=0)
@@ -70,8 +71,8 @@ def main():
             )
         )
     for mode in ("raw", "ema"):
-        source, _, sources = verified("low80", mode, 1376)
-        output = args.output / f"low80-{mode}-widths-case-1376.png"
+        source, _, sources = verified(args.variant, mode, 1376)
+        output = args.output / f"{args.variant}-{mode}-widths-case-1376.png"
         shutil.copyfile(source, output)
         assert sha(source) == sha(output)
         records.append(

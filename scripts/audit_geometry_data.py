@@ -26,6 +26,7 @@ def main():
             "boundary_half",
             "cldice_loss",
             "noise_strength",
+            "mask_sampling",
         ],
         default="geometry_data",
     )
@@ -95,6 +96,10 @@ def main():
 
         verify_reuse(root, 10000)
     timings = [json.loads(x) for x in (root / "training/timings.jsonl").read_text().splitlines()]
+    if args.study == "mask_sampling":
+        from mask_reuse import paired_timings
+
+        timings = paired_timings(root, 10000)
     assert [r["step"] for r in timings] == list(range(1, 10001))
     from lineartgen.config import load_config
 
@@ -107,7 +112,7 @@ def main():
         actual = row["generated"][methods[-1]]
         if args.study == "geometry_data":
             assert not row["generated"]["control"]
-        elif args.study in ("boundary_loss", "cldice_loss", "noise_strength"):
+        elif args.study in ("boundary_loss", "cldice_loss", "noise_strength", "mask_sampling"):
             assert row["generated"]["control"] == actual
         assert [r["item"] for r in actual] == selected
         assert all(r["key"] == [config.train.seed, step, r["item"], 0x50415448] for r in actual)
