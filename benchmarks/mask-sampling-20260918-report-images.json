@@ -1,0 +1,80 @@
+{
+  "records": [
+    {
+      "case": 256,
+      "mode": "raw",
+      "output": "docs/assets/mask-sampling-20260918/paired-raw-case-256.png",
+      "sha256": "f29e8e23c842e22767afaf1de942075459b4dcf88132ba831a35890e6c9fd123",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/mask-sampling-20260918/evaluation/widths-10000-control-raw/case-256.png": "fecf1dd119854aa75be8a4351016693a54d597e4ecbd54f31bb1c3ba3750796e",
+        "runs/mask-sampling-20260918/evaluation/widths-10000-control-raw/verification.json": "f4fb88d26b27ec25fbc5cc3daa97b088840968a4037c7d795118887fac15797a",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/mask-sampling-20260918/evaluation/widths-10000-boundary8-raw/case-256.png": "c2fa80fc6a406ebe979e6c80d4a292c310e40371f26d1303f1fc912adb645e54",
+        "runs/mask-sampling-20260918/evaluation/widths-10000-boundary8-raw/verification.json": "f84907dfe403fe81087e47bf1499af99d814ed239176c95f19479aa62d38f2e5"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 480,
+      "mode": "raw",
+      "output": "docs/assets/mask-sampling-20260918/paired-raw-case-480.png",
+      "sha256": "0e3fef57f791921361c939a19939d8970835ae79ea04af5f6e4fbf5d648b1668",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/mask-sampling-20260918/evaluation/widths-10000-control-raw/case-480.png": "377190fbbbcdb4ace3504156c7c3f806c1a4b08589f7250b5e1946c344e9389d",
+        "runs/mask-sampling-20260918/evaluation/widths-10000-control-raw/verification.json": "f4fb88d26b27ec25fbc5cc3daa97b088840968a4037c7d795118887fac15797a",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/mask-sampling-20260918/evaluation/widths-10000-boundary8-raw/case-480.png": "cc41b154b729b800ea49eb7b3c44a21990300e6dc119e2c77f99ac8c2ed54379",
+        "runs/mask-sampling-20260918/evaluation/widths-10000-boundary8-raw/verification.json": "f84907dfe403fe81087e47bf1499af99d814ed239176c95f19479aa62d38f2e5"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 480,
+      "mode": "ema",
+      "output": "docs/assets/mask-sampling-20260918/paired-ema-case-480.png",
+      "sha256": "52c71227c944f5619cef6c1358325b5a9c40fa6d1657e04a4a52b760624e850f",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/mask-sampling-20260918/evaluation/widths-10000-control-ema/case-480.png": "c0c265acd18973c1635955738b531b9475a44b80c04bf89f73c7439553285693",
+        "runs/mask-sampling-20260918/evaluation/widths-10000-control-ema/verification.json": "0262ab2f3bf4fb1073a36acdb5f1a94b3a97692985ab8285c0eab860b6f64148",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/mask-sampling-20260918/evaluation/widths-10000-boundary8-ema/case-480.png": "97da3ad0ce6783e548349b330c0c2c0c3081ea5af38d391ee1be4ac9dcc0f122",
+        "runs/mask-sampling-20260918/evaluation/widths-10000-boundary8-ema/verification.json": "8923f3f8b09da7dd73776a69e42600b74e95e5f8e188df14988fad531e852cc9"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 479,
+      "mode": "ema",
+      "output": "docs/assets/mask-sampling-20260918/paired-ema-case-479.png",
+      "sha256": "b811f690a2915f037bac66c00bf99b9a78eaef90faf3092939ffb9362c26b180",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/mask-sampling-20260918/evaluation/widths-10000-control-ema/case-479.png": "7a5af89b3f7830ed1297a8888e85831b7bbfe555f6e4ba64162701a2015fd6d0",
+        "runs/mask-sampling-20260918/evaluation/widths-10000-control-ema/verification.json": "0262ab2f3bf4fb1073a36acdb5f1a94b3a97692985ab8285c0eab860b6f64148",
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/mask-sampling-20260918/evaluation/widths-10000-boundary8-ema/case-479.png": "c1c44e53e316dda4f0ca6dea2011a891217c179b63acc1f25c22ebf8172cb8b9",
+        "runs/mask-sampling-20260918/evaluation/widths-10000-boundary8-ema/verification.json": "8923f3f8b09da7dd73776a69e42600b74e95e5f8e188df14988fad531e852cc9"
+      },
+      "inputs_exact": true
+    },
+    {
+      "case": 1376,
+      "mode": "raw",
+      "output": "docs/assets/mask-sampling-20260918/boundary8-raw-widths-case-1376.png",
+      "sha256": "3e7d4e5a57e8742632da887247f8afcb7cb6e33a61af71c58114a21b81475d8f",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/mask-sampling-20260918/evaluation/widths-10000-boundary8-raw/case-1376.png": "3e7d4e5a57e8742632da887247f8afcb7cb6e33a61af71c58114a21b81475d8f",
+        "runs/mask-sampling-20260918/evaluation/widths-10000-boundary8-raw/verification.json": "f84907dfe403fe81087e47bf1499af99d814ed239176c95f19479aa62d38f2e5"
+      },
+      "copied_exact": true
+    },
+    {
+      "case": 1376,
+      "mode": "ema",
+      "output": "docs/assets/mask-sampling-20260918/boundary8-ema-widths-case-1376.png",
+      "sha256": "04f5810bb82e2c5aae54866427f40092053318497c2667d20303fc164f77b6b3",
+      "source_sha256": {
+        "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/runs/mask-sampling-20260918/evaluation/widths-10000-boundary8-ema/case-1376.png": "04f5810bb82e2c5aae54866427f40092053318497c2667d20303fc164f77b6b3",
+        "runs/mask-sampling-20260918/evaluation/widths-10000-boundary8-ema/verification.json": "8923f3f8b09da7dd73776a69e42600b74e95e5f8e188df14988fad531e852cc9"
+      },
+      "copied_exact": true
+    }
+  ],
+  "source": "/home/whitegreen/projects/lineartgen/.worktrees/jax-rewrite/scripts/render_strength_comparison.py",
+  "source_sha256": "6f16723590e53da40d071a40015f3dfb7ca3f4c9c01edf27232612337434e399"
+}

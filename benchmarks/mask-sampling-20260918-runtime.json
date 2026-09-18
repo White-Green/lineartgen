@@ -1,0 +1,169 @@
+{
+  "records": [
+    {
+      "method": "control",
+      "mode": "raw",
+      "case": 167,
+      "levels": 3,
+      "max_abs_error": 1.7285346984863281e-06,
+      "protected_exact": true,
+      "onnx_sha256": "48da4e3e640d466b2f20c9c4fc8cfe5e9badf124f543ed86ecc82a111beed37c",
+      "weights_sha256": "09915f2ea1942c2c8d4ba5c9607d15d1e0b0f6c812d9e961e97717e56d351c59"
+    },
+    {
+      "method": "control",
+      "mode": "raw",
+      "case": 256,
+      "levels": 3,
+      "max_abs_error": 2.0265579223632812e-06,
+      "protected_exact": true,
+      "onnx_sha256": "48da4e3e640d466b2f20c9c4fc8cfe5e9badf124f543ed86ecc82a111beed37c",
+      "weights_sha256": "09915f2ea1942c2c8d4ba5c9607d15d1e0b0f6c812d9e961e97717e56d351c59"
+    },
+    {
+      "method": "control",
+      "mode": "raw",
+      "case": 479,
+      "levels": 3,
+      "max_abs_error": 2.086162567138672e-06,
+      "protected_exact": true,
+      "onnx_sha256": "48da4e3e640d466b2f20c9c4fc8cfe5e9badf124f543ed86ecc82a111beed37c",
+      "weights_sha256": "09915f2ea1942c2c8d4ba5c9607d15d1e0b0f6c812d9e961e97717e56d351c59"
+    },
+    {
+      "method": "control",
+      "mode": "raw",
+      "case": 1376,
+      "levels": 3,
+      "max_abs_error": 7.748603820800781e-07,
+      "protected_exact": true,
+      "onnx_sha256": "48da4e3e640d466b2f20c9c4fc8cfe5e9badf124f543ed86ecc82a111beed37c",
+      "weights_sha256": "09915f2ea1942c2c8d4ba5c9607d15d1e0b0f6c812d9e961e97717e56d351c59"
+    },
+    {
+      "method": "control",
+      "mode": "ema",
+      "case": 167,
+      "levels": 3,
+      "max_abs_error": 3.874301910400391e-06,
+      "protected_exact": true,
+      "onnx_sha256": "7516057d4218e5fa51dc2bf4a549475521e4746e0683941d73f6b494f082dbe9",
+      "weights_sha256": "8ccf025ada6d4b269d6bef509648faa42ebe8fa92a42bb22897f18a2e6afab36"
+    },
+    {
+      "method": "control",
+      "mode": "ema",
+      "case": 256,
+      "levels": 3,
+      "max_abs_error": 1.1920928955078125e-06,
+      "protected_exact": true,
+      "onnx_sha256": "7516057d4218e5fa51dc2bf4a549475521e4746e0683941d73f6b494f082dbe9",
+      "weights_sha256": "8ccf025ada6d4b269d6bef509648faa42ebe8fa92a42bb22897f18a2e6afab36"
+    },
+    {
+      "method": "control",
+      "mode": "ema",
+      "case": 479,
+      "levels": 3,
+      "max_abs_error": 1.4901161193847656e-06,
+      "protected_exact": true,
+      "onnx_sha256": "7516057d4218e5fa51dc2bf4a549475521e4746e0683941d73f6b494f082dbe9",
+      "weights_sha256": "8ccf025ada6d4b269d6bef509648faa42ebe8fa92a42bb22897f18a2e6afab36"
+    },
+    {
+      "method": "control",
+      "mode": "ema",
+      "case": 1376,
+      "levels": 3,
+      "max_abs_error": 1.0728836059570312e-06,
+      "protected_exact": true,
+      "onnx_sha256": "7516057d4218e5fa51dc2bf4a549475521e4746e0683941d73f6b494f082dbe9",
+      "weights_sha256": "8ccf025ada6d4b269d6bef509648faa42ebe8fa92a42bb22897f18a2e6afab36"
+    },
+    {
+      "method": "boundary8",
+      "mode": "raw",
+      "case": 167,
+      "levels": 3,
+      "max_abs_error": 3.337860107421875e-06,
+      "protected_exact": true,
+      "onnx_sha256": "da031c51d7b198aeb9509d8e8a19f1234711379fa558ddf9aeadfb1e7451e1c0",
+      "weights_sha256": "c676c372a828fc48e1174057d1ea1b4dba555bb835ea681614434b247e96c8a3"
+    },
+    {
+      "method": "boundary8",
+      "mode": "raw",
+      "case": 256,
+      "levels": 3,
+      "max_abs_error": 4.0531158447265625e-06,
+      "protected_exact": true,
+      "onnx_sha256": "da031c51d7b198aeb9509d8e8a19f1234711379fa558ddf9aeadfb1e7451e1c0",
+      "weights_sha256": "c676c372a828fc48e1174057d1ea1b4dba555bb835ea681614434b247e96c8a3"
+    },
+    {
+      "method": "boundary8",
+      "mode": "raw",
+      "case": 479,
+      "levels": 3,
+      "max_abs_error": 1.430511474609375e-06,
+      "protected_exact": true,
+      "onnx_sha256": "da031c51d7b198aeb9509d8e8a19f1234711379fa558ddf9aeadfb1e7451e1c0",
+      "weights_sha256": "c676c372a828fc48e1174057d1ea1b4dba555bb835ea681614434b247e96c8a3"
+    },
+    {
+      "method": "boundary8",
+      "mode": "raw",
+      "case": 1376,
+      "levels": 3,
+      "max_abs_error": 4.76837158203125e-07,
+      "protected_exact": true,
+      "onnx_sha256": "da031c51d7b198aeb9509d8e8a19f1234711379fa558ddf9aeadfb1e7451e1c0",
+      "weights_sha256": "c676c372a828fc48e1174057d1ea1b4dba555bb835ea681614434b247e96c8a3"
+    },
+    {
+      "method": "boundary8",
+      "mode": "ema",
+      "case": 167,
+      "levels": 3,
+      "max_abs_error": 1.6689300537109375e-06,
+      "protected_exact": true,
+      "onnx_sha256": "25c1e0d5310f00d3fcc4d98b0b6428bb56c6e4104e14c7ecf7bc186573da7869",
+      "weights_sha256": "535197b5d5cdd378ae2e4f9c81ab1a549233352c07d76b92b7081452f5d7e4b3"
+    },
+    {
+      "method": "boundary8",
+      "mode": "ema",
+      "case": 256,
+      "levels": 3,
+      "max_abs_error": 9.5367431640625e-07,
+      "protected_exact": true,
+      "onnx_sha256": "25c1e0d5310f00d3fcc4d98b0b6428bb56c6e4104e14c7ecf7bc186573da7869",
+      "weights_sha256": "535197b5d5cdd378ae2e4f9c81ab1a549233352c07d76b92b7081452f5d7e4b3"
+    },
+    {
+      "method": "boundary8",
+      "mode": "ema",
+      "case": 479,
+      "levels": 3,
+      "max_abs_error": 1.3709068298339844e-06,
+      "protected_exact": true,
+      "onnx_sha256": "25c1e0d5310f00d3fcc4d98b0b6428bb56c6e4104e14c7ecf7bc186573da7869",
+      "weights_sha256": "535197b5d5cdd378ae2e4f9c81ab1a549233352c07d76b92b7081452f5d7e4b3"
+    },
+    {
+      "method": "boundary8",
+      "mode": "ema",
+      "case": 1376,
+      "levels": 3,
+      "max_abs_error": 7.748603820800781e-07,
+      "protected_exact": true,
+      "onnx_sha256": "25c1e0d5310f00d3fcc4d98b0b6428bb56c6e4104e14c7ecf7bc186573da7869",
+      "weights_sha256": "535197b5d5cdd378ae2e4f9c81ab1a549233352c07d76b92b7081452f5d7e4b3"
+    }
+  ],
+  "manifest_sha256": "1a0b834c475434d224e26c0fbb2e8bd22f3a738a1440d2be3fc1d53caf42e4f9",
+  "devices": [
+    "cpu:0"
+  ],
+  "scope": "Normalized arrays, actual S ONNX and unchanged runtime sampling; no BGRA conversion"
+}
