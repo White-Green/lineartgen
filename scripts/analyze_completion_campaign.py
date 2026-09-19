@@ -240,6 +240,10 @@ def main():
         return
     if args.stage == "final":
         check_seal(root)
+    else:
+        from supplement_campaign_diagnostics import run_diagnostics
+
+        run_diagnostics(root)
     result = analyze(root, final=args.stage == "final")
     output = root / f"{args.stage}-summary.json"
     write(output, result)
@@ -250,6 +254,7 @@ def main():
             root / "protocol.json",
             root / "cohorts.json",
             root / "training-source.json",
+            root / "diagnostic-summary.json",
             *sorted((root / "decisions").glob("*.json")),
             Path(__file__).resolve(),
             *(
@@ -259,10 +264,12 @@ def main():
                     "verify_completion_campaign.py",
                     "render_campaign_blind.py",
                     "audit_completion_campaign.py",
+                    "supplement_campaign_diagnostics.py",
                 )
             ),
         ]:
             artifacts[str(p)] = sha(p)
+        artifacts.update(read(root / "diagnostic-summary.json")["artifacts"])
         for group in read(root / "cohorts.json").values():
             for name in group.values():
                 arm = root / "arms" / name

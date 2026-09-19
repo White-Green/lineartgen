@@ -93,3 +93,10 @@ M/Lの内部再帰channelを扱わないため、M/Lは自律したJAX prefixと
 M/LをKritaに配布済みとは扱わない。今回Krita plugin側の変更は行わない。
 最終監査は `scripts/audit_completion_campaign.py` で全更新、実際の強度/mask/生成線画keyの
 対応、元画像分割、評価grid、封印済み重みとexportを照合する。
+
+段数と反復回数の診断は `supplement_campaign_diagnostics.py` で、全学習終了後・選定封印前に
+実行する。A2/A3の10k snapshotはraw/EMAでdataset段数を使い、幾何評価の1段再帰と
+実画像の1〜6段を確認する。seed42の最終3条件では、EMAでdataset段数の再評価と、
+runtime3段・denoise2/5回を追加する。採用規則は主評価のruntime3段・denoise1回に固定し、
+追加測定は失敗傾向の記録に使う。dataset段数間では画像例も異なるため、段数そのものの
+因果的な比較とは解釈しない。

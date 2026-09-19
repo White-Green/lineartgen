@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 from analyze_completion_campaign import check_seal
 from campaign_protocol import needs_continuation, read, report, sha, write
+from supplement_campaign_diagnostics import validate as validate_diagnostic
 
 
 def training_audit(arm):
@@ -97,6 +98,18 @@ def audit(root):
                 _, step, mode = path.parent.name.split("-")
                 result = report(arm, int(step), mode, root / cases, scope=scope)
                 total_predictions += len(result["results"])
+        for path in sorted((arm / "diagnostics").glob("*/metrics.json")):
+            result = read(path)
+            validate_diagnostic(
+                path,
+                arm,
+                root / "development",
+                result["checkpoint_step"],
+                "ema" if result["ema"] else "raw",
+                tuple(result["denoise_steps"]),
+                result["recursion"],
+            )
+            total_predictions += len(result["results"])
     for seed, cohort in cohorts.items():
         expected = audits[cohort["shared"]]["paired_data_sha256"]
         for name in cohort.values():

@@ -283,3 +283,51 @@ def test_training_audit_detects_gaps_and_wrong_generated_seed(tmp_path, monkeypa
     write_rows()
     with pytest.raises(AssertionError):
         audit.training_audit(tmp_path)
+
+
+def test_supplementary_diagnostics_require_each_iteration_and_correct_depth(tmp_path, monkeypatch):
+    module_ = module("supplement_campaign_diagnostics", monkeypatch)
+    from lineartgen.config import ExperimentConfig, save_config
+
+    cases, arm = tmp_path / "cases", tmp_path / "arm"
+    module_.write(cases / "cases.json", dict(cases=[dict(scale_level=0), dict(scale_level=5)]))
+    arm.mkdir()
+    save_config(ExperimentConfig(), arm / "config.json")
+    rows = [
+        dict(
+            case=i,
+            subnet=0,
+            denoise_steps=steps,
+            method="model",
+            recursion_levels=1 if i == 0 else 6,
+            protected_max_error=0.0,
+        )
+        for i in range(2)
+        for steps in (2, 5)
+    ]
+    result = dict(
+        results=rows,
+        cases=2,
+        denoise_steps=[2, 5],
+        manifest_sha256=module_.sha(cases / "cases.json"),
+        checkpoint_step=10000,
+        ema=True,
+        noise_generator="numpy",
+        recursion="dataset",
+    )
+    path = tmp_path / "metrics.json"
+    module_.write(path, result)
+    module_.validate(path, arm, cases, 10000, "ema", (2, 5), "dataset")
+    rows[0]["recursion_levels"] = 3
+    module_.write(path, result)
+    with pytest.raises(AssertionError):
+        module_.validate(path, arm, cases, 10000, "ema", (2, 5), "dataset")
+    rows[0]["recursion_levels"] = 1
+    rows.pop()
+    module_.write(path, result)
+    with pytest.raises(AssertionError):
+        module_.validate(path, arm, cases, 10000, "ema", (2, 5), "dataset")
+    with pytest.raises(AssertionError, match="locked campaign controller"):
+        module_.inherited_lock(tmp_path)
+    with (tmp_path / "controller.lock").open("a+") as lock:
+        assert module_.inherited_lock(tmp_path) == (lock.fileno(),)
