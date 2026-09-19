@@ -37,6 +37,23 @@ def test_paired_intervals_weight_cases_and_resample_fitted_seeds(monkeypatch):
         analysis.interval(pairs, manifest, "clean_real", "active_ink_f1")
 
 
+def test_random_blank_crops_cannot_hide_line_scores_in_diagnostics(monkeypatch):
+    analysis = module("analyze_completion_campaign", monkeypatch)
+    shared = dict(suite="sketch_real", family="strokes", severity="strong", strength=0.5)
+    result = analysis.real_ink_summaries(
+        [
+            dict(shared, active_target_ink_fraction=0.0, active_ink_f1=1.0),
+            dict(shared, active_target_ink_fraction=0.1, active_ink_f1=0.2),
+            dict(shared, active_target_ink_fraction=None, active_ink_f1=None, strength=0.0),
+        ]
+    )
+    indexed = {r["population"]: r for r in result}
+    assert indexed["all"]["cases"] == 2
+    assert indexed["all"]["active_ink_f1"] == pytest.approx(0.6)
+    assert indexed["with_ink"]["active_ink_f1"] == 0.2
+    assert indexed["low_ink"]["active_ink_f1"] == 1.0
+
+
 def test_final_data_cannot_be_opened_before_seal_and_changed_artifacts_reject(
     tmp_path, monkeypatch
 ):

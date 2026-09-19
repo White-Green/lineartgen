@@ -37,6 +37,36 @@ def source_key(case):
     return case["source"] if case["kind"] == "real" else (case["kind"], case["variant"])
 
 
+def real_ink_summaries(rows):
+    """Expose nearly blank random crops separately without changing selection criteria."""
+    groups = {}
+    for row in rows:
+        if row["strength"] <= 0 or row["suite"] not in ("matched_real", "sketch_real"):
+            continue
+        name = (
+            "clean_real"
+            if row["suite"] == "matched_real"
+            else (f"sketch_real_{row['family']}_{row['severity']}")
+        )
+        ink = "with_ink" if row["active_target_ink_fraction"] >= 0.001 else "low_ink"
+        for population in ("all", ink):
+            groups.setdefault((name, population), []).append(row)
+    return [
+        dict(
+            subset=name,
+            population=population,
+            cases=len(selected),
+            **{
+                metric: float(np.mean([r[metric] for r in selected if r.get(metric) is not None]))
+                if any(r.get(metric) is not None for r in selected)
+                else None
+                for metric in ("active_ink_f1", "active_mae", "active_background_mae")
+            },
+        )
+        for (name, population), selected in sorted(groups.items())
+    ]
+
+
 def interval(pairs, manifest, group, metric, *, seed=20260911, draws=5000):
     """Resample both fitted seeds and paired source clusters, with case weighting."""
     grouped = []
@@ -99,13 +129,21 @@ def analyze(root, *, final=False):
                 reports[seed, role, mode] = report(arm, step, mode, cases, scope=scope)
                 path = arm / scope / f"step-{step}-{mode}/metrics.json"
                 artifacts[str(path)] = sha(path)
-    rows = []
+    rows, real_ink = [], []
     decisions = []
     for name, (role, index) in MODELS.items():
         per_mode = {}
         violations = []
         for mode in ("raw", "ema"):
             summaries = {s: values(reports[s, role, mode]) for s in cohorts}
+            for seed in cohorts:
+                selected_rows = [
+                    r for r in reports[seed, role, mode]["results"] if r["subnet"] == index
+                ]
+                real_ink.extend(
+                    dict(model=name, seed=seed, mode=mode, **row)
+                    for row in real_ink_summaries(selected_rows)
+                )
             contrasts = []
             for group in protocol["screening_subsets"]:
                 for metric, tolerance in protocol["size_tolerances"].items():
@@ -209,6 +247,9 @@ def analyze(root, *, final=False):
         step=step,
         candidate_decisions=decisions,
         per_seed_summary=rows,
+        real_ink_diagnostics=real_ink,
+        real_ink_definition="with_ink: active_target_ink_fraction >= 0.001; "
+        "low_ink includes blank and nearly blank crops. Descriptive, not a new selection rule.",
         artifacts=artifacts,
         smallest_eligible=eligible[0]["model"] if eligible else None,
         note="Intervals resample three fitted seeds and paired sources; precision is limited. "
