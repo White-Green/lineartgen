@@ -145,3 +145,28 @@ post-pool3,198／pre-pool2,000更新の状態から、別root
 移行記録は新rootの `migration.json` と `cache-integrity.json`。
 PNG/TIFFの独立測定結果は
 [benchmarks/input-cache-20260919.json](benchmarks/input-cache-20260919.json) にも保存した。
+
+## A2結果：pool前skipは採用しない
+
+2026-09-19 11:39 UTCに両構造の10,000更新・raw/EMA・S/M/L評価が完了した。
+2,000更新評価も含む37,488予測がfiniteで、保護画素の最大誤差は0。
+両構造10,000更新のscale・再帰段数・ノイズ強度・mask面積・生成線画keyの対応hashが
+一致した。設定・初期値を揃えた単一学習seedでの構造screeningである。
+
+EMA Sの強いstrokes幾何線画では次の結果になった。
+
+| 指標 | 既存pool後skip | pool前skip |
+| --- | ---: | ---: |
+| 編集領域ink F1 | 0.50244 | 0.48880 |
+| 切断率 | 0.53021 | 0.58177 |
+| 線消失率 | 0.07359 | 0.08067 |
+| 線幅MAE（px） | 2.99562 | 3.11401 |
+| 誤接続率 | 0.52083 | 0.50000 |
+
+一部に改善はあるが、事前の劣化許容条件を30項目で超え、主要改善条件も通らなかった。
+よってA2は不採用。pool前skip一般の優劣や、別の学習期間での結果まで断定しない。
+詳細は新rootの `decisions/a2.json`、入力対応監査は `training-audit-a2-10000.json`。
+
+既存pool後skipのEMA Sでも切断率.53021と消失率.07359がA3の開始基準
+（それぞれ.10/.02）を超えたため、最深encoder/decoderのみdilation2にした
+`seed42_post_pool_d2` を同じ初期値・recipeで学習開始した。パラメータ数は同じ。
