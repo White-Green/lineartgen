@@ -74,3 +74,22 @@ final画像を見て設定を修正しない。不合格もそのまま結果に
 実験rootは `runs/completion-20260919`。各runの設定、入力、ソース、checkpoint、判断を
 hashと追記ログで保存し、stopファイルで更新・保存後に停止できるようにする。
 数値コードの変更が必要になった場合は、既存runのsourceを保ち、変更理由と影響を記録する。
+
+後段の集計は `scripts/analyze_completion_campaign.py`。対応差の区間は学習seedと元画像を
+それぞれ再標本化し、case数で重み付けする。EMAの区間と各seedの点推定が非劣性幅を
+満たし、各seedの絶対品質目安も通った候補からparameter数順で選ぶ。
+同数の場合は安定した名前順とし、独立Sと共同Sの双方が通れば独立Sを優先する。
+3 seedだけでは不確実性の推定精度に限界がある。
+
+`selection-seal.json` に設定・判断・開発用評価・採用段階の全重みのSHA256を保存する。
+final生成スクリプトはこの記録を検証してから画像を開く。白紙cropも取り除かず保持する。
+`render_campaign_blind.py` は実画像の4枚おき16元画像と幾何形状の2個おき16条件を使う。
+強いstrokes/blur・全面/部分編集の4条件を固定順で巡回し、3 seedを巡回する。
+32パネル中24はEMA、8はraw。全体と固定中央256pxの2倍表示を作る。
+これは予測を見て選んだ良い例の一覧でも、raw/EMA間の完全な対比較でもない。
+
+ONNX/BGRA確認の対象は共同S・独立S・通常UNet基準モデル。現在のscalar insert APIは
+M/Lの内部再帰channelを扱わないため、M/Lは自律したJAX prefixとして検証する。
+M/LをKritaに配布済みとは扱わない。今回Krita plugin側の変更は行わない。
+最終監査は `scripts/audit_completion_campaign.py` で全更新、実際の強度/mask/生成線画keyの
+対応、元画像分割、評価grid、封印済み重みとexportを照合する。
