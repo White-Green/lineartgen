@@ -104,3 +104,35 @@ runtime3段・denoise2/5回を追加する。採用規則は主評価のruntime3
 finalの無作為cropに白紙が多い場合も把握できるよう、実画像由来の合成下描きについて、
 全例・編集領域のink比率≥.001・ink比率<.001のF1/MAE/背景MAEを別集計する。
 低ink群にはごく少量の線を含む例もある。これは記述用の診断であり、採否基準の変更ではない。
+
+## 画像読み込みの比較と保存形式の移行
+
+2026-09-19のpost-pool冒頭2,000更新では、最初の100更新を除いた入力待ちが
+平均0.634秒、中央値0.00193秒、最大58.7秒だった。モデル更新自体は中央値約1.16秒。
+以前の小規模runでの入力待ち平均2.46msは今回の条件を代表していなかった。
+未実施だったPNG対tiled TIFFの比較を、学習をcheckpointで停止して追加した。
+
+train内の最大scale PNGのファイル容量順位から4元画像を固定し、6 scale・16crop・
+4並列・3反復で比較した。最大scaleの後半2反復はPNG平均2.998秒、TIFF平均0.01631秒。
+Grainの36batchでも画像とaugmentationの結果が完全一致した。
+1.15秒の消費待ちを模擬した場合、最初の6batchを除く入力待ちは
+PNG平均37.62ms、TIFF平均0.638msだった。OS cacheは消去しておらず、
+4元画像を反復する測定なので955元画像での実学習の高速化率とは扱わない。
+測定コードは `scripts/benchmark_io_cache.py`、全記録は
+`runs/completion-20260919/io-comparison/benchmark.json`。
+
+train891+dev64の955元画像・6 scaleをlossless deflate tiled TIFFに変換する。
+final64元画像は変換対象から除外する。各ファイルの左上・中央・右下512cropで
+float32画素の完全一致を確認し、両ファイルのSHA256も保存する。
+これは全画素の総当たり比較ではない。cacheは `.cache/completion-tiles-20260919`。
+変換前の推定192 GiBに対し空き約382 GiB、空き100 GiBを下回れば停止する。
+
+post-pool3,198／pre-pool2,000更新の状態から、別root
+`runs/completion-20260919-cached`へ全checkpointをコピーして継続する。
+設定変更は `data.prepared_root` のみ。元rootは停止状態で残す。
+`migrate_campaign_cache.py` はmodel・optimizer・EMA・stepを復元して完全一致を確認する。
+合成RGBA画像によるテストでは、PNGで3更新する場合とPNG1更新→TIFF2更新の
+全学習状態がpost-pool/pre-pool両方で完全一致した。乱数やlossの変更はない。
+`run_cached_campaign.py` が既存controllerの全工程をそのまま呼び出す。
+`audit_campaign_cache.py --payload-hashes` で移行記録と全cacheのhashを最終確認する。
+旧PNG区間と新TIFF区間の学習時間は別集計する。
