@@ -293,6 +293,19 @@ def test_size_selection_rejects_regression_and_final_does_not_reselect(tmp_path,
     assert result["smallest_eligible"] is None and not result["selection_confirmed"]
     independent = next(d for d in result["candidate_decisions"] if d["model"] == "independent_s")
     assert any(v["kind"] == "absolute" for v in independent["violations"])
+    # A reserved crop draw with no evaluable clean ink is inconclusive, never a pass.
+    for path in (tmp_path / "arms").glob("*/final-evaluation/*/metrics.json"):
+        report = analysis.read(path)
+        for row in report["results"]:
+            if row["suite"] == "matched_real":
+                row["active_target_ink_fraction"] = 0.0
+        analysis.write(path, report)
+    missing = analysis.analyze(tmp_path, final=True)
+    assert not missing["selection_confirmed"]
+    assert all(
+        any(v["kind"] == "missing_subset" for v in d["violations"])
+        for d in missing["candidate_decisions"]
+    )
 
 
 def test_training_audit_detects_gaps_and_wrong_generated_seed(tmp_path, monkeypatch):

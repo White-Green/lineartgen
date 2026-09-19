@@ -218,11 +218,22 @@ def analyze(root, *, final=False):
                             dict(kind="noninferiority", subset=group, metric=metric, **result)
                         )
                 for s in cohorts:
-                    row = summaries[s][group, index]
+                    row = summaries[s].get((group, index))
+                    if row is None:
+                        rows.append(
+                            dict(model=name, seed=s, mode=mode, subset=group, available=False)
+                        )
+                        if mode == "ema":
+                            violations.append(dict(kind="missing_subset", seed=s, subset=group))
+                        continue
                     measured = {
                         k: row.get(k) for k in ("active_ink_f1", *protocol["size_tolerances"])
                     }
-                    rows.append(dict(model=name, seed=s, mode=mode, subset=group, **measured))
+                    rows.append(
+                        dict(
+                            model=name, seed=s, mode=mode, subset=group, available=True, **measured
+                        )
+                    )
                     if mode == "ema":
                         quality = protocol["absolute_quality"]
                         f1_min = (
