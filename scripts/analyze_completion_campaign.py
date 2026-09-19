@@ -252,6 +252,15 @@ def main():
             root / "training-source.json",
             *sorted((root / "decisions").glob("*.json")),
             Path(__file__).resolve(),
+            *(
+                Path(__file__).resolve().parent / name
+                for name in (
+                    "prepare_campaign_final.py",
+                    "verify_completion_campaign.py",
+                    "render_campaign_blind.py",
+                    "audit_completion_campaign.py",
+                )
+            ),
         ]:
             artifacts[str(p)] = sha(p)
         for group in read(root / "cohorts.json").values():
