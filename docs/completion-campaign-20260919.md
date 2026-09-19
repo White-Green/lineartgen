@@ -136,3 +136,12 @@ post-pool3,198／pre-pool2,000更新の状態から、別root
 `run_cached_campaign.py` が既存controllerの全工程をそのまま呼び出す。
 `audit_campaign_cache.py --payload-hashes` で移行記録と全cacheのhashを最終確認する。
 旧PNG区間と新TIFF区間の学習時間は別集計する。
+
+変換は06:33 UTC頃に完了した。実容量186,685,804,702 bytes（173.86 GiB）、
+所要5,745秒。5,730ファイル×3crop＝17,190か所で完全一致。
+移行後に各構造340配列のmodel・optimizer・EMA・stepを復元し、元checkpointと
+完全一致を確認した。06:34 UTCに `runs/completion-20260919-cached` で学習を再開。
+移行コードのcommitは `f129b58`、元の数値コードは `cc40408` のまま。
+移行記録は新rootの `migration.json` と `cache-integrity.json`。
+PNG/TIFFの独立測定結果は
+[benchmarks/input-cache-20260919.json](benchmarks/input-cache-20260919.json) にも保存した。
