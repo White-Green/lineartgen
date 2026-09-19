@@ -25,7 +25,7 @@ from lineartgen.diffusion import sample, training_inputs
 from lineartgen.models import create_model
 from lineartgen.models.serialization import load_inference, save_inference
 from lineartgen.training import checkpoints
-from lineartgen.training.comparison import comparison_configs
+from lineartgen.training.comparison import comparison_configs, manifest_configs
 from lineartgen.training.steps import accumulate_gradients, create_optimizer, make_steps
 from lineartgen.training.trainer import Trainer
 
@@ -38,6 +38,7 @@ def main():
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--baseline", action="store_true")
     parser.add_argument("--only-method", help="Train one named arm; other arms remain untouched")
+    parser.add_argument("--variants", type=Path, help="Explicit architecture arm configurations")
     parser.add_argument(
         "--study",
         choices=[
@@ -63,12 +64,20 @@ def main():
         help="Save all runs and stop at the next complete update when this file exists",
     )
     args = parser.parse_args()
+    if args.variants:
+        if args.baseline or args.initialize_from:
+            parser.error("Explicit variants start fresh or resume; no implicit baseline/warmstart")
+        args.study = "campaign"
     if args.stop_after < 1:
         parser.error("--stop-after must be positive")
     if args.initialize_from and (args.resume or args.study == "widths"):
         parser.error("--initialize-from requires a fresh methods/sketch study")
     config = load_config(args.config)
-    configs = comparison_configs(config, study=args.study, baseline=args.baseline)
+    configs = (
+        manifest_configs(args.variants, config)
+        if args.variants
+        else comparison_configs(config, study=args.study, baseline=args.baseline)
+    )
     all_configs = configs
     if args.only_method:
         if args.only_method not in configs:
@@ -163,11 +172,14 @@ def main():
             model = create_model(settings.model, rngs=nnx.Rngs(settings.train.initialization_seed))
             if initial is not None:
                 nnx.update(model, jax.tree.map(lambda x: x.copy(), nnx.state(initial, nnx.Param)))
+            if not args.resume and (initial is not None or args.variants):
                 save_inference(
                     model,
                     settings,
                     root / "initial" / name,
-                    provenance=f"Shared warmstart from {args.initialize_from}",
+                    provenance=f"Shared warmstart from {args.initialize_from}"
+                    if initial is not None
+                    else f"Fresh seed {settings.train.initialization_seed}",
                 )
             optimizer, schedule = create_optimizer(model, settings)
             ema = jax.tree.map(lambda x: x.copy(), nnx.state(model, nnx.Param))
@@ -196,7 +208,7 @@ def main():
                 trainer=Trainer(settings, directory),
                 prepare=preparation(settings),
             )
-        if not args.resume:
+        if not args.resume and not args.variants:
             # The contrast starts with exactly the same weights, not just the same seed.
             if args.study == "widths":
                 pairs = [(runs["shared"]["model"].extract(0), runs["independent_core"]["model"])]
@@ -321,7 +333,7 @@ def main():
                                 ).tolist()
                                 for name, s in configs.items()
                             }
-                            if args.study in ("noise_strength", "mask_sampling")
+                            if args.study in ("noise_strength", "mask_sampling", "campaign")
                             else None,
                             "mask_areas": {
                                 name: np.asarray(
@@ -334,7 +346,7 @@ def main():
                                 ).tolist()
                                 for name, s in configs.items()
                             }
-                            if args.study == "mask_sampling"
+                            if args.study in ("mask_sampling", "campaign")
                             else None,
                             "generated": {
                                 name: generated[(s.diffusion, s.matching, s.sketch, s.geometry)]

@@ -1,5 +1,8 @@
 # lineartgen — JAX rewrite
 
+2026-09-19から、[残りの実験計画](docs/completion-campaign-20260919.md)を一括して実行する。
+A2/条件付きA3、長期学習、独立Sと大型基準、3 seed、最後の未使用testまでを対象とする。
+
 JAX / Flax NNX で線画モデルを学習し、ONNX に出力する。
 Krita の Diffusion Drawing は小さな別パッケージ `lineartgen-runtime` で推論する。
 このブランチに Rust ソース・Cargo・ネイティブ拡張のビルドはない。

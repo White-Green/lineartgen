@@ -10,10 +10,16 @@ from lineartgen.models import create_model
 
 
 @pytest.mark.parametrize("nested", [False, True])
-def test_changed_architecture_exports_dynamic_shapes(tmp_path, nested):
+@pytest.mark.parametrize("skip,dilation", [("post_pool", 1), ("pre_pool", 1), ("pre_pool", 2)])
+def test_changed_architecture_exports_dynamic_shapes(tmp_path, nested, skip, dilation):
     config = ExperimentConfig.model_validate(
         {
-            "model": {"channels": [3, 6, 12], "convolutions_per_block": 2},
+            "model": {
+                "channels": [3, 6, 12],
+                "convolutions_per_block": 2,
+                "skip_mode": skip,
+                "bottleneck_dilation": dilation,
+            },
         }
     )
     if nested:

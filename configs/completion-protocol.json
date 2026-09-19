@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "seeds": [{"model": 42, "data": 47}, {"model": 43, "data": 48}, {"model": 44, "data": 49}],
+  "architecture_steps": [2000, 10000],
+  "long_steps": [2000, 10000, 20000, 30000, 60000, 100000],
+  "screening_subsets": ["clean_real", "clean_geometry", "sketch_real_blur_strong", "sketch_real_strokes_strong", "sketch_geometry_strokes_strong"],
+  "safety_tolerances": {"active_ink_f1": 0.01, "profile_width_mae_px": 0.1, "profile_missing_fraction": 0.01, "connection_cut_rate": 0.01, "connection_bridge_rate": 0.025, "active_background_mae": 0.001},
+  "screening_improvement": {"active_ink_f1": 0.005, "connection_cut_rate": 0.01},
+  "a3_trigger": {"connection_cut_rate": 0.10, "profile_missing_fraction": 0.02},
+  "continuation_improvement": {"active_ink_f1": 0.005, "connection_cut_rate": 0.01, "profile_missing_fraction": 0.005},
+  "size_tolerances": {"active_ink_f1": 0.01, "profile_width_mae_px": 0.1, "profile_missing_fraction": 0.01, "connection_cut_rate": 0.01, "connection_bridge_rate": 0.025},
+  "absolute_quality": {"clean_ink_f1_min": 0.90, "strong_ink_f1_min": 0.80, "connection_cut_rate_max": 0.10, "profile_missing_fraction_max": 0.02, "connection_bridge_rate_max": 0.10},
+  "final_seed": 2026091901,
+  "blind_seed": 2026091902,
+  "final_cases_per_source": 17,
+  "final_geometry_variants": [8, 9, 10, 11],
+  "bootstrap_draws": 5000,
+  "bootstrap_seed": 20260911
+}

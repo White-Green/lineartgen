@@ -22,6 +22,8 @@ class ModelConfig(Settings):
     nested_channels: tuple[tuple[int, ...], ...] = ()
     nested_execution: Literal["fused", "blocks"] = "fused"
     output_mode: Literal["direct", "residual"] = "direct"
+    skip_mode: Literal["post_pool", "pre_pool"] = "post_pool"
+    bottleneck_dilation: int = Field(default=1, ge=1, le=4)
 
     @model_validator(mode="after")
     def validate_architecture(self):

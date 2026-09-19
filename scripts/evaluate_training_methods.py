@@ -26,7 +26,7 @@ from lineartgen.evaluation import (
 from lineartgen.evaluation_sampling import background_metrics, runtime_inputs, runtime_levels
 from lineartgen.models.serialization import load_inference, save_inference
 from lineartgen.training.checkpoints import load_run_model
-from lineartgen.training.comparison import comparison_configs
+from lineartgen.training.comparison import comparison_configs, manifest_configs
 
 
 def data_settings(config):
@@ -227,6 +227,7 @@ def main():
     parser.add_argument("--steps", type=int, nargs="+", default=[1, 2, 5])
     parser.add_argument("--limit", type=int)
     parser.add_argument("--snapshot-only", action="store_true")
+    parser.add_argument("--variants", type=Path, help="Explicit architecture arm configurations")
     parser.add_argument(
         "--study",
         choices=[
@@ -251,6 +252,8 @@ def main():
         "--initialize-from", type=Path, help="Evaluate common warmstart at step zero"
     )
     args = parser.parse_args()
+    if args.variants:
+        args.study = "campaign"
     config = load_config(args.config)
     if config.data.crop_size != 512:
         parser.error("This fixed evaluation suite uses 512px crops")
@@ -266,6 +269,7 @@ def main():
             "cldice_loss",
             "noise_strength",
             "mask_sampling",
+            "campaign",
         )
         else prepare(config, args.cases, args.legacy_cases)
     )
@@ -296,6 +300,8 @@ def main():
     variants = (
         {"initial": config}
         if args.initialize_from
+        else manifest_configs(args.variants, config)
+        if args.variants
         else comparison_configs(config, study=args.study)
     )
     for method, settings in variants.items():
@@ -314,7 +320,10 @@ def main():
             save_inference(model, saved, snapshot, provenance=f"{method} step {step} {mode}")
         if saved.model != settings.model if args.initialize_from else saved != settings:
             raise ValueError(f"Saved configuration differs for {method}")
-        models.update(((method, i), model.extract(i)) for i in range(model.num_subnets))
+        if hasattr(model, "extract"):
+            models.update(((method, i), model.extract(i)) for i in range(model.num_subnets))
+        else:
+            models[method, 0] = model
     if args.snapshot_only:
         print(f"Saved {mode} snapshots at step {args.step}", flush=True)
         return
@@ -398,7 +407,7 @@ def main():
                         **extra,
                         **(
                             edit_boundary_metrics(prediction, target, strength)
-                            if args.study == "mask_sampling"
+                            if args.study in ("mask_sampling", "campaign")
                             else {}
                         ),
                     )

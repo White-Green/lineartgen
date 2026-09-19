@@ -1,6 +1,22 @@
 """Named, single-factor comparisons with a fixed optimizer batch and random pool."""
 
-from lineartgen.config import ModelConfig
+import json
+import re
+from pathlib import Path
+
+from lineartgen.config import ExperimentConfig, ModelConfig
+
+
+def manifest_configs(path, reference):
+    """Explicit architecture arms, keeping the data and optimization recipe fixed."""
+    records = json.loads(Path(path).read_text())
+    if not records or any(not re.fullmatch(r"[a-z][a-z0-9_]*", name) for name in records):
+        raise ValueError("Variant names must be nonempty safe identifiers")
+    variants = {name: ExperimentConfig.model_validate(value) for name, value in records.items()}
+    expected = reference.model_dump(exclude={"model"})
+    if any(c.model_dump(exclude={"model"}) != expected for c in variants.values()):
+        raise ValueError("Architecture arms must share all non-model settings")
+    return variants
 
 
 def comparison_configs(config, *, study="widths", baseline=False):

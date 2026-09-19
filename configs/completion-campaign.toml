@@ -1,0 +1,64 @@
+# Remaining campaign: fixed recipe; explicit per-arm architecture manifests.
+[model]
+architecture = "nested"
+channels = [4, 6, 8]
+nested_channels = [[6, 8, 12], [8, 12, 16]]
+convolutions_per_block = 2
+nested_execution = "fused"
+output_mode = "residual"
+
+[data]
+root = "dataset"
+crop_size = 512
+validation_count = 64
+final_test_count = 64
+split_seed = 42
+workers = 4
+prefetch_batches = 8
+
+[diffusion]
+original_steps = 1
+strength_sampling = "uniform"
+mask_sampling = "uniform"
+boundary_candidates = 8
+scale_loss_multiplier = 0.0
+sample_steps = 1
+pattern_weights = [1.0, 1.0, 1.0, 0.0]
+
+[matching]
+method = "independent"
+pool_size = 16
+
+[sketch]
+mode = "strokes"
+probability = 0.50
+opacity_min = 0.25
+opacity_max = 1.0
+blur_sigma_min = 0.0
+blur_sigma_max = 2.0
+dilation_radius = 2
+displacement = 2.0
+
+[geometry]
+probability = 0.2
+blank_probability = 0.05
+supersampling = 4
+minimum_width = 0.6
+maximum_width = 12.0
+
+[loss]
+noise_weight_floor = 0.05
+contrast_active_only = true
+
+[train]
+steps = 100000
+batch_size = 4
+accumulate_steps = 4
+learning_rate = 0.0001
+minimum_learning_rate = 0.00001
+warmup_steps = 500
+evaluate_every = 1000
+checkpoint_every = 250
+validation_batches = 12
+seed = 47
+model_seed = 42

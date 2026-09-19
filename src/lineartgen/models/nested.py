@@ -26,11 +26,18 @@ def concatenate_groups(left, right):
 
 
 class CausalConv(nnx.Module):
-    def __init__(self, inputs, outputs, *, kernel_size, rngs, execution):
+    def __init__(self, inputs, outputs, *, kernel_size, rngs, execution, dilation=1):
         self.execution = execution
+        self.dilation = dilation
         self.groups = nnx.List(
             [
-                nnx.Conv(sum(inputs[: i + 1]), width, (kernel_size, kernel_size), rngs=rng)
+                nnx.Conv(
+                    sum(inputs[: i + 1]),
+                    width,
+                    (kernel_size, kernel_size),
+                    kernel_dilation=(dilation, dilation),
+                    rngs=rng,
+                )
                 for i, (width, rng) in enumerate(zip(outputs, rngs, strict=True))
             ]
         )
@@ -53,6 +60,7 @@ class CausalConv(nnx.Module):
             jnp.concatenate(kernels, -1),
             window_strides=(1, 1),
             padding="SAME",
+            rhs_dilation=(self.dilation, self.dilation),
             dimension_numbers=("NHWC", "HWIO", "NHWC"),
         ) + jnp.concatenate([conv.bias[...] for conv in self.groups])
         boundaries = tuple(np.cumsum([conv.bias.shape[0] for conv in self.groups])[:-1])
@@ -60,7 +68,7 @@ class CausalConv(nnx.Module):
 
 
 class CausalConvBlock(nnx.Module):
-    def __init__(self, inputs, outputs, *, depth, kernel_size, rngs, execution):
+    def __init__(self, inputs, outputs, *, depth, kernel_size, rngs, execution, dilation=1):
         # Match max(in, out) at each prefix, including the original smallest block.
         middle = tuple(
             int(width)
@@ -69,7 +77,9 @@ class CausalConvBlock(nnx.Module):
         widths = [inputs] + [middle] * (depth - 1) + [outputs]
         self.layers = nnx.List(
             [
-                CausalConv(a, b, kernel_size=kernel_size, rngs=rngs, execution=execution)
+                CausalConv(
+                    a, b, kernel_size=kernel_size, rngs=rngs, execution=execution, dilation=dilation
+                )
                 for a, b in zip(widths[:-1], widths[1:], strict=True)
             ]
         )
@@ -86,6 +96,8 @@ class NestedUNet(nnx.Module):
         self.num_subnets = len(widths)
         self.minimum_size = config.minimum_size
         self.output_mode = config.output_mode
+        self.skip_mode = config.skip_mode
+        self.bottleneck_dilation = config.bottleneck_dilation
         # A group's initialization is independent of how many extensions exist.
         key = rngs.params()
         group_rngs = tuple(nnx.Rngs(jax.random.fold_in(key, i)) for i in range(self.num_subnets))
@@ -94,7 +106,7 @@ class NestedUNet(nnx.Module):
             for stage in range(len(config.channels))
         )
 
-        def block(inputs, outputs):
+        def block(inputs, outputs, dilation=1):
             return CausalConvBlock(
                 inputs,
                 outputs,
@@ -102,6 +114,7 @@ class NestedUNet(nnx.Module):
                 kernel_size=config.kernel_size,
                 rngs=group_rngs,
                 execution=config.nested_execution,
+                dilation=dilation,
             )
 
         # The external image/noise map belongs to the common input group.
@@ -111,7 +124,10 @@ class NestedUNet(nnx.Module):
         ]
         skips = [tuple(c + 1 for c in increments[0]), *increments[1:]]
         self.encoders = nnx.List(
-            [block(a, b) for a, b in zip(encoder_inputs, increments, strict=True)]
+            [
+                block(a, b, config.bottleneck_dilation if stage == len(increments) - 1 else 1)
+                for stage, (a, b) in enumerate(zip(encoder_inputs, increments, strict=True))
+            ]
         )
         previous = (0,) * self.num_subnets
         decoders = []
@@ -119,7 +135,13 @@ class NestedUNet(nnx.Module):
             # Every extension retains two final features, not just the smallest.
             outputs = encoder_inputs[stage] if stage else (2,) * self.num_subnets
             inputs = tuple(a + b for a, b in zip(skips[stage], previous, strict=True))
-            decoders.append(block(inputs, outputs))
+            decoders.append(
+                block(
+                    inputs,
+                    outputs,
+                    config.bottleneck_dilation if stage == len(increments) - 1 else 1,
+                )
+            )
             previous = outputs
         self.decoders = nnx.List(decoders)
         self.heads = nnx.List(
@@ -138,26 +160,41 @@ class NestedUNet(nnx.Module):
     def __call__(self, image, noise_level, insert):
         if insert.shape[-1] != self.num_subnets:
             raise ValueError("insert must contain one prediction per retained subnet")
-        empty = image[..., :0]
-        groups = (jnp.concatenate((image, noise_level), -1),) + (empty,) * (self.num_subnets - 1)
-        skips = []
-        for stage, encoder in enumerate(self.encoders):
-            groups = tuple(
-                nnx.max_pool(x, (2, 2), (2, 2), padding="VALID") for x in encoder(groups)
-            )
-            if stage == 0:
-                groups = concatenate_groups(
-                    groups, tuple(insert[..., i : i + 1] for i in range(self.num_subnets))
-                )
-            skips.append(groups)
-        for stage, (decoder, skip) in enumerate(zip(self.decoders, reversed(skips), strict=True)):
-            groups = skip if stage == 0 else concatenate_groups(skip, groups)
-            groups = tuple(
+
+        def upsample(groups):
+            return tuple(
                 jax.image.resize(
                     x, (x.shape[0], x.shape[1] * 2, x.shape[2] * 2, x.shape[3]), "nearest"
                 )
                 for x in groups
             )
+
+        empty = image[..., :0]
+        groups = (jnp.concatenate((image, noise_level), -1),) + (empty,) * (self.num_subnets - 1)
+        skips = []
+        for stage, encoder in enumerate(self.encoders):
+            features = encoder(groups)
+            groups = tuple(nnx.max_pool(x, (2, 2), (2, 2), padding="VALID") for x in features)
+            if stage == 0:
+                groups = concatenate_groups(
+                    groups, tuple(insert[..., i : i + 1] for i in range(self.num_subnets))
+                )
+            if self.skip_mode == "pre_pool" and stage < len(self.encoders) - 1:
+                skips.append(
+                    concatenate_groups(
+                        features,
+                        upsample(tuple(insert[..., i : i + 1] for i in range(self.num_subnets))),
+                    )
+                    if stage == 0
+                    else features
+                )
+            else:
+                skips.append(groups)
+        for stage, (decoder, skip) in enumerate(zip(self.decoders, reversed(skips), strict=True)):
+            if self.skip_mode == "pre_pool" and stage > 0:
+                groups = concatenate_groups(skip, upsample(groups))
+            else:
+                groups = upsample(skip if stage == 0 else concatenate_groups(skip, groups))
             groups = decoder(groups)
         return jnp.concatenate(
             [
@@ -204,6 +241,8 @@ class NestedUNet(nnx.Module):
             convolutions_per_block=len(self.encoders[0].layers),
             kernel_size=self.encoders[0].layers[0].groups[0].kernel.shape[0],
             output_mode=self.output_mode,
+            skip_mode=self.skip_mode,
+            bottleneck_dilation=self.bottleneck_dilation,
         )
         model = UNet(config, rngs=nnx.Rngs(0))
         for source, target in zip(

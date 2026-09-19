@@ -4,12 +4,19 @@ from flax import nnx
 
 
 class ConvBlock(nnx.Module):
-    def __init__(self, inputs, outputs, *, kernel_size=3, depth=3, rngs):
+    def __init__(self, inputs, outputs, *, kernel_size=3, depth=3, dilation=1, rngs):
         middle = max(inputs, outputs)
         channels = [inputs] + [middle] * (depth - 1) + [outputs]
         self.layers = nnx.List(
             [
-                nnx.Conv(a, b, (kernel_size, kernel_size), padding="SAME", rngs=rngs)
+                nnx.Conv(
+                    a,
+                    b,
+                    (kernel_size, kernel_size),
+                    padding="SAME",
+                    kernel_dilation=(dilation, dilation),
+                    rngs=rngs,
+                )
                 for a, b in zip(channels[:-1], channels[1:], strict=True)
             ]
         )
