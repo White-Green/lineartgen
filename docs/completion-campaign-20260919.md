@@ -170,3 +170,21 @@ EMA Sの強いstrokes幾何線画では次の結果になった。
 既存pool後skipのEMA Sでも切断率.53021と消失率.07359がA3の開始基準
 （それぞれ.10/.02）を超えたため、最深encoder/decoderのみdilation2にした
 `seed42_post_pool_d2` を同じ初期値・recipeで学習開始した。パラメータ数は同じ。
+
+## A3結果：dilation2は採用せず、既存構造で長期比較へ進む
+
+2026-09-19 15:14 UTCにA3の10,000更新・raw/EMA・S/M/L評価が完了した。
+A2/A3全3構造の2k/10k評価は計56,232予測でfinite・保護画素完全一致。
+3構造すべてで初期配列と10,000更新の入力対応hashが一致した。
+
+EMA Sの強いstrokes幾何線画では、dilation1→2でF1は.50244→.48738、
+切断率は.53021→.55938、消失率は.07359→.08268、線幅MAEは2.99562→3.27701px。
+誤接続率は.52083→.50000と下がったが、採用に必要な主要改善条件は通らず、
+劣化許容条件を39項目で超えた。rawの強いblur実画像でもF1が低下した。
+事前規則によりA3は不採用とし、長期比較の構造をpool後skip・dilation1に固定した。
+結果は新rootの `decisions/a3.json`、`decisions/architecture.json`、
+`training-audit-architectures-10000.json` に保存した。
+
+長期比較の3 seed cohortは `cohorts.json` に固定した。入れ子S/M/Lは既存の10k状態から、
+独立Sと126,765 parameterの基準モデルは初期化から同じ更新数・データ系列で比較する。
+15:14 UTCにseed42の独立Sを開始した。A2/A3だけから最小十分サイズは判定しない。
