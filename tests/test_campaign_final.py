@@ -1,6 +1,8 @@
 import importlib
+import io
 import json
 import shutil
+import tarfile
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -74,6 +76,42 @@ def test_final_data_cannot_be_opened_before_seal_and_changed_artifacts_reject(
     with pytest.raises(AssertionError, match="Sealed selection changed"):
         final.prepare(tmp_path)
     assert not opened
+
+
+def test_runtime_dependencies_recover_from_original_archive_and_reject_changes(
+    tmp_path, monkeypatch
+):
+    analysis = module("analyze_completion_campaign", monkeypatch)
+    monkeypatch.chdir(tmp_path)
+    runtime = Path("packages/lineartgen-runtime/src/lineartgen_runtime/sampling.py")
+    runtime.parent.mkdir(parents=True)
+    runtime.write_text("original runtime\n")
+    script = Path("scripts/old.py")
+    script.parent.mkdir()
+    script.write_text("original helper\n")
+    archive_path = tmp_path / "source.tar.gz"
+    with tarfile.open(archive_path, "w:gz") as archive:
+        for path in (runtime, script):
+            data = path.read_bytes()
+            member = tarfile.TarInfo(str(path))
+            member.size = len(data)
+            archive.addfile(member, io.BytesIO(data))
+    analysis.write(
+        tmp_path / "training-source.json",
+        dict(
+            commit="fixture",
+            archive=str(archive_path),
+            archive_sha256=analysis.sha(archive_path),
+        ),
+    )
+    analysis.write(
+        tmp_path / "execution-source.json", dict(files={str(script): analysis.sha(script)})
+    )
+    result = analysis.original_dependencies(tmp_path)
+    assert result == {str(script): analysis.sha(script), str(runtime): analysis.sha(runtime)}
+    runtime.write_text("changed runtime\n")
+    with pytest.raises(AssertionError, match="Original evaluation dependency changed"):
+        analysis.original_dependencies(tmp_path)
 
 
 def test_final_manifest_keeps_all_sources_blanks_and_disjoint_split(tmp_path, monkeypatch):

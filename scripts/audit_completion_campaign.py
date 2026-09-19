@@ -74,6 +74,8 @@ def audit(root):
     assert sha(frozen["archive"]) == frozen["archive_sha256"]
     for path, digest in frozen["file_sha256"].items():
         assert sha(path) == digest, path
+    for path, digest in read(root / "dependency-source.json")["file_sha256"].items():
+        assert sha(path) == digest, path
     for name, digest in read(root / "development-input-sha256.json").items():
         assert sha(root / "development" / name) == digest
     for name, digest in read(root / "final/input-sha256.json").items():

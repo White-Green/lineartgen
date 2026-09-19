@@ -2,7 +2,9 @@
 
 import argparse
 import datetime
+import hashlib
 import json
+import tarfile
 from pathlib import Path
 
 import numpy as np
@@ -111,6 +113,38 @@ def check_seal(root):
     for path, digest in seal["artifacts"].items():
         assert sha(path) == digest, f"Sealed selection changed: {path}"
     return seal
+
+
+def original_dependencies(root):
+    """Recover dependency hashes from the original snapshot, including on a fresh rerun."""
+    path = root / "dependency-source.json"
+    if not path.exists():
+        original = read(root / "training-source.json")
+        files = dict(read(root / "execution-source.json")["files"])
+        assert sha(original["archive"]) == original["archive_sha256"]
+        with tarfile.open(original["archive"], "r:gz") as archive:
+            for member in archive:
+                if (
+                    member.isfile()
+                    and member.name.startswith("packages/lineartgen-runtime/src/")
+                    and member.name.endswith(".py")
+                ):
+                    files[member.name] = hashlib.sha256(
+                        archive.extractfile(member).read()
+                    ).hexdigest()
+        write(
+            path,
+            dict(
+                commit=original["commit"],
+                file_sha256=files,
+                note="Existing helper scripts and runtime dependencies from the original "
+                "pre-training snapshot. New final-stage scripts are versioned separately.",
+            ),
+        )
+    dependencies = read(path)["file_sha256"]
+    for name, digest in dependencies.items():
+        assert sha(name) == digest, f"Original evaluation dependency changed: {name}"
+    return dependencies
 
 
 def analyze(root, *, final=False):
@@ -275,6 +309,7 @@ def main():
     parser.add_argument("--stage", choices=("development", "final"), required=True)
     args = parser.parse_args()
     root = args.root.resolve()
+    dependencies = original_dependencies(root)
     if args.stage == "development" and (root / "selection-seal.json").exists():
         check_seal(root)
         print("Existing selection seal verified; no reselection")
@@ -290,11 +325,13 @@ def main():
     write(output, result)
     if args.stage == "development":
         artifacts = dict(result["artifacts"])
+        artifacts.update(dependencies)
         for p in [
             output,
             root / "protocol.json",
             root / "cohorts.json",
             root / "training-source.json",
+            root / "dependency-source.json",
             root / "diagnostic-summary.json",
             *sorted((root / "decisions").glob("*.json")),
             Path(__file__).resolve(),
