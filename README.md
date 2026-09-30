@@ -1,7 +1,8 @@
 # lineartgen — JAX rewrite
 
-2026-09-19から、[残りの実験計画](docs/completion-campaign-20260919.md)を一括して実行する。
-A2/条件付きA3、長期学習、独立Sと大型基準、3 seed、最後の未使用testまでを対象とする。
+2026-09-30、[予定した実験を完了](docs/completion-results-20260930.md)。
+A2/A3、共同S/M/L・独立S・大型基準の3 seed×100k学習、未使用test、匿名画像確認、
+ONNX／入出力監査まで実施した。全品質条件を満たす候補はなく、最小十分サイズは未確定。
 
 JAX / Flax NNX で線画モデルを学習し、ONNX に出力する。
 Krita の Diffusion Drawing は小さな別パッケージ `lineartgen-runtime` で推論する。
@@ -24,7 +25,9 @@ Krita の Diffusion Drawing は小さな別パッケージ `lineartgen-runtime` 
 低〜中強度80%の案は細線消失・切断が増え、高強度の復元も悪化したため採用しない。
 [N2の矩形mask境界sampling](docs/mask-sampling-experiment-20260918.md)も10,000更新まで完了。
 同じ面積・強度の8候補から境界ink最大を選ぶ案は、境界F1が安定して改善せず、
-Sの切断率もraw/EMAとも増えたため採用しない。次はpool前の特徴を使うskipの比較を候補とする。
+Sの切断率もraw/EMAとも増えたため採用しない。
+続く[pool前skipとdilation2の比較](docs/completion-campaign-20260919.md)も不採用となり、
+pool後・dilation1で長期比較を完了した。
 
 ## 環境を作る
 
