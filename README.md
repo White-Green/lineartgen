@@ -190,10 +190,12 @@ uv run --frozen --extra export lineartgen export --run-dir runs/experiment-001 \
 uv build --project packages/lineartgen-runtime --wheel --out-dir dist
 ```
 
-同梱済み asset は旧 epoch 1500 の学習済み重みを Python で移したもの。
-新しい学習を完了する前でも Krita で使える。元の MPK はこのブランチでは不要。
-移行ツールは `scripts/import_burn_checkpoint.py`。乱数生成器と backend の差により
-旧版と同じ Seed の出力を完全再現するものではない。
+runtime 0.2.2 の同梱モデルは、JAXで100,000更新学習した基準UNetのEMA重み。
+channels `[4,10,20,40]`、各block 3 conv、126,765パラメータで、現在の学習済み候補の
+最大構造を使う。実験の主seed 42（data seed 47）の `seed42_baseline` を固定した。
+元のONNXと同梱assetはbyte単位で一致し、checkpoint・ONNXのSHA256と出自を
+`assets/model-source.json` に記録している。[品質評価](docs/completion-results-20260930.md)も参照。
+以前のepoch 1500モデルから切り替わるため、同じSeedでも生成結果は変わる。
 
 ONNX は opset 20 / IR 10。jax2onnx の可変形状 Pool / Resize 変換には制約があるため、
 固定形状で trace した後、許可した演算だけを対象に Resize を定数倍率へ変換し、

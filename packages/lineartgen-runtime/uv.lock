@@ -54,7 +54,7 @@ wheels = [
 
 [[package]]
 name = "lineartgen-runtime"
-version = "0.2.1"
+version = "0.2.2"
 source = { editable = "." }
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-18-lineartgen-runtime-cpu' and extra == 'extra-18-lineartgen-runtime-directml')" },

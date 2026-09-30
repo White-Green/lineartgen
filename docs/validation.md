@@ -1,6 +1,37 @@
-# ローカル検証結果（2026-09-09 更新）
+# ローカル検証結果（2026-09-30 更新）
 
 Burn / JAX の学習更新と PNG 読み込みの実測比較は [training-speed.md](training-speed.md) を参照。
+
+## 学習済み最大モデルのKrita同梱（2026-09-30、runtime 0.2.2）
+
+同梱assetを旧epoch 1500から、JAXの`seed42_baseline`・100,000更新・EMAに変更した。
+現在の学習済み候補で最大の126,765パラメータ、channels `[4,10,20,40]`・3 conv/block。
+最終評価でseedを選び直さず、主実験のseed 42（data seed 47）を使用した。
+出自・checkpoint・ONNXのhashはruntimeの `assets/model-source.json` にある。
+ONNXは検証済みの実験exportとbyte単位で同一で、SHA256は
+`2c3ad50d25e7fc977087386eef1cce3ba6d2a92daa4f707d59073cc9b271d415`。
+
+| 検証 | 結果 |
+| --- | --- |
+| runtimeの入出力テスト | 11件成功。新しい同梱モデルでBGRA、padding、再帰、固定seed、alpha、入力エラーを確認 |
+| Krita UI／描画イベント／ワーカー | 29件成功 |
+| lockfile | runtimeと学習workspaceの両方で `uv lock --check --offline` 成功。runtime自身の版だけ0.2.2に変更し、依存の版は維持 |
+| wheel | `uv build --project packages/lineartgen-runtime --wheel --out-dir dist` 成功。ONNX・metadata・出自を同梱 |
+| 配布ZIP | Linux x64 CPython 3.10＋ORT 1.23.2、3.12＋ORT 1.29.0の両方で作成・同梱依存だけの推論に成功 |
+| 実推論 | 33×17と145×129、複数回denoise、保護線画、alpha-only scribble、固定seed再現、入力エラーを確認。JAX／Flaxはimportしない |
+| Krita公式インポーター | SHA256を固定したKrita 5.2.9 importerでcp310 ZIPの3,172ファイル、cp312 ZIPの1,391ファイルをインストール後に全件照合 |
+| Windows設定 | 固定依存のDirectML exportに成功。Python 3.10・DirectMLの既存CI手順を維持 |
+
+consumer worktreeの `dist/diffusion_drawing-linux-x64-cp310-0.2.2.zip` と
+`dist/diffusion_drawing-linux-x64-cp312-0.2.2.zip` が今回のローカル成果物。
+両ZIPの同梱ONNX hashは上記と一致する。依存wheelのhashもruntime lockfileと全件一致。
+ビルドの記録は `dist/baseline-100k-0.2.2-build.json` に保存した。
+Windows DirectMLおよびKrita GUI上の動作はこのLinuxホストでは実行していない。
+Windows ZIPはconsumerの既存GitHub Actions、またはREADMEのWindowsビルド手順で作成する。
+
+モデルの品質評価は[最終報告](completion-results-20260930.md)を参照。
+実験終了後に同梱assetとruntime版を更新したため、以前の実験のソースhash監査を再実行する際は
+実験rootに保存したsource archiveまたは対応commitを使う。
 
 ## 作業場所
 
@@ -87,8 +118,8 @@ Windows 用 ZIP と同名にせず、`diffusion_drawing-linux-x64-cp310.zip` と
 - Windows 実機の DirectML 推論速度と Krita GUI 上の描画は、この Linux ホストでは未検証。
   Windows CI に wheel 取得・DirectML provider の実推論・公式 importer の検証を用意した。
   CI をリモートで実行したという意味ではない。
-- 100,000 更新の長時間学習、全解像度でのスループット、画質の比較は未実施。
-  初期設定の batch / LR / loss が最適と確認できたわけではない。
+- 100,000更新・3 seedの長期学習と品質・速度の比較は[最終報告](completion-results-20260930.md)で完了。
+  最小十分サイズは未確定であり、batch / LR / loss が最適と確認できたわけではない。
 - 旧版と同じ Seed の画素一致は保証しない。数値比較は JAX と出力 ONNX の間で実施した。
 - export は現在の fully convolutional U-Net 向け。新しい演算を追加したら変換と数値検証を更新する。
 - model / data の変更は新しい run で開始する。厳密な再開は同じ設定・同じデータで行う。

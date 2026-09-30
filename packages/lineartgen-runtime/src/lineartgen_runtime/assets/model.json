@@ -5,6 +5,7 @@
   "stop_size": 128,
   "image_scale": 1.1,
   "model": {
+    "architecture": "unet",
     "channels": [
       4,
       10,
@@ -12,31 +13,36 @@
       40
     ],
     "convolutions_per_block": 3,
-    "kernel_size": 3
+    "kernel_size": 3,
+    "nested_channels": [],
+    "nested_execution": "fused",
+    "output_mode": "residual",
+    "skip_mode": "post_pool",
+    "bottleneck_dilation": 1
   },
   "dynamic": true,
-  "provenance": "Original epoch 1500 checkpoint; MPK SHA256 e7d4b04c93cbf9fd1055876247863d5c3ca0f92cc4743d750a2c637b188215ac",
+  "provenance": "seed42_baseline ema step 100000",
   "validation": [
     {
       "size": [
         16,
         16
       ],
-      "max_abs_error": 8.344650268554688e-07
+      "max_abs_error": 1.1324882507324219e-06
     },
     {
       "size": [
         32,
         48
       ],
-      "max_abs_error": 1.0132789611816406e-06
+      "max_abs_error": 1.6093254089355469e-06
     },
     {
       "size": [
         128,
         128
       ],
-      "max_abs_error": 1.3113021850585938e-06
+      "max_abs_error": 1.5497207641601562e-06
     }
   ]
 }

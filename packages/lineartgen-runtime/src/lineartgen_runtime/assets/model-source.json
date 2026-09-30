@@ -1,0 +1,16 @@
+{
+  "campaign": "completion-20260919-cached",
+  "arm": "seed42_baseline",
+  "parameters": 126765,
+  "model_seed": 42,
+  "data_seed": 47,
+  "training_steps": 100000,
+  "weights": "ema",
+  "selection": "Largest trained architecture, using the primary experiment seed and EMA; not reselected using final-test scores.",
+  "training_source_commit": "cc40408daa15bf68af7905336a959427a9eabd05",
+  "checkpoint_weights_sha256": "1f7745fc22a3d96ce47831f0b1d7c6da268a958ad24050b0da8ab3c9524c48ab",
+  "checkpoint_config_sha256": "963335d274f346c8038d8647eace25253864fdccc6b38cbfd7f7f25703d77912",
+  "onnx_sha256": "2c3ad50d25e7fc977087386eef1cce3ba6d2a92daa4f707d59073cc9b271d415",
+  "export_metadata_sha256": "e27eed5e03422de761dce334cee4e6a37e7553078d6e558f5c3edcc11d22bf22",
+  "runtime_validation_max_abs_error": 2.205371856689453e-06
+}
