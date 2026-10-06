@@ -73,6 +73,11 @@ straight/thin/bezier/taper/parallel/gapを対象とし、角・交点・端点�
   幾何probeは全体編集のケースでのみ使う。
 - 固定31ケースの比較PNGを通常濃淡とKritaのalpha処理後の白背景合成で保存する。
   後者は実際のKrita GUIを撮影したものではない。
+- 31ケースの幾何線画が部分編集に偏っていたため、候補モデルの出力を見る前に
+  全体編集24ケースを追加固定した（`supplemental-panels.json`）。8種の幾何形状それぞれで
+  strong strokesのstrength .1/.5とstrong blurの.5を選ぶ。
+  元の1,562条件の数値集計は変えず、接続・分離を目視する画像の範囲を補う。
+  補足画像には100k初期モデルも並べ、追加学習だけによる差も確認できるようにする。
 - 追加10k後に固定31ケースでdenoise1/2/5回を比較する。
 - 既存セットに白紙だけの専用ケースがないため、別途512px白紙40条件を追加した。
   seed4種、strength=0/.1/.3/.5/.7、全体/中央矩形編集をdenoise1/2/5回で評価する。
@@ -126,6 +131,11 @@ JAX_PLATFORMS=rocm,cpu XLA_PYTHON_CLIENT_PREALLOCATE=false OPENBLAS_NUM_THREADS=
   反復の悪化を監視する必要がある。
 - 固定白紙case6/7の5回出力も確認した。これらの画像はほぼ白く見え、上記の最大ケースを
   表すものではない。目視した少数の白紙だけで異常なしとは判定しない。
+- 補足幾何画像ではcase910（細線・strokes .1）で線の肥大化と周囲の灰色、
+  case903（細線・blur .5）でほぼ全消失、case1295（平行線・strokes .5）で二本が一本へ合流、
+  case1390（隙間・strokes .1）で意図的な隙間が閉じることを確認した。
+  強い劣化で入力側にも線間の情報が失われる例を含み、lossだけで必ず復元できるとは扱わない。
+  補足24例の数値504項目は主評価の同じ例と一致した（rtol=1e-5、atol=1e-6）。
 
 起点画像は `evaluation/step-0-ema/`、白紙は `blank-evaluation/step-0-ema/`。
 集計は `analysis-through-0.{json,md}`。ペア比較には元線画/幾何kind・variant単位の
@@ -141,6 +151,10 @@ JAX_PLATFORMS=cpu OPENBLAS_NUM_THREADS=1 .venv/bin/python \
 
 JAX_PLATFORMS=rocm,cpu XLA_PYTHON_CLIENT_PREALLOCATE=false OPENBLAS_NUM_THREADS=1 \
   .venv/bin/python scripts/evaluate_lineart_blank_study.py \
+  --root runs/lineart-loss-20261006 --step STEP --mode MODE
+
+JAX_PLATFORMS=rocm,cpu XLA_PYTHON_CLIENT_PREALLOCATE=false OPENBLAS_NUM_THREADS=1 \
+  .venv/bin/python scripts/render_lineart_loss_supplement.py \
   --root runs/lineart-loss-20261006 --step STEP --mode MODE
 ```
 
