@@ -19,8 +19,17 @@ def collapse_failures(root, step):
     failures = []
     for method in sorted({r["method"] for r in current["results"]}):
         rows = [r for r in current["results"] if r["method"] == method and r["family"] == "clean"]
-        before = sum(reference[r["case"]]["active_ink_f1"] for r in rows) / len(rows)
-        after = sum(r["active_ink_f1"] for r in rows) / len(rows)
+        pairs = []
+        for row in rows:
+            before, after = reference[row["case"]]["active_ink_f1"], row["active_ink_f1"]
+            if (before is None) != (after is None):
+                raise ValueError(f"Mismatched active regions: {method}, case {row['case']}")
+            if before is not None:
+                pairs.append((before, after))
+        if not pairs:
+            raise ValueError(f"No active clean-image F1 values for {method}")
+        before = sum(x for x, _ in pairs) / len(pairs)
+        after = sum(y for _, y in pairs) / len(pairs)
         if after < min(0.3, before * 0.5):
             failures.append(dict(method=method, initial=before, current=after))
     return failures
