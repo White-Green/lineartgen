@@ -106,6 +106,11 @@ straight/thin/bezier/taper/parallel/gapを対象とし、角・交点・端点�
   節目では推論用raw/EMAの各parameterがcheckpointと完全一致することも検証する。
   250stepではG各126,765、判別器6,321 parametersであることも確認できた。
 - 起点の重み・ソース・設定・評価入力のSHA256を保存し、各段階の開始時に照合する。
+- 評価1,562条件の入力値域も確認した。全て[-1,1]内で、image_scale=1.1を含む
+  runtime前処理から各入力を再現するBGRA層を構成できた。8bit化して実際の
+  `prepare_input` に戻した差は最大.004313886、強度差は0。
+  `bgra-input-audit.json` に保存。これは入力形式と値域の検証であり、量子化前後の
+  モデル出力一致やKrita GUIでの操作を検証したものではない。
 
 実行先: `runs/lineart-loss-20261006`。
 
