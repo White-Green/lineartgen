@@ -1,5 +1,8 @@
 # lineartgen — JAX rewrite
 
+2026-10-06、[線画lossの5条件×追加10k比較を完了](docs/lineart-loss-results-20261006.md)。
+領域別lossでにじみは減ったが細線の保持に副作用があり、配布モデルの更新は見送った。
+
 2026-09-30、[予定した実験を完了](docs/completion-results-20260930.md)。
 A2/A3、共同S/M/L・独立S・大型基準の3 seed×100k学習、未使用test、匿名画像確認、
 ONNX／入出力監査まで実施した。全品質条件を満たす候補はなく、最小十分サイズは未確定。
