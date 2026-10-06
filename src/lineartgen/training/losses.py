@@ -5,6 +5,7 @@ import jax.numpy as jnp
 
 from .boundary import boundary_distance_loss
 from .cldice import centerline_loss
+from .lineart import line_region_loss, profile_loss
 
 
 def region_mean(error, weights, region):
@@ -35,7 +36,7 @@ def sobel(image):
     )
 
 
-def image_loss(prediction, clean, noise_level, config, min_noise):
+def image_loss(prediction, clean, noise_level, config, min_noise, *, profiles=None, level=0):
     active = noise_level > min_noise
     weights = tone_weights(clean) if config.balance_tones else jnp.ones_like(clean)
     error = jnp.square(prediction - clean)
@@ -57,6 +58,16 @@ def image_loss(prediction, clean, noise_level, config, min_noise):
     loss = denoise + config.identity_weight * identity
     loss += config.edge_weight * edge + config.contrast_weight * contrast
     parts = {"denoise": denoise, "identity": identity, "edge": edge, "contrast": contrast}
+    if config.line_region_weight:
+        region = line_region_loss(prediction, clean, active, config.line_region_radius)
+        loss += config.line_region_weight * region
+        parts["line_region"] = region
+    if config.line_profile_weight:
+        if profiles is None:
+            raise ValueError("line_profile_weight requires generated curve profile coordinates")
+        profile = profile_loss(prediction, clean, active, profiles, level=level)
+        loss += config.line_profile_weight * profile
+        parts["line_profile"] = profile
     if config.boundary_weight:
         boundary = boundary_distance_loss(prediction, clean, active, config.boundary_radius)
         loss += config.boundary_weight * boundary

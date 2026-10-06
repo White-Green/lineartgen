@@ -16,14 +16,14 @@ def normals(points):
     return np.column_stack((-tangent[:, 1], tangent[:, 0]))
 
 
-def draw_geometry(rng, size, config, *, kind=None):
+def draw_geometry(rng, size, config, *, kind=None, include_paths=False):
     """Return white=1 float32 raster and generation metadata; coordinates are subpixel."""
     if kind is None and rng.random() < config.blank_probability:
         return np.ones((size, size, 1), np.float32), {"kinds": ["blank"], "paths": 0}
     scale = config.supersampling
     canvas = Image.new("L", (size * scale, size * scale), 255)
     draw = ImageDraw.Draw(canvas)
-    kinds, path_count = [], 0
+    kinds, path_count, descriptions = [], 0, []
     groups = 1 if kind is not None else int(rng.integers(1, 5))
     for _ in range(groups):
         selected = kind or KINDS[int(rng.integers(len(KINDS)))]
@@ -101,6 +101,10 @@ def draw_geometry(rng, size, config, *, kind=None):
                 add(np.column_stack((a + t * (b - a), np.zeros_like(t))))
 
         for points, widths in paths:
+            if include_paths:
+                descriptions.append(
+                    dict(kind=selected, points=points.tolist(), widths=widths.tolist())
+                )
             normal = normals(points)
             polygon = (
                 np.concatenate(
@@ -117,10 +121,13 @@ def draw_geometry(rng, size, config, *, kind=None):
         np.asarray(canvas.resize((size, size), Image.Resampling.LANCZOS), np.float32)[..., None]
         / 255
     )
-    return gray, {"kinds": kinds, "paths": path_count}
+    metadata = {"kinds": kinds, "paths": path_count}
+    if include_paths:
+        metadata["path_geometry"] = descriptions
+    return gray, metadata
 
 
-def mix_geometry(clean, config, *, seed, step, image_scale):
+def mix_geometry(clean, config, *, seed, step, image_scale, include_paths=False):
     """Replace selected targets; leave the original crop stream and all other RNGs untouched."""
     if config.probability == 0:
         return clean, []
@@ -132,7 +139,10 @@ def mix_geometry(clean, config, *, seed, step, image_scale):
     for item in selected:
         key = [seed, step, int(item), 0x50415448]
         gray, metadata = draw_geometry(
-            np.random.default_rng(np.random.SeedSequence(key)), clean.shape[1], config
+            np.random.default_rng(np.random.SeedSequence(key)),
+            clean.shape[1],
+            config,
+            include_paths=include_paths,
         )
         result[item] = np.clip((gray * 2 - 1) * image_scale, -1, 1)
         records.append(dict(item=int(item), key=key, **metadata))
