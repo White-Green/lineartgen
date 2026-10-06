@@ -2,7 +2,8 @@
 
 目的は線周囲の余分な灰色を減らしながら、細線・線幅・接続と分離を維持すること。
 [設計の検討](lineart-loss-design-20261006.md)に基づく最大モデル単体の比較。
-現時点では実装・事前検証が完了した段階で、画質改善はまだ確認していない。
+実装・事前検証・起点モデル評価が完了し、2026-10-06 04:29 UTCに本比較を開始した。
+最初の25step（5条件×25更新）は有限値で通過。画質改善はまだ確認していない。
 Kritaプラグイン、ONNXモデル、配布artifactは変更しない。
 
 ## 固定した比較
@@ -61,7 +62,7 @@ straight/thin/bezier/taper/parallel/gapを対象とし、角・交点・端点�
 
 ## 評価
 
-固定development 1,562条件を利用する。元線画由来の合成下描きと幾何線画、白紙、
+固定development 1,562条件を利用する。元線画由来の合成下描きと幾何線画、
 弱い/強い劣化、全体/部分編集を含む。これは1,562枚の独立した元画像ではない。
 既に使ったdevelopmentであり、新規の最終評価とは扱わない。
 
@@ -73,6 +74,9 @@ straight/thin/bezier/taper/parallel/gapを対象とし、角・交点・端点�
 - 固定31ケースの比較PNGを通常濃淡とKritaのalpha処理後の白背景合成で保存する。
   後者は実際のKrita GUIを撮影したものではない。
 - 追加10k後に固定31ケースでdenoise1/2/5回を比較する。
+- 既存セットに白紙だけの専用ケースがないため、別途512px白紙40条件を追加した。
+  seed4種、strength=0/.1/.3/.5/.7、全体/中央矩形編集をdenoise1/2/5回で評価する。
+  これは元の1,562条件へ後から混ぜず、背景への余分なinkを調べる独立の診断とする。
 - 有限値・保護画素の完全一致を毎評価で確認する。clean F1の大幅崩壊なら停止するが、
   この停止判定に通ることは画質改善・採用の根拠にはしない。
 
@@ -83,6 +87,7 @@ straight/thin/bezier/taper/parallel/gapを対象とし、角・交点・端点�
 ## 検証と再開
 
 - 全既存テストを含む191件がCPUで成功（321.73秒）。
+- その後に追加した再開ログの退避テスト1件も成功（.90秒）。
 - 補助項0で既存loss/再帰勾配と一致、正しい灰色教師の追加loss/勾配0、保護画素勾配0を確認。
 - 人工haloが50%閾値F1では見逃され、新しい指標で検出できることを確認。
 - 生成器・判別器・両optimizer・EMAを保存再開し、連続学習と全状態が一致。
@@ -103,3 +108,41 @@ JAX_PLATFORMS=rocm,cpu XLA_PYTHON_CLIENT_PREALLOCATE=false OPENBLAS_NUM_THREADS=
 `workflow-status.json` が処理段階、`progress.json` が学習進捗、`checkpoint.json` が保存済みstep。
 `stop` ファイルで5条件分の更新を終えて保存したのち停止できる。
 数値評価の終了後も、目視確認と結果レポートが終わるまで実験完了と扱わない。
+
+## 起点で確認した症状
+
+本学習前のEMAで1,562条件、専用白紙40×3=120予測を評価した。
+以下は改善後の値ではなく、以後の比較の基準。
+
+- `real/strokes/strong` の近傍余剰不透明度は平均.15166、alpha50% F1は.83741。
+  近傍余剰不透明度は各画像の線外6px以内の背景で平均してから、条件間で平均した値。
+  全画像の15%が灰色という意味ではない。
+- 同じ線画に強いblurを与えたcase479（strength .1）と480（.5）を白背景合成で目視した。
+  .1でも目や鼻の細線に灰色とざらつき、.5では細線の崩れと教師にない接続が目立つ。
+  これらは固定31ケースに事前指定してあり、学習後も同じ箇所を確認する。
+- 白紙のstrength0は全て完全保存。strength .5では表示に残る画素数の最大が
+  denoise1回169px、5回1,283px。0.7ではそれぞれ994px、7,868px。
+  これはseed/全体・部分編集8条件中の最大で、同じ1枚での増分ではない。
+  反復の悪化を監視する必要がある。
+- 固定白紙case6/7の5回出力も確認した。これらの画像はほぼ白く見え、上記の最大ケースを
+  表すものではない。目視した少数の白紙だけで異常なしとは判定しない。
+
+起点画像は `evaluation/step-0-ema/`、白紙は `blank-evaluation/step-0-ema/`。
+集計は `analysis-through-0.{json,md}`。ペア比較には元線画/幾何kind・variant単位の
+cluster bootstrapを使い、同じ元画像に対する複数ノイズを独立標本と数えない。
+同一予測のペア比較で2,056集計の差と区間が0になることも確認した。
+学習seedの不確実性はこの区間に含まれず、多数の探索比較の補正もしていない。
+
+2k/10kの評価後には以下も実行する（`STEP` は追加step、`MODE` はemaまたはraw）。
+
+```sh
+JAX_PLATFORMS=cpu OPENBLAS_NUM_THREADS=1 .venv/bin/python \
+  scripts/summarize_lineart_loss_study.py --root runs/lineart-loss-20261006 --through STEP
+
+JAX_PLATFORMS=rocm,cpu XLA_PYTHON_CLIENT_PREALLOCATE=false OPENBLAS_NUM_THREADS=1 \
+  .venv/bin/python scripts/evaluate_lineart_blank_study.py \
+  --root runs/lineart-loss-20261006 --step STEP --mode MODE
+```
+
+学習ソース固定commitは `5b05d12ed22fdec399e8b30bd07d632453e4abc0`。
+その後の集計・白紙診断は独立したスクリプトで、学習や主評価の固定ソースには変更を加えていない。
