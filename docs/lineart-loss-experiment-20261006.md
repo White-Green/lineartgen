@@ -3,7 +3,8 @@
 目的は線周囲の余分な灰色を減らしながら、細線・線幅・接続と分離を維持すること。
 [設計の検討](lineart-loss-design-20261006.md)に基づく最大モデル単体の比較。
 実装・事前検証・起点モデル評価が完了し、2026-10-06 04:29 UTCに本比較を開始した。
-最初の25step（5条件×25更新）は有限値で通過。画質改善はまだ確認していない。
+250stepの本学習checkpointをCPUで読み取り専用復元し、5条件のoptimizerと判別器の
+更新回数250、全状態の有限値を確認した。画質改善はまだ確認していない。
 Kritaプラグイン、ONNXモデル、配布artifactは変更しない。
 
 ## 固定した比較
@@ -100,6 +101,10 @@ straight/thin/bezier/taper/parallel/gapを対象とし、角・交点・端点�
   この事前検証は使い捨て重みで、比較用checkpointを変更していない。
 - 本学習は5条件まとめて250stepごとにatomic checkpoint保存。
   再開時にはcheckpointより先のログを退避し、未確定の更新を二重に数えない。
+- `audit_lineart_loss_checkpoint.py` は本学習のcheckpointを読み取り専用で復元し、
+  全5条件のG/optimizer/EMAと判別器/optimizerの有限値・更新回数を検証する。
+  節目では推論用raw/EMAの各parameterがcheckpointと完全一致することも検証する。
+  250stepではG各126,765、判別器6,321 parametersであることも確認できた。
 - 起点の重み・ソース・設定・評価入力のSHA256を保存し、各段階の開始時に照合する。
 
 実行先: `runs/lineart-loss-20261006`。
@@ -113,6 +118,13 @@ JAX_PLATFORMS=rocm,cpu XLA_PYTHON_CLIENT_PREALLOCATE=false OPENBLAS_NUM_THREADS=
 `workflow-status.json` が処理段階、`progress.json` が学習進捗、`checkpoint.json` が保存済みstep。
 `stop` ファイルで5条件分の更新を終えて保存したのち停止できる。
 数値評価の終了後も、目視確認と結果レポートが終わるまで実験完了と扱わない。
+
+`watch_lineart_loss_analysis.py` を独立した監視プロセスとして併用する。
+checkpointの保持数が3なので、節目の推論重みが保存されたらすぐ読み取り専用の整合検証を
+行う。その後、主評価完了を待って集計・白紙診断・補足画像を自動生成する。
+制御プロセスの実PIDとコマンドを確認し、消失・異常終了・stopファイルで待機を終了する。
+この監視は学習を起動し直さない。状態は `analysis-status.json`、ログは `analysis-logs/`。
+補足GPU評価が後続学習と重なる時間があるため、本runの経過時間を純粋な学習速度の比較には使わない。
 
 ## 起点で確認した症状
 
