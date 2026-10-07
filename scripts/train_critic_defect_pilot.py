@@ -1,7 +1,7 @@
 """Bounded critic-only pilot: artificial negatives and spatial/local logistic loss.
 
 All variants start from the same old 10k critic. The generator is never updated.
-Evaluation uses new geometry variants and milder perturbations, after 1000 updates.
+Evaluation uses specified geometry variants and milder perturbations at the fixed end.
 """
 
 import argparse
@@ -23,7 +23,7 @@ from lineartgen.config import SketchAugmentationConfig, load_config
 from lineartgen.evaluation import KINDS, line_case
 from lineartgen.models.serialization import load_inference
 from lineartgen.sketch import augment_sketch
-from lineartgen.training import lineart_state
+from lineartgen.training import checkpoints, lineart_state
 from lineartgen.training.lineart_study import create_arm, study_methods
 
 
@@ -140,30 +140,70 @@ def make_step(mode):
     return step
 
 
-def run(parent, output):
+def critic_states(models, optimizers):
+    return {
+        name: dict(
+            model=nnx.to_pure_dict(nnx.state(model)),
+            optimizer=nnx.to_pure_dict(nnx.state(optimizers[name])),
+        )
+        for name, model in models.items()
+    }
+
+
+def resume_states(path, models, optimizers, expected_step):
+    with ocp.StandardCheckpointer() as saved:
+        state = saved.restore(path.resolve(), target=critic_states(models, optimizers))
+    for name, model in models.items():
+        checkpoints.restore_into(model, state[name]["model"])
+        checkpoints.restore_into(optimizers[name], state[name]["optimizer"])
+        assert int(optimizers[name].step.value) == expected_step
+    jax.tree.map(np.testing.assert_array_equal, state, critic_states(models, optimizers))
+
+
+def run(parent, output, *, total_steps=1000, resume=None, evaluation_start=96):
+    assert total_steps > 0 and evaluation_start >= 80
     if output.exists():
         raise FileExistsError(output)
     output.mkdir(parents=True)
     plan = dict(
-        steps=1000,
+        steps=total_steps,
         batch_size=32,
         learning_rate=0.0001,
         train_variants=list(range(64, 80)),
-        evaluation_variants=list(range(96, 104)),
+        evaluation_variants=list(range(evaluation_start, evaluation_start + 8)),
         train_seed=2026100813,
         evaluation_seed=2026100913,
         methods=["scalar", "spatial", "localized"],
         initial="Same 10k critic from previous study",
         generator_updates=0,
         negatives="Equal sampling across halo, weak, cut, bridge; pure synthetic geometry",
-        evaluation="Once after 1000 updates. New variants and milder defects; "
-        "no best-step selection",
+        evaluation=f"Once after {total_steps} updates. Specified variants and milder defects; "
+        "no best-step selection. Resumed runs also evaluate the previous critic state.",
         next_phase_gate="Diagnostic only. Require >=80% clean-preference for cuts and bridges "
         "in both source conditions, and >=90% for halo, before considering a generator pilot.",
         limitations="No natural sketches or actual generator outputs in this pilot. Geometry "
         "comes from the same generator. Passing alone does not justify deployment.",
         source_sha256=sha(Path(__file__)),
     )
+    completed = 0
+    if resume is not None:
+        previous = read(resume / "plan.json")
+        completed = previous["steps"]
+        assert completed < total_steps
+        for key in ["batch_size", "learning_rate", "train_variants", "train_seed", "methods"]:
+            assert plan[key] == previous[key], key
+        assert not set(plan["evaluation_variants"]) & set(previous["evaluation_variants"])
+        plan["continuation"] = dict(
+            parent=str(resume),
+            step=completed,
+            parent_plan_sha256=sha(resume / "plan.json"),
+            parent_results_sha256=sha(resume / "results.json"),
+            checkpoint_files={
+                str(p.relative_to(resume)): sha(p)
+                for p in sorted((resume / "checkpoint").rglob("*"))
+                if p.is_file()
+            },
+        )
     write(output / "plan.json", plan)
     protocol = read(parent / "protocol.json")
     initial, _ = load_inference(protocol["initial"])
@@ -190,6 +230,22 @@ def run(parent, output):
         name: nnx.Optimizer(model, optax.adam(plan["learning_rate"]), wrt=nnx.Param)
         for name, model in models.items()
     }
+    references = {"original": original}
+    if resume is not None:
+        resume_states(resume / "checkpoint", models, optimizers, completed)
+        references.update(
+            {f"step{completed}_{name}": nnx.clone(model) for name, model in models.items()}
+        )
+        write(
+            output / "resume-audit.json",
+            dict(
+                step=completed,
+                full_state_exact=True,
+                optimizer_counters_exact=True,
+                parent=str(resume),
+                source_sha256=sha(Path(__file__)),
+            ),
+        )
     steps = {name: make_step(name) for name in models}
     train, records = dataset(plan["train_variants"], plan["train_seed"], False)
     groups = {
@@ -202,6 +258,8 @@ def run(parent, output):
         indices = np.concatenate(
             [random.choice(indices, plan["batch_size"] // 4) for indices in groups.values()]
         )
+        if step < completed:
+            continue  # Advance exactly the old index RNG, without replaying optimizer updates.
         batch = tuple(jax.device_put(x[indices]) for x in train)
         metrics = {}
         for name in models:
@@ -216,7 +274,7 @@ def run(parent, output):
     evaluation, metadata = dataset(plan["evaluation_variants"], plan["evaluation_seed"], True)
     predict = nnx.jit(lambda m, x: m(x))
     rows, summary = [], []
-    for name, model in {"original": original, **models}.items():
+    for name, model in (references | models).items():
         values = []
         for inputs in evaluation[:2]:
             values.append(
@@ -243,13 +301,8 @@ def run(parent, output):
                     mean_margin=float(np.mean(group)),
                 )
             )
-    state = {
-        name: dict(
-            model=nnx.to_pure_dict(nnx.state(model)),
-            optimizer=nnx.to_pure_dict(nnx.state(optimizers[name])),
-        )
-        for name, model in models.items()
-    }
+    state = critic_states(models, optimizers)
+    assert all(int(o.step.value) == total_steps for o in optimizers.values())
     with ocp.StandardCheckpointer() as saver:
         saver.save((output / "checkpoint").resolve(), state)
         saver.wait_until_finished()
@@ -270,5 +323,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--parent", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--steps", type=int, default=1000)
+    parser.add_argument("--resume", type=Path)
+    parser.add_argument("--evaluation-start", type=int, default=96)
     args = parser.parse_args()
-    run(args.parent.resolve(), args.output.resolve())
+    run(
+        args.parent.resolve(),
+        args.output.resolve(),
+        total_steps=args.steps,
+        resume=args.resume.resolve() if args.resume else None,
+        evaluation_start=args.evaluation_start,
+    )
