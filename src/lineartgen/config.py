@@ -22,11 +22,15 @@ class ModelConfig(Settings):
     nested_channels: tuple[tuple[int, ...], ...] = ()
     nested_execution: Literal["fused", "blocks"] = "fused"
     output_mode: Literal["direct", "residual"] = "direct"
+    # Experimental backward rule; both choices have the same clipped forward values.
+    output_clip_gradient: Literal["hard", "straight_through"] = "hard"
     skip_mode: Literal["post_pool", "pre_pool"] = "post_pool"
     bottleneck_dilation: int = Field(default=1, ge=1, le=4)
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.architecture != "unet" and self.output_clip_gradient != "hard":
+            raise ValueError("Surrogate output gradients currently require architecture='unet'")
         if not self.channels or min(self.channels) < 1:
             raise ValueError("channels must contain positive channel counts")
         if self.kernel_size % 2 == 0:

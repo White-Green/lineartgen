@@ -20,6 +20,7 @@ class UNet(nnx.Module):
     def __init__(self, config: ModelConfig, *, rngs: nnx.Rngs):
         self.minimum_size = config.minimum_size
         self.output_mode = config.output_mode
+        self.output_clip_gradient = config.output_clip_gradient
         self.skip_mode = config.skip_mode
         self.bottleneck_dilation = config.bottleneck_dilation
         encoder_inputs = [2] + [
@@ -96,4 +97,5 @@ class UNet(nnx.Module):
             image,
             noise_level,
             self.output_mode,
+            self.output_clip_gradient,
         )

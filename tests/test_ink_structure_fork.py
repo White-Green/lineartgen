@@ -4,6 +4,7 @@ from pathlib import Path
 import jax
 import jax.numpy as jnp
 import numpy as np
+import pytest
 from flax import nnx
 
 from lineartgen.config import ExperimentConfig
@@ -17,10 +18,16 @@ sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 from fork_ink_structure_study import transfer
 
 
-def test_selected_arms_continue_exactly_after_full_state_fork(tmp_path):
+@pytest.mark.parametrize("clip_gradient", ["hard", "straight_through"])
+def test_selected_arms_continue_exactly_after_full_state_fork(tmp_path, clip_gradient):
     config = ExperimentConfig.model_validate(
         dict(
-            model=dict(channels=[2, 4], convolutions_per_block=1, output_mode="residual"),
+            model=dict(
+                channels=[2, 4],
+                convolutions_per_block=1,
+                output_mode="residual",
+                output_clip_gradient=clip_gradient,
+            ),
             matching=dict(method="independent"),
             train=dict(batch_size=1, accumulate_steps=1),
         )

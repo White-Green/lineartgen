@@ -5,6 +5,7 @@ from pathlib import Path
 
 import jax
 import numpy as np
+from flax import nnx
 
 from lineartgen.models import NestedUNet
 from lineartgen.training import checkpoints
@@ -14,6 +15,12 @@ def export_model(model, config, destination, *, dynamic=True, provenance=None):
     import onnx
     import onnxruntime as ort
     from jax2onnx import to_onnx
+
+    if getattr(model, "output_clip_gradient", "hard") != "hard":
+        # Export the identical ordinary Clip forward; the training-only custom JVP
+        # is unnecessary in an inference graph. Preserve the caller's model.
+        model = nnx.clone(model)
+        model.output_clip_gradient = "hard"
 
     if isinstance(model, NestedUNet):
         if model.num_subnets != 1:
