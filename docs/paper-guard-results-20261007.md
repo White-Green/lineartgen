@@ -15,6 +15,11 @@ rawのhalo改善は9.73% / 11.04%。EMAのhalo差のcluster 95%区間はreal −
 geometry −0.02211〜−0.01443。realは定義済み46ケース・12source、geometryは128ケース・32群で、
 別学習seedの不確実性を表す区間ではない。
 
+同じneighbor lossでhard clipを使う直接の対照は、主haloを14.15% / 13.91%減らしていた。
+したがって代理勾配は、この対照に対するにじみ改善ではない。
+一方、geometry strong blurのprofile欠落はhard neighbor比で3.92ポイント減った。
+この保持の改善と背景悪化の両面があるため、元のcontrolだけとの比較で効果を解釈しない。
+
 ## 保持と背景の副作用
 
 ste_neighbor_guardのgeometry strong blurではprofile欠落が2.70ポイント減った一方、
