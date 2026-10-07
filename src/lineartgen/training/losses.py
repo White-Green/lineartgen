@@ -7,6 +7,7 @@ from .boundary import boundary_distance_loss
 from .cldice import centerline_loss
 from .ink_structure import ink_structure_losses
 from .lineart import line_region_loss, profile_loss
+from .paper import paper_peak_loss
 
 
 def region_mean(error, weights, region):
@@ -59,6 +60,10 @@ def image_loss(prediction, clean, noise_level, config, min_noise, *, profiles=No
     loss = denoise + config.identity_weight * identity
     loss += config.edge_weight * edge + config.contrast_weight * contrast
     parts = {"denoise": denoise, "identity": identity, "edge": edge, "contrast": contrast}
+    if config.paper_peak_weight:
+        paper = paper_peak_loss(prediction, clean, active, tile=config.paper_peak_tile)
+        loss += config.paper_peak_weight * paper
+        parts["paper_peak"] = paper
     if config.ink_keep_weight or config.neighbor_keep_weight or config.neighbor_paper_weight:
         structure = ink_structure_losses(
             prediction,
