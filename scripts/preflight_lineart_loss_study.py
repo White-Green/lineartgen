@@ -17,7 +17,7 @@ from lineartgen.models.serialization import load_inference
 from lineartgen.training import checkpoints, lineart_state
 from lineartgen.training.lineart import make_profiles
 from lineartgen.training.lineart_adversarial import patch_coordinates
-from lineartgen.training.lineart_study import METHODS, create_arm, update_arm
+from lineartgen.training.lineart_study import create_arm, study_methods, update_arm
 
 
 def main():
@@ -42,7 +42,7 @@ def main():
                 adversarial=n == "patch_prior",
                 patch_size=protocol["patch_size"],
             )
-            for n in METHODS
+            for n in study_methods(protocol)
         }
 
     arms = create()
@@ -78,7 +78,11 @@ def main():
         for name, arm in arms.items():
             started = time.perf_counter()
             metrics = update_arm(
-                arm, prepared, profiles, coordinates, prior_weight=coefficients["patch_prior"]
+                arm,
+                prepared,
+                profiles,
+                coordinates,
+                prior_weight=coefficients.get("patch_prior", 0.0),
             )
             record = dict(
                 method=name, levels=step + 1, seconds=time.perf_counter() - started, **metrics

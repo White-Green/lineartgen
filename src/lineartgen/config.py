@@ -174,6 +174,10 @@ class GeometryDataConfig(Settings):
 
 
 class LossConfig(Settings):
+    ink_keep_weight: float = Field(default=0.0, ge=0)
+    neighbor_keep_weight: float = Field(default=0.0, ge=0)
+    neighbor_paper_weight: float = Field(default=0.0, ge=0)
+    neighbor_radius: int = Field(default=1, ge=0, le=4)
     line_region_weight: float = Field(default=0.0, ge=0)
     line_region_radius: int = Field(default=6, ge=1, le=16)
     line_profile_weight: float = Field(default=0.0, ge=0)

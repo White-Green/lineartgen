@@ -14,6 +14,19 @@ from .steps import create_optimizer, make_steps
 METHODS = ("control", "no_contrast", "regions", "profiles", "patch_prior")
 
 
+def study_methods(protocol):
+    """Explicit arm names allow subsequent studies to reuse the paired trainer."""
+    names = tuple(protocol.get("methods", METHODS))
+    if not names or len(set(names)) != len(names):
+        raise ValueError("Study methods must be nonempty and unique")
+    if any(
+        not name or any(c not in "abcdefghijklmnopqrstuvwxyz0123456789_" for c in name)
+        for name in names
+    ):
+        raise ValueError("Invalid study method name")
+    return names
+
+
 def study_configs(base, coefficients):
     no_contrast = base.loss.model_copy(update={"contrast_weight": 0.0})
     return {

@@ -7,7 +7,7 @@ import numpy as np
 from campaign_protocol import read, sha, write
 from PIL import Image, ImageDraw
 
-from lineartgen.training.lineart_study import METHODS
+from lineartgen.training.lineart_study import study_methods
 
 
 def render(root, step):
@@ -34,7 +34,7 @@ def render(root, step):
             labels = ["target", "source", "noisy"]
             if suite == "supplemental-evaluation":
                 labels.append("initial")
-            labels.extend(METHODS)
+            labels.extend(study_methods(read(root / "protocol.json")))
             with Image.open(source) as sheet:
                 size = sheet.height - 24
                 assert sheet.width == size * len(labels)

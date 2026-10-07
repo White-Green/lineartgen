@@ -14,7 +14,7 @@ from train_lineart_loss_study import verify
 from lineartgen.diffusion import sample_prepared
 from lineartgen.evaluation_sampling import runtime_inputs
 from lineartgen.models.serialization import load_inference
-from lineartgen.training.lineart_study import METHODS
+from lineartgen.training.lineart_study import study_methods
 
 SEEDS = (2026100609, 2026100610, 2026100611, 2026100612)
 STRENGTHS = (0.0, 0.1, 0.3, 0.5, 0.7)
@@ -27,7 +27,10 @@ def evaluate(root, step, mode):
     paths = (
         {"initial": Path(protocol["initial"])}
         if step == 0
-        else {name: root / "snapshots" / f"step-{step}" / name / mode for name in METHODS}
+        else {
+            name: root / "snapshots" / f"step-{step}" / name / mode
+            for name in study_methods(protocol)
+        }
     )
     hashes = {name: sha(path / "weights.npz") for name, path in paths.items()}
     source_hash = sha(Path(__file__))

@@ -20,7 +20,7 @@ from lineartgen.models.serialization import load_inference, save_inference
 from lineartgen.training import checkpoints, lineart_state
 from lineartgen.training.lineart import make_profiles
 from lineartgen.training.lineart_adversarial import patch_coordinates
-from lineartgen.training.lineart_study import METHODS, create_arm, update_arm
+from lineartgen.training.lineart_study import create_arm, study_methods, update_arm
 
 
 def verify(root):
@@ -92,6 +92,7 @@ def restore_journal(root, completed):
 
 def train(root, end):
     protocol = verify(root)
+    methods = study_methods(protocol)
     config = load_config(root / "config.json")
     if not 0 <= end <= config.train.steps:
         raise ValueError("Invalid end step")
@@ -99,7 +100,7 @@ def train(root, end):
     sources = discover(config.data)
     training, dev, final = split_experiment(sources, config.data, config.train.seed)
     assert dataset_description(sources, training, dev, final) == read(root / "dataset.json")
-    configs = {name: load_config(root / "configs" / f"{name}.json") for name in METHODS}
+    configs = {name: load_config(root / "configs" / f"{name}.json") for name in methods}
     arms = {
         name: create_arm(
             settings, initial, adversarial=name == "patch_prior", patch_size=protocol["patch_size"]
@@ -155,11 +156,11 @@ def train(root, end):
                 profiles, coordinates = jax.device_put((profiles, coordinates))
                 jax.block_until_ready(prepared)
                 preparation_seconds = time.perf_counter() - started
-                order = list(METHODS[step % len(METHODS) :] + METHODS[: step % len(METHODS)])
+                order = list(methods[step % len(methods) :] + methods[: step % len(methods)])
                 metrics = {}
                 for name in order:
                     begin = time.perf_counter()
-                    weight = coefficients["patch_prior"] * min(
+                    weight = coefficients.get("patch_prior", 0.0) * min(
                         step / protocol["prior_ramp_steps"], 1
                     )
                     row = update_arm(

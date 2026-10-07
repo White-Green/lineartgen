@@ -9,7 +9,7 @@ from campaign_protocol import read, sha, write
 from summarize_sketch_experiment import clustered_delta
 from train_lineart_loss_study import verify
 
-from lineartgen.training.lineart_study import METHODS
+from lineartgen.training.lineart_study import study_methods
 
 METRICS = (
     "halo_opacity_excess",
@@ -98,7 +98,7 @@ def audit(root, step, mode, reference, count):
     assert report["preflight_limit"] is None and not report["diagnostic"]
     assert report["manifest_sha256"] == reference["cases_sha256"]
     assert report["recursion_levels"] == 3 and report["noise"] == "fixed NumPy runtime draws"
-    names = ("initial",) if step == 0 else METHODS
+    names = ("initial",) if step == 0 else study_methods(read(root / "protocol.json"))
     expected = {(i, name, 1) for i in range(count) for name in names}
     actual = [(r["case"], r["method"], r["denoise_steps"]) for r in report["results"]]
     assert len(actual) == len(expected) and set(actual) == expected
@@ -120,10 +120,12 @@ def audit(root, step, mode, reference, count):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
-    parser.add_argument("--through", choices=(0, 2000, 10000), type=int, required=True)
+    parser.add_argument("--through", type=int, required=True)
     args = parser.parse_args()
     root = args.root.resolve()
     protocol = verify(root)
+    if args.through not in [0, *protocol["milestones"]]:
+        raise ValueError("Summary step must be a declared milestone")
     reference = read(root / "evaluation.json")
     manifest_path = Path(reference["root"]) / "cases.json"
     assert sha(manifest_path) == reference["cases_sha256"]
@@ -140,6 +142,7 @@ def main():
                 paired=[
                     r
                     for baseline in ("control", "no_contrast")
+                    if baseline in study_methods(protocol)
                     for r in differences(rows, rows, manifest, baseline)
                 ]
                 + differences(rows, initial["results"], manifest, "initial"),

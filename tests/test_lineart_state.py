@@ -1,6 +1,7 @@
 import jax
 import jax.numpy as jnp
 import numpy as np
+import pytest
 from flax import nnx
 
 from lineartgen.config import ExperimentConfig
@@ -11,18 +12,29 @@ from lineartgen.training.lineart import Profiles
 from lineartgen.training.lineart_study import create_arm, update_arm
 
 
-def test_joint_critic_generator_optimizer_and_ema_resume_matches_uninterrupted(tmp_path):
+@pytest.mark.parametrize("adversarial", [True, False])
+def test_joint_critic_generator_optimizer_and_ema_resume_matches_uninterrupted(
+    tmp_path, adversarial
+):
     config = ExperimentConfig.model_validate(
         dict(
             model=dict(channels=[2, 4], convolutions_per_block=1, output_mode="residual"),
             matching=dict(method="independent"),
+            loss={}
+            if adversarial
+            else dict(
+                line_region_weight=0.2,
+                ink_keep_weight=0.1,
+                neighbor_keep_weight=0.1,
+                neighbor_paper_weight=0.1,
+            ),
             train=dict(batch_size=1, accumulate_steps=2),
         )
     )
     initial = create_model(config.model, rngs=nnx.Rngs(3))
 
     def create():
-        return {"prior": create_arm(config, initial, adversarial=True, patch_size=16)}
+        return {"prior": create_arm(config, initial, adversarial=adversarial, patch_size=16)}
 
     full, resumed = create(), create()
 

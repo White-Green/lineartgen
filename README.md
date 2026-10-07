@@ -1,5 +1,7 @@
 # lineartgen — JAX rewrite
 
+2026-10-07、[芯の保持・局所誤差を含む6条件の追加実験](docs/ink-structure-experiment-20261007.md)を開始。
+
 2026-10-06、[線画lossの5条件×追加10k比較を完了](docs/lineart-loss-results-20261006.md)。
 領域別lossでにじみは減ったが細線の保持に副作用があり、配布モデルの更新は見送った。
 

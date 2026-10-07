@@ -13,7 +13,7 @@ from train_lineart_loss_study import verify
 from lineartgen.config import load_config
 from lineartgen.models.serialization import load_inference
 from lineartgen.training import lineart_state
-from lineartgen.training.lineart_study import METHODS, create_arm
+from lineartgen.training.lineart_study import create_arm, study_methods
 
 
 def audit(root, step, snapshots):
@@ -26,7 +26,7 @@ def audit(root, step, snapshots):
             adversarial=name == "patch_prior",
             patch_size=protocol["patch_size"],
         )
-        for name in METHODS
+        for name in study_methods(protocol)
     }
     with ocp.CheckpointManager(
         (root / "checkpoints").resolve(),

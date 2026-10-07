@@ -11,6 +11,8 @@ from pathlib import Path
 from campaign_protocol import read, write
 from train_lineart_loss_study import verify
 
+from lineartgen.training.lineart_study import study_methods
+
 
 def collapse_failures(root, step):
     initial = read(root / "evaluation/step-0-ema/metrics.json")
@@ -69,7 +71,7 @@ def run(root):
             return
         if not all(
             (root / f"snapshots/step-{step}" / name / "ema/weights.npz").is_file()
-            for name in ("control", "no_contrast", "regions", "profiles", "patch_prior")
+            for name in study_methods(protocol)
         ):
             command("train_lineart_loss_study", ["--end", step])
             if (root / "stop").exists():

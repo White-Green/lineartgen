@@ -17,7 +17,7 @@ from lineartgen.evaluation import edit_boundary_metrics, probe_metrics, protecte
 from lineartgen.evaluation_sampling import background_metrics, runtime_inputs
 from lineartgen.lineart_metrics import halo_metrics
 from lineartgen.models.serialization import load_inference
-from lineartgen.training.lineart_study import METHODS
+from lineartgen.training.lineart_study import study_methods
 
 
 def summaries(rows, keys):
@@ -69,7 +69,7 @@ def evaluate(root, step, mode, *, diagnostic=False, limit=None):
     if (folder / "metrics.json").exists():
         return
     folder.mkdir(parents=True, exist_ok=True)
-    names = ("initial",) if step == 0 else METHODS
+    names = ("initial",) if step == 0 else study_methods(protocol)
     model_paths = {
         name: Path(protocol["initial"])
         if step == 0

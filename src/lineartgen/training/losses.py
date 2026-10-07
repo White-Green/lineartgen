@@ -5,6 +5,7 @@ import jax.numpy as jnp
 
 from .boundary import boundary_distance_loss
 from .cldice import centerline_loss
+from .ink_structure import ink_structure_losses
 from .lineart import line_region_loss, profile_loss
 
 
@@ -58,6 +59,17 @@ def image_loss(prediction, clean, noise_level, config, min_noise, *, profiles=No
     loss = denoise + config.identity_weight * identity
     loss += config.edge_weight * edge + config.contrast_weight * contrast
     parts = {"denoise": denoise, "identity": identity, "edge": edge, "contrast": contrast}
+    if config.ink_keep_weight or config.neighbor_keep_weight or config.neighbor_paper_weight:
+        structure = ink_structure_losses(
+            prediction,
+            clean,
+            active,
+            halo_radius=config.line_region_radius,
+            neighbor_radius=config.neighbor_radius,
+        )
+        for name, value in structure.items():
+            loss += getattr(config, name + "_weight") * value
+        parts.update(structure)
     if config.line_region_weight:
         region = line_region_loss(prediction, clean, active, config.line_region_radius)
         loss += config.line_region_weight * region

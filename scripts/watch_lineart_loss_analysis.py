@@ -11,7 +11,7 @@ from pathlib import Path
 from campaign_protocol import read, sha, write
 from train_lineart_loss_study import verify
 
-from lineartgen.training.lineart_study import METHODS
+from lineartgen.training.lineart_study import study_methods
 
 
 def analysis_sources(root):
@@ -92,7 +92,7 @@ def run(root):
                 root,
                 lambda step=step: all(
                     (root / f"snapshots/step-{step}" / name / mode / "weights.npz").is_file()
-                    for name in METHODS
+                    for name in study_methods(protocol)
                     for mode in ("raw", "ema")
                 ),
                 f"waiting_for_snapshots_{step}",

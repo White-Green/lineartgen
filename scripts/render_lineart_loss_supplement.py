@@ -15,7 +15,7 @@ from lineartgen.evaluation import probe_metrics, protected_metrics
 from lineartgen.evaluation_sampling import runtime_inputs
 from lineartgen.lineart_metrics import halo_metrics
 from lineartgen.models.serialization import load_inference
-from lineartgen.training.lineart_study import METHODS
+from lineartgen.training.lineart_study import study_methods
 
 
 def evaluate(root, step, mode):
@@ -29,7 +29,12 @@ def evaluate(root, step, mode):
     assert sha(cases / "cases.json") == selected["manifest_sha256"] == reference["cases_sha256"]
     paths = {"initial": Path(protocol["initial"])}
     if step:
-        paths.update({name: root / "snapshots" / f"step-{step}" / name / mode for name in METHODS})
+        paths.update(
+            {
+                name: root / "snapshots" / f"step-{step}" / name / mode
+                for name in study_methods(protocol)
+            }
+        )
     hashes = {name: sha(path / "weights.npz") for name, path in paths.items()}
     folder = root / "supplemental-evaluation" / f"step-{step}-{mode}"
     folder.mkdir(parents=True, exist_ok=True)
