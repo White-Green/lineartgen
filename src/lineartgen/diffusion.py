@@ -17,6 +17,13 @@ class TrainingInputs(NamedTuple):
     noisy: tuple
 
 
+class GuidedTrainingInputs(NamedTuple):
+    targets: tuple
+    noise_levels: tuple
+    noisy: tuple
+    guides: tuple
+
+
 def downsample(image):
     batch, height, width, channels = image.shape
     return image.reshape(batch, height // 2, 2, width // 2, 2, channels).mean((2, 4))
@@ -29,7 +36,7 @@ def pyramid(image, levels):
     return tuple(images)
 
 
-def recursive_forward_all(model, images, noise_levels):
+def recursive_forward_all(model, images, noise_levels, *, guides=None):
     """All retained subnets share features, with a separate recursive state per prefix."""
     smallest = images[-1]
     count = getattr(model, "num_subnets", 1)
@@ -38,20 +45,26 @@ def recursive_forward_all(model, images, noise_levels):
         dtype=smallest.dtype,
     )
     outputs = []
-    for image, noise in zip(reversed(images), reversed(noise_levels), strict=True):
-        insert = model(image, noise, insert)
+    if guides is None:
+        guides = (None,) * len(images)
+    for image, noise, guide in zip(
+        reversed(images), reversed(noise_levels), reversed(guides), strict=True
+    ):
+        insert = (
+            model(image, noise, insert) if guide is None else model(image, noise, insert, guide)
+        )
         outputs.append(insert)
     return tuple(
         tuple(output[..., i : i + 1] for output in reversed(outputs)) for i in range(count)
     )
 
 
-def recursive_forward(model, images, noise_levels):
+def recursive_forward(model, images, noise_levels, *, guides=None):
     """Return the selected prefix's predictions, including its internal smaller states."""
-    return recursive_forward_all(model, images, noise_levels)[-1]
+    return recursive_forward_all(model, images, noise_levels, guides=guides)[-1]
 
 
-def recursive_forward_with_preclip(model, images, noise_levels):
+def recursive_forward_with_preclip(model, images, noise_levels, *, guides=None):
     """Single UNet supervision values; recursive feedback always remains clipped."""
     smallest = images[-1]
     insert = jnp.zeros(
@@ -59,8 +72,16 @@ def recursive_forward_with_preclip(model, images, noise_levels):
         dtype=smallest.dtype,
     )
     predictions, preclip = [], []
-    for image, noise in zip(reversed(images), reversed(noise_levels), strict=True):
-        insert, raw = model(image, noise, insert, return_preclip=True)
+    if guides is None:
+        guides = (None,) * len(images)
+    for image, noise, guide in zip(
+        reversed(images), reversed(noise_levels), reversed(guides), strict=True
+    ):
+        insert, raw = (
+            model(image, noise, insert, return_preclip=True)
+            if guide is None
+            else model(image, noise, insert, guide, return_preclip=True)
+        )
         predictions.append(insert)
         preclip.append(raw)
     return tuple(reversed(predictions)), tuple(reversed(preclip))
@@ -112,7 +133,7 @@ def noise_map(clean, key, config: DiffusionConfig):
     )
 
 
-def training_inputs(clean, key, config, matching, *, levels, sketch=None):
+def training_inputs(clean, key, config, matching, *, levels, sketch=None, with_source=False):
     map_key, noise_key = jax.random.split(key)
     source = clean
     if sketch is not None and sketch.mode != "none":
@@ -136,6 +157,8 @@ def training_inputs(clean, key, config, matching, *, levels, sketch=None):
                 target, level, noise, resolution=matching.cost_resolution, solver=matching.solver
             )
         noisy.append(source * jnp.sqrt(1 - level) + noise * jnp.sqrt(level))
+    if with_source:
+        return GuidedTrainingInputs(targets, noise_levels, tuple(noisy), sources)
     return TrainingInputs(targets, noise_levels, tuple(noisy))
 
 
@@ -152,15 +175,16 @@ def sample(model, clean, key, *, strength, steps, levels):
         target * jnp.sqrt(1 - level) + jax.random.normal(k, target.shape) * jnp.sqrt(level)
         for target, level, k in zip(targets, noise_levels, noise_keys, strict=True)
     )
-    return sample_prepared(model, images, noise_levels, steps=steps)
+    guides = targets if getattr(model, "source_conditioning", False) else None
+    return sample_prepared(model, images, noise_levels, steps=steps, guides=guides)
 
 
-def sample_prepared(model, images, noise_levels, *, steps):
+def sample_prepared(model, images, noise_levels, *, steps, guides=None):
     """Evolve an already sampled pyramid, permitting paired recursion diagnostics."""
     for step in range(steps):
         current, following = (steps - step) / steps, (steps - step - 1) / steps
         predictions = recursive_forward(
-            model, images, tuple(level * current for level in noise_levels)
+            model, images, tuple(level * current for level in noise_levels), guides=guides
         )
         ratio = jnp.sqrt(following / current)
         updated = tuple(

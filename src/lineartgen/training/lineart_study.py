@@ -3,6 +3,7 @@
 import math
 
 import jax
+import numpy as np
 from flax import nnx
 
 from lineartgen.models import create_model
@@ -12,6 +13,18 @@ from .lineart_steps import accumulate_critic, accumulate_generator, make_lineart
 from .steps import create_optimizer, make_steps
 
 METHODS = ("control", "no_contrast", "regions", "profiles", "patch_prior")
+
+
+def assert_initial_parameters(initial, model):
+    """Exact inherited tensors and zero-only optional source projections."""
+    original = nnx.to_pure_dict(nnx.state(initial, nnx.Param))
+    current = nnx.to_pure_dict(nnx.state(model, nnx.Param))
+    extras = current.keys() - original.keys()
+    assert extras in (set(), {"guide_encoder", "guide_head"})
+    jax.tree.map(np.testing.assert_array_equal, original, {k: current[k] for k in original})
+    for key in extras:
+        for value in jax.tree.leaves(current[key]):
+            np.testing.assert_array_equal(value, 0)
 
 
 def study_methods(protocol):

@@ -76,6 +76,7 @@ class Trainer:
                 config.matching,
                 levels=levels,
                 sketch=config.sketch,
+                with_source=config.model.source_conditioning,
             ),
             static_argnums=(2,),
         )

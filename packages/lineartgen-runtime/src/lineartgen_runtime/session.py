@@ -48,21 +48,25 @@ class LineartModel:
         if self._metadata.get("format_version") != 1 or self._metadata.get("layout") != "NHWC":
             raise ValueError("Unsupported lineartgen model format")
         inputs = {value.name for value in self._session.get_inputs()}
-        if inputs != {"image", "noise_level", "insert"}:
+        self.source_conditioning = self._metadata.get("source_conditioning", False)
+        expected_inputs = {"image", "noise_level", "insert"}
+        if self.source_conditioning:
+            expected_inputs.add("guide")
+        if inputs != expected_inputs:
             raise ValueError(f"Unexpected ONNX input contract: {sorted(inputs)}")
         self.backend = "onnxruntime"
         self.device = ", ".join(self._session.get_providers())
         self._lock = threading.Lock()
 
-    def forward(self, image, noise_level, insert):
-        return self._session.run(
-            ["prediction"],
-            {
-                "image": image,
-                "noise_level": noise_level,
-                "insert": insert,
-            },
-        )[0]
+    def forward(self, image, noise_level, insert, guide=None):
+        inputs = {"image": image, "noise_level": noise_level, "insert": insert}
+        if self.source_conditioning:
+            if guide is None:
+                raise ValueError("This model requires the original rough guide")
+            inputs["guide"] = guide
+        elif guide is not None:
+            raise ValueError("This model does not accept a guide")
+        return self._session.run(["prediction"], inputs)[0]
 
     def infer(self, *, scribble, lineart, width, height, strength, seed, denoise_steps):
         width, height = operator.index(width), operator.index(height)
@@ -81,7 +85,13 @@ class LineartModel:
         )
         with self._lock:
             prediction = denoise(
-                self.forward, clean, noise, seed=seed, steps=denoise_steps, levels=len(plan.sizes)
+                self.forward,
+                clean,
+                noise,
+                seed=seed,
+                steps=denoise_steps,
+                levels=len(plan.sizes),
+                source_conditioning=self.source_conditioning,
             )
         if not np.isfinite(prediction).all():
             raise RuntimeError("ONNX inference produced nonfinite output")

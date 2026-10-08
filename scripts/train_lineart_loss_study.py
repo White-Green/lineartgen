@@ -109,7 +109,13 @@ def train(root, end):
     }
     prepare = jax.jit(
         lambda x, k, levels: training_inputs(
-            x, k, config.diffusion, config.matching, levels=levels, sketch=config.sketch
+            x,
+            k,
+            config.diffusion,
+            config.matching,
+            levels=levels,
+            sketch=config.sketch,
+            with_source=config.model.source_conditioning,
         ),
         static_argnums=2,
     )

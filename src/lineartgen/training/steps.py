@@ -36,12 +36,15 @@ def accumulate_gradients(gradient_step, model, prepared, train):
 
 def make_steps(config, *, all_subnets=True):
     def objective(model, prepared):
-        targets, noise_levels, noisy = prepared
+        targets, noise_levels, noisy = prepared[:3]
+        guides = prepared.guides if config.model.source_conditioning else None
         if config.loss.pixel_loss == "interval_mse":
-            predictions, preclip = recursive_forward_with_preclip(model, noisy, noise_levels)
+            predictions, preclip = recursive_forward_with_preclip(
+                model, noisy, noise_levels, guides=guides
+            )
             subnets = (predictions,)
         else:
-            subnets = recursive_forward_all(model, noisy, noise_levels)
+            subnets = recursive_forward_all(model, noisy, noise_levels, guides=guides)
             preclip = (None,) * len(noisy)
         if not all_subnets:
             subnets = (subnets[-1],)

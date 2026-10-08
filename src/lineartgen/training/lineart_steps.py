@@ -12,12 +12,13 @@ from .steps import _add_trees, _average_and_norm
 
 
 def objective(model, prepared, profiles, config):
+    guides = prepared.guides if config.model.source_conditioning else None
     if config.loss.pixel_loss == "interval_mse":
         predictions, preclip = recursive_forward_with_preclip(
-            model, prepared.noisy, prepared.noise_levels
+            model, prepared.noisy, prepared.noise_levels, guides=guides
         )
     else:
-        predictions = recursive_forward(model, prepared.noisy, prepared.noise_levels)
+        predictions = recursive_forward(model, prepared.noisy, prepared.noise_levels, guides=guides)
         preclip = (None,) * len(predictions)
     total, denominator, metrics = jnp.zeros(()), 0.0, {}
     for level, (prediction, target, noise) in enumerate(
@@ -74,7 +75,12 @@ def make_lineart_steps(config, *, adversarial=False, patch_size=64):
     @nnx.jit
     def critic_gradient(critic, model, prepared, coordinates):
         prediction = jax.lax.stop_gradient(
-            recursive_forward(model, prepared.noisy, prepared.noise_levels)[0]
+            recursive_forward(
+                model,
+                prepared.noisy,
+                prepared.noise_levels,
+                guides=prepared.guides if config.model.source_conditioning else None,
+            )[0]
         )
         (_, metrics), gradient = nnx.value_and_grad(discriminator_loss, argnums=0, has_aux=True)(
             critic, prediction, prepared, coordinates, patch_size, config.diffusion.min_noise

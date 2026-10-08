@@ -11,8 +11,7 @@ from flax import nnx
 from lineartgen_runtime.images import pyramid_plan, to_bgra
 from train_lineart_loss_study import verify
 
-from lineartgen.diffusion import sample_prepared
-from lineartgen.evaluation_sampling import runtime_inputs
+from lineartgen.evaluation_sampling import inference_with_source, runtime_inputs
 from lineartgen.models.serialization import load_inference
 from lineartgen.training.lineart_study import study_methods
 
@@ -40,7 +39,9 @@ def evaluate(root, step, mode):
         assert previous["analysis_source_sha256"] == source_hash
         return
     models = {name: load_inference(path)[0] for name, path in paths.items()}
-    inference = nnx.jit(lambda m, x, t, s: sample_prepared(m, x, t, steps=s), static_argnums=3)
+    inference = nnx.jit(
+        lambda m, x, t, source, s: inference_with_source(m, x, t, source, steps=s), static_argnums=4
+    )
     white = np.ones((512, 512, 1), np.float32)
     rows, index = [], 0
     for seed in SEEDS:
@@ -57,7 +58,9 @@ def evaluate(root, step, mode):
                 for iterations in (1, 2, 5):
                     predictions = {}
                     for name, model in models.items():
-                        prediction = np.asarray(inference(model, *prepared, iterations))[0]
+                        prediction = np.asarray(
+                            inference(model, *prepared, jax.device_put(white[None]), iterations)
+                        )[0]
                         assert np.isfinite(prediction).all()
                         error = np.abs(prediction[..., 0] - 1)
                         protected = float(error[~active].max()) if (~active).any() else None

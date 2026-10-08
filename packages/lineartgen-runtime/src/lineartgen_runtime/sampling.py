@@ -13,7 +13,7 @@ def pyramid(image, count):
     return result
 
 
-def denoise(forward, clean, noise_level, *, seed, steps, levels):
+def denoise(forward, clean, noise_level, *, seed, steps, levels, source_conditioning=False):
     rng = np.random.default_rng(seed)
     clean_scales = pyramid(clean, levels)
     noise_levels = pyramid(noise_level, levels)
@@ -32,11 +32,18 @@ def denoise(forward, clean, noise_level, *, seed, steps, levels):
             (smallest.shape[0], smallest.shape[1] // 2, smallest.shape[2] // 2, 1), np.float32
         )
         predictions = []
-        for x, level in zip(reversed(images), reversed(noise_levels), strict=True):
-            insert = forward(
+        for x, level, guide in zip(
+            reversed(images), reversed(noise_levels), reversed(clean_scales), strict=True
+        ):
+            arguments = (
                 np.ascontiguousarray(x),
                 np.ascontiguousarray(level * current),
                 np.ascontiguousarray(insert),
+            )
+            insert = (
+                forward(*arguments, np.ascontiguousarray(guide))
+                if source_conditioning
+                else forward(*arguments)
             )
             predictions.append(insert)
         ratio = np.sqrt(following / current)

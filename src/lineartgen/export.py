@@ -38,16 +38,19 @@ def export_model(model, config, destination, *, dynamic=True, provenance=None):
     # convolutional graph spatially dynamic without changing the model code.
     size = minimum * 2
     image_shape, insert_shape = (1, size, size, 1), (1, size // 2, size // 2, 1)
+    conditioned = config.model.source_conditioning
+    input_shapes = [image_shape, image_shape, insert_shape] + ([image_shape] if conditioned else [])
+    input_names = ["image", "noise_level", "insert"] + (["guide"] if conditioned else [])
     graph = to_onnx(
         model,
-        [image_shape, image_shape, insert_shape],
+        input_shapes,
         opset=20,
         model_name="lineartgen_unet",
-        input_names=["image", "noise_level", "insert"],
+        input_names=input_names,
         output_names=["prediction"],
     )
     # The graph uses ordinary tensors/operators; IR 10 also works with the ORT
-    # releases supporting the plugin's Python 3.10 environment.
+    # releases supporting the plugin's Python environment.
     graph.ir_version = 10
     if dynamic:
         make_spatially_dynamic(graph)
@@ -60,6 +63,7 @@ def export_model(model, config, destination, *, dynamic=True, provenance=None):
         "model": config.model.model_dump(mode="json"),
         "dynamic": dynamic,
         "provenance": provenance or "JAX model",
+        "source_conditioning": conditioned,
     }
     onnx.helper.set_model_props(graph, {"lineartgen": json.dumps(metadata)})
     onnx.checker.check_model(graph)
@@ -83,6 +87,8 @@ def export_model(model, config, destination, *, dynamic=True, provenance=None):
             "noise_level": random.uniform(0, 1, (1, height, width, 1)).astype(np.float32),
             "insert": random.uniform(-1, 1, (1, height // 2, width // 2, 1)).astype(np.float32),
         }
+        if conditioned:
+            inputs["guide"] = random.uniform(-1, 1, (1, height, width, 1)).astype(np.float32)
         expected = np.asarray(model(*(jax.numpy.asarray(x) for x in inputs.values())))
         actual = session.run(["prediction"], inputs)[0]
         np.testing.assert_allclose(actual, expected, rtol=2e-4, atol=2e-5)

@@ -23,6 +23,18 @@ def runtime_inputs(source, strength, seed, levels):
     return images, masks
 
 
+def inference_with_source(model, images, noise_levels, source, *, steps):
+    """Use the actual supplied rough image as a fixed guide, never a clean teacher."""
+    from lineartgen.diffusion import sample_prepared
+
+    guides = (
+        tuple(pyramid(source, len(images)))
+        if getattr(model, "source_conditioning", False)
+        else None
+    )
+    return sample_prepared(model, images, noise_levels, steps=steps, guides=guides)
+
+
 def background_metrics(prediction, target, strength):
     mask = (strength > 0) & (target >= 0.99)
     count = int(mask.sum())

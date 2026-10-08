@@ -24,11 +24,14 @@ class ModelConfig(Settings):
     output_mode: Literal["direct", "residual"] = "direct"
     # Experimental backward rule; both choices have the same clipped forward values.
     output_clip_gradient: Literal["hard", "straight_through"] = "hard"
+    source_conditioning: bool = False
     skip_mode: Literal["post_pool", "pre_pool"] = "post_pool"
     bottleneck_dilation: int = Field(default=1, ge=1, le=4)
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.architecture != "unet" and self.source_conditioning:
+            raise ValueError("Source conditioning currently requires architecture='unet'")
         if self.architecture != "unet" and self.output_clip_gradient != "hard":
             raise ValueError("Surrogate output gradients currently require architecture='unet'")
         if not self.channels or min(self.channels) < 1:

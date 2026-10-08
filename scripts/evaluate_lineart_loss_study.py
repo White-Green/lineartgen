@@ -12,9 +12,8 @@ from lineartgen_runtime.images import pyramid_plan, to_bgra
 from PIL import Image, ImageDraw
 from train_lineart_loss_study import verify
 
-from lineartgen.diffusion import sample_prepared
 from lineartgen.evaluation import edit_boundary_metrics, probe_metrics, protected_metrics
-from lineartgen.evaluation_sampling import background_metrics, runtime_inputs
+from lineartgen.evaluation_sampling import background_metrics, inference_with_source, runtime_inputs
 from lineartgen.lineart_metrics import halo_metrics
 from lineartgen.models.serialization import load_inference
 from lineartgen.training.lineart_study import study_methods
@@ -77,7 +76,9 @@ def evaluate(root, step, mode, *, diagnostic=False, limit=None):
         for name in names
     }
     models = {name: load_inference(path)[0] for name, path in model_paths.items()}
-    inference = nnx.jit(lambda m, x, t, s: sample_prepared(m, x, t, steps=s), static_argnums=3)
+    inference = nnx.jit(
+        lambda m, x, t, source, s: inference_with_source(m, x, t, source, steps=s), static_argnums=4
+    )
     indices = protocol["selected_panels"] if diagnostic else list(range(len(manifest["cases"])))
     if limit:
         indices = indices[:limit]
@@ -97,7 +98,9 @@ def evaluate(root, step, mode, *, diagnostic=False, limit=None):
         for iterations in (1, 2, 5) if diagnostic else (1,):
             predictions = {}
             for name, model in models.items():
-                prediction = np.asarray(inference(model, *prepared, iterations))[0]
+                prediction = np.asarray(
+                    inference(model, *prepared, jax.device_put(source[None]), iterations)
+                )[0]
                 assert np.isfinite(prediction).all(), (index, name)
                 extra = (
                     probe_metrics(prediction, target, probes, connections)

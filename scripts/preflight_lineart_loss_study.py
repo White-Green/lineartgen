@@ -7,7 +7,6 @@ from pathlib import Path
 import jax
 import numpy as np
 from campaign_protocol import read, write
-from flax import nnx
 
 from lineartgen.config import load_config
 from lineartgen.data.geometry import mix_geometry
@@ -17,7 +16,12 @@ from lineartgen.models.serialization import load_inference
 from lineartgen.training import checkpoints, lineart_state
 from lineartgen.training.lineart import make_profiles
 from lineartgen.training.lineart_adversarial import patch_coordinates
-from lineartgen.training.lineart_study import create_arm, study_methods, update_arm
+from lineartgen.training.lineart_study import (
+    assert_initial_parameters,
+    create_arm,
+    study_methods,
+    update_arm,
+)
 
 
 def main():
@@ -47,14 +51,20 @@ def main():
 
     arms = create()
     for arm in arms.values():
-        jax.tree.map(np.testing.assert_array_equal, nnx.state(initial), nnx.state(arm["model"]))
+        assert_initial_parameters(initial, arm["model"])
     training, _, _ = split_experiment(discover(config.data), config.data, config.train.seed)
     stream = batches(
         training, config.data, batch_size=config.train.effective_batch_size, count=6, seed=20263006
     )
     prepare = jax.jit(
         lambda x, k, levels: training_inputs(
-            x, k, config.diffusion, config.matching, levels=levels, sketch=config.sketch
+            x,
+            k,
+            config.diffusion,
+            config.matching,
+            levels=levels,
+            sketch=config.sketch,
+            with_source=config.model.source_conditioning,
         ),
         static_argnums=2,
     )

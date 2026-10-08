@@ -10,9 +10,8 @@ from evaluate_lineart_loss_study import render
 from flax import nnx
 from train_lineart_loss_study import verify
 
-from lineartgen.diffusion import sample_prepared
 from lineartgen.evaluation import probe_metrics, protected_metrics
-from lineartgen.evaluation_sampling import runtime_inputs
+from lineartgen.evaluation_sampling import inference_with_source, runtime_inputs
 from lineartgen.lineart_metrics import halo_metrics
 from lineartgen.models.serialization import load_inference
 from lineartgen.training.lineart_study import study_methods
@@ -45,7 +44,7 @@ def evaluate(root, step, mode):
         assert previous["analysis_source_sha256"] == sha(Path(__file__))
         return
     models = {name: load_inference(path)[0] for name, path in paths.items()}
-    inference = nnx.jit(lambda m, x, t: sample_prepared(m, x, t, steps=1))
+    inference = nnx.jit(lambda m, x, t, source: inference_with_source(m, x, t, source, steps=1))
     rows = []
     for requested in selected["cases"]:
         index = requested["case"]
@@ -62,7 +61,7 @@ def evaluate(root, step, mode):
         prepared = jax.device_put(prepared)
         predictions = {}
         for name, model in models.items():
-            prediction = np.asarray(inference(model, *prepared))[0]
+            prediction = np.asarray(inference(model, *prepared, jax.device_put(source[None])))[0]
             assert np.isfinite(prediction).all()
             measured = (
                 protected_metrics(prediction, target, strength)

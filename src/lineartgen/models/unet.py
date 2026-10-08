@@ -21,6 +21,7 @@ class UNet(nnx.Module):
         self.minimum_size = config.minimum_size
         self.output_mode = config.output_mode
         self.output_clip_gradient = config.output_clip_gradient
+        self.source_conditioning = config.source_conditioning
         self.skip_mode = config.skip_mode
         self.bottleneck_dilation = config.bottleneck_dilation
         encoder_inputs = [2] + [
@@ -66,8 +67,33 @@ class UNet(nnx.Module):
             previous = outputs
         self.decoders = nnx.List(decoders)
         self.head = block(1 + previous, 1)
+        if self.source_conditioning:
+            # Zero additions preserve the existing model at initialization. The
+            # original rough image is available at inference, unlike the teacher.
+            def guide_projection(channels):
+                return nnx.Conv(
+                    1,
+                    channels,
+                    (config.kernel_size, config.kernel_size),
+                    padding="SAME",
+                    use_bias=False,
+                    kernel_init=nnx.initializers.zeros,
+                    rngs=rngs,
+                )
 
-    def __call__(self, image, noise_level, insert, *, return_preclip=False):
+            self.guide_encoder = guide_projection(self.encoders[0].layers[0].out_features)
+            self.guide_head = guide_projection(self.head.layers[0].out_features)
+
+    def __call__(self, image, noise_level, insert, guide=None, *, return_preclip=False):
+        if self.source_conditioning:
+            if guide is None or guide.shape != image.shape:
+                raise ValueError("Source-conditioned UNet requires a matching original rough guide")
+            encoder_bias, head_bias = self.guide_encoder(guide), self.guide_head(guide)
+        else:
+            if guide is not None:
+                raise ValueError("This UNet is not configured for source conditioning")
+            encoder_bias = head_bias = None
+
         def upsample(x):
             return jax.image.resize(
                 x, (x.shape[0], x.shape[1] * 2, x.shape[2] * 2, x.shape[3]), "nearest"
@@ -76,7 +102,7 @@ class UNet(nnx.Module):
         x = jnp.concatenate((image, noise_level), axis=-1)
         skips = []
         for index, encoder in enumerate(self.encoders):
-            features = encoder(x)
+            features = encoder(x, first_bias=encoder_bias if index == 0 else None)
             x = nnx.max_pool(features, window_shape=(2, 2), strides=(2, 2), padding="VALID")
             if index == 0:
                 x = jnp.concatenate((x, insert), axis=-1)
@@ -93,7 +119,7 @@ class UNet(nnx.Module):
                 x = upsample(skip if index == 0 else jnp.concatenate((skip, x), axis=-1))
             x = decoder(x)
         return denoised_output(
-            self.head(jnp.concatenate((image, x), -1), linear_output=True),
+            self.head(jnp.concatenate((image, x), -1), linear_output=True, first_bias=head_bias),
             image,
             noise_level,
             self.output_mode,
