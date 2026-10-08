@@ -49,6 +49,8 @@ def freeze(root, tests_log):
             "baseline-replay-audit.json",
             "baseline-replay/preflight/results.json",
             "initial-guide-audit.json",
+            "mixture-diagnostic.json",
+            "supplemental-validation.json",
         )
         if (root / name).is_file()
     )

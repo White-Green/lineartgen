@@ -79,18 +79,28 @@ def augment_sketch(clean, key, config: SketchAugmentationConfig):
         maxval=config.opacity_max,
     )
     ink = jnp.clip((1 - clean) / 2, 0, 1)
-    if config.mode == "strokes":
-        ink = displaced_strokes(
+    # Independent key: family choice must not change opacity, blur, enablement
+    # or downstream Gaussian draws. Mixed allocates equal probability to the
+    # three existing corruption families, independently for each example.
+    family = (
+        jax.random.randint(jax.random.fold_in(key, 4), (batch, 1, 1, 1), 0, 3)
+        if config.mode == "mixed"
+        else None
+    )
+    if config.mode in ("strokes", "mixed"):
+        strokes = displaced_strokes(
             ink, jax.random.fold_in(key, 3), config.dilation_radius, config.displacement
         )
-    if config.mode in ("blur", "strokes"):
+        ink = jnp.where(family == 2, strokes, ink) if family is not None else strokes
+    if config.mode in ("blur", "strokes", "mixed"):
         sigma = jax.random.uniform(
             jax.random.fold_in(key, 2),
             (batch,),
             minval=config.blur_sigma_min,
             maxval=config.blur_sigma_max,
         )
-        ink = gaussian_blur(ink, sigma, config.blur_sigma_max)
+        blurred = gaussian_blur(ink, sigma, config.blur_sigma_max)
+        ink = jnp.where(family == 0, ink, blurred) if family is not None else blurred
     source = 1 - 2 * jnp.clip(ink, 0, 1) * opacity
     return jnp.where(enabled, source, clean)
 

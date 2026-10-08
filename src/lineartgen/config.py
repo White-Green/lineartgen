@@ -148,7 +148,7 @@ class NoiseMatchingConfig(Settings):
 class SketchAugmentationConfig(Settings):
     """Corrupt only the input, at crop resolution before constructing the pyramid."""
 
-    mode: Literal["none", "tone", "blur", "strokes"] = "none"
+    mode: Literal["none", "tone", "blur", "strokes", "mixed"] = "none"
     probability: float = Field(default=0.75, ge=0, le=1)
     opacity_min: float = Field(default=0.25, gt=0, le=1)
     opacity_max: float = Field(default=1.0, gt=0, le=1)

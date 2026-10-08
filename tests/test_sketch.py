@@ -32,7 +32,7 @@ def settings():
     )
 
 
-@pytest.mark.parametrize("mode", ["none", "tone", "blur", "strokes"])
+@pytest.mark.parametrize("mode", ["none", "tone", "blur", "strokes", "mixed"])
 def test_sketch_preserves_white_and_is_deterministic_and_bounded(mode):
     config = SketchAugmentationConfig(mode=mode, probability=1)
     apply = jax.jit(lambda image, key: augment_sketch(image, key, config))
@@ -76,6 +76,9 @@ def test_disabled_sketch_keeps_existing_training_inputs_exact():
 
 def test_rough_input_is_downsampled_before_common_noise_and_protected_teacher_is_rough():
     variants = comparison_configs(settings(), study="sketch")
+    variants["mixed"] = variants["strokes"].model_copy(
+        update={"sketch": variants["strokes"].sketch.model_copy(update={"mode": "mixed"})}
+    )
     clean = jnp.ones((4, 32, 32, 1)).at[:, :, 14:18].set(-1)
     key = jax.random.PRNGKey(7)
     map_key, noise_key = jax.random.split(key)
