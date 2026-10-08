@@ -139,7 +139,7 @@ def arms_from_root(root):
     plan = read(root / "plan.json")
     initial, _ = load_inference(plan["initial"])
     arms = {}
-    for name in NAMES:
+    for name in plan["arms"]:
         config = load_config(root / f"configs/{name}.json")
         start = (
             initial
@@ -235,7 +235,8 @@ def train(root, *, preflight=False, end=1200):
         audit = read(root / "preflight/restore-audit.json")
         assert audit["step"] == 6 and audit["all_state_exact"]
     arms = arms_from_root(root)
-    config = arms[NAMES[0]]["config"]
+    names = tuple(arms)
+    config = arms[names[0]]["config"]
     data = np.load(root / "train.npz")
     clean, source = data["clean"], data["source"]
     prepare = jax.jit(
@@ -255,7 +256,7 @@ def train(root, *, preflight=False, end=1200):
                 a, b, jax.random.fold_in(jax.random.PRNGKey(SEED), step), step % 6 + 1
             )
             stats = {}
-            for name in NAMES[step % 4 :] + NAMES[: step % 4]:
+            for name in names[step % len(names) :] + names[: step % len(names)]:
                 stats[name] = update(arms[name], prepared)
             complete = step + 1
             row = dict(
@@ -312,10 +313,11 @@ def fixed_inputs(clean, source, strength, seed, *, partial=False):
 
 def evaluate(root, step):
     verify(root)
+    names = tuple(read(root / "plan.json")["arms"])
     out = root / f"evaluation/step-{step}"
     out.mkdir(parents=True, exist_ok=True)
     rows = []
-    for name in NAMES:
+    for name in names:
         for mode in ("raw", "ema"):
             model, _ = load_inference(root / f"snapshots/step-{step}/{name}/{mode}")
             forward = nnx.jit(lambda m, x, t, g: recursive_forward_with_preclip(m, x, t, guides=g))
@@ -366,7 +368,7 @@ def evaluate(root, step):
         ),
     )
     summaries = []
-    for name in NAMES:
+    for name in names:
         for mode in ("raw", "ema"):
             for split in ("train", "probe"):
                 for family in ("clean", "tone", "blur"):
@@ -413,22 +415,23 @@ def evaluate(root, step):
 
 def render(root, step):
     out = root / f"evaluation/step-{step}"
+    names = tuple(read(root / "plan.json")["arms"])
     for split in ("train", "probe"):
         data = np.load(root / f"{split}.npz")
         records = read(root / f"{split}.json")
         # Fixed first variant of nine kinds, blur/.5: native 160px core crops.
         indices = list(range(38, 47))
-        predictions = {n: np.load(out / f"{n}-raw-{split}.npz")["images"] for n in NAMES}
-        canvas = Image.new("RGB", (6 * 160, len(indices) * 180), "white")
+        predictions = {n: np.load(out / f"{n}-raw-{split}.npz")["images"] for n in names}
+        canvas = Image.new("RGB", ((len(names) + 2) * 160, len(indices) * 180), "white")
         draw = ImageDraw.Draw(canvas)
         for row, i in enumerate(indices):
             clean = data["clean"][i]
             ys, xs = np.where(clean[..., 0] < 0.96)
             cy, cx = int(np.mean(ys)), int(np.mean(xs))
             y, x = np.clip(cy - 80, 0, 352), np.clip(cx - 80, 0, 352)
-            images = [clean, data["source"][i]] + [predictions[n][57 + i] for n in NAMES]
+            images = [clean, data["source"][i]] + [predictions[n][len(records) + i] for n in names]
             for col, (label, image) in enumerate(
-                zip(("target", "source", *NAMES), images, strict=True)
+                zip(("target", "source", *names), images, strict=True)
             ):
                 gray = np.uint8(np.rint(np.clip((image[..., 0] + 1) * 127.5, 0, 255)))
                 canvas.paste(

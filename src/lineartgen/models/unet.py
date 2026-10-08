@@ -37,6 +37,7 @@ class UNet(nnx.Module):
         self.minimum_size = config.minimum_size
         self.output_mode = config.output_mode
         self.output_clip_gradient = config.output_clip_gradient
+        self.residual_scale_floor = config.residual_scale_floor
         self.source_conditioning = config.source_conditioning
         self.guide_encoding = config.guide_encoding
         self.skip_mode = config.skip_mode
@@ -143,4 +144,5 @@ class UNet(nnx.Module):
             self.output_mode,
             self.output_clip_gradient,
             return_preclip=return_preclip,
+            scale_floor=self.residual_scale_floor,
         )

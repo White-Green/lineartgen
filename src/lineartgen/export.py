@@ -127,6 +127,11 @@ def make_spatially_dynamic(model):
         "Mul",
         "Add",
         "Sub",  # Pointwise centering of the optional rough-source guide.
+        # Optional residual-scale floor and exact t=0 head suppression. These
+        # broadcast scalars; no spatial size assumptions or reduction axes.
+        "Max",
+        "Greater",
+        "Where",
     }
     unsupported = {node.op_type for node in model.graph.node} - supported
     if unsupported:

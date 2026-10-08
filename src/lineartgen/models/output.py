@@ -16,9 +16,18 @@ def _straight_through_clip_jvp(primals, tangents):
     return straight_through_clip(value), tangent
 
 
-def denoised_output(raw, image, noise_level, mode, clip_gradient="hard", *, return_preclip=False):
+def denoised_output(
+    raw, image, noise_level, mode, clip_gradient="hard", *, return_preclip=False, scale_floor=0.0
+):
     if mode == "residual":
-        raw = image + jnp.sqrt(noise_level) * raw
+        if scale_floor:
+            # Nonzero edit strengths can require a finite rough-to-clean change
+            # even as Gaussian variance tends to zero. Protected pixels remain
+            # exact identity, with no gradient to the head at t=0.
+            scale = jnp.sqrt(jnp.maximum(noise_level, scale_floor))
+            raw = image + jnp.where(noise_level > 0, scale * raw, 0.0)
+        else:
+            raw = image + jnp.sqrt(noise_level) * raw
     if clip_gradient == "straight_through":
         prediction = straight_through_clip(raw)
     elif clip_gradient == "hard":

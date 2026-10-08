@@ -24,6 +24,7 @@ class ModelConfig(Settings):
     output_mode: Literal["direct", "residual"] = "direct"
     # Experimental backward rule; both choices have the same clipped forward values.
     output_clip_gradient: Literal["hard", "straight_through"] = "hard"
+    residual_scale_floor: float = Field(default=0.0, ge=0, le=1)
     source_conditioning: bool = False
     guide_encoding: Literal["raw", "ink", "sqrt_ink"] = "raw"
     skip_mode: Literal["post_pool", "pre_pool"] = "post_pool"
@@ -31,6 +32,10 @@ class ModelConfig(Settings):
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.residual_scale_floor and (
+            self.architecture != "unet" or self.output_mode != "residual"
+        ):
+            raise ValueError("residual_scale_floor requires a residual UNet")
         if not self.source_conditioning and self.guide_encoding != "raw":
             raise ValueError("guide_encoding requires source_conditioning=True")
         if self.architecture != "unet" and self.source_conditioning:
