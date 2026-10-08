@@ -49,6 +49,9 @@ class LineartModel:
             raise ValueError("Unsupported lineartgen model format")
         inputs = {value.name for value in self._session.get_inputs()}
         self.source_conditioning = self._metadata.get("source_conditioning", False)
+        self._preserve_zero_noise = (
+            self._metadata.get("model", {}).get("output_mode", "direct") == "residual"
+        )
         expected_inputs = {"image", "noise_level", "insert"}
         if self.source_conditioning:
             expected_inputs.add("guide")
@@ -92,6 +95,7 @@ class LineartModel:
                 steps=denoise_steps,
                 levels=len(plan.sizes),
                 source_conditioning=self.source_conditioning,
+                preserve_zero_noise=self._preserve_zero_noise,
             )
         if not np.isfinite(prediction).all():
             raise RuntimeError("ONNX inference produced nonfinite output")

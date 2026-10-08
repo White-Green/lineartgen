@@ -56,12 +56,13 @@ def check(checkpoint, destination):
                     steps=steps,
                     levels=len(plan.sizes),
                     source_conditioning=True,
+                    preserve_zero_noise=True,
                 )
                 np.testing.assert_allclose(actual_float, expected, atol=2e-4, rtol=2e-4)
                 protected_error = float(
                     np.max(np.abs(actual_float[noise == 0] - source[noise == 0]))
                 )
-                assert protected_error <= 3e-7
+                assert protected_error == 0.0
                 actual_bytes = runtime.infer(
                     scribble=scribble_bytes,
                     lineart=lineart_bytes,
@@ -105,8 +106,7 @@ def check(checkpoint, destination):
             all_continuous_comparisons_passed=True,
             limitations=(
                 "CPU ONNX Runtime versus CPU JAX; Windows DirectML and Krita GUI not exercised. "
-                "Existing NumPy sampler can round protected values by a few ULPs during iteration; "
-                "record this explicitly, pending exact residual-mask preservation."
+                "Residual zero-noise masks must remain exactly unchanged."
             ),
         ),
     )

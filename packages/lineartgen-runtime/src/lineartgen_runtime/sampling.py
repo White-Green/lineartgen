@@ -13,7 +13,17 @@ def pyramid(image, count):
     return result
 
 
-def denoise(forward, clean, noise_level, *, seed, steps, levels, source_conditioning=False):
+def denoise(
+    forward,
+    clean,
+    noise_level,
+    *,
+    seed,
+    steps,
+    levels,
+    source_conditioning=False,
+    preserve_zero_noise=False,
+):
     rng = np.random.default_rng(seed)
     clean_scales = pyramid(clean, levels)
     noise_levels = pyramid(noise_level, levels)
@@ -47,11 +57,21 @@ def denoise(forward, clean, noise_level, *, seed, steps, levels, source_conditio
             )
             predictions.append(insert)
         ratio = np.sqrt(following / current)
-        images = [
+        updated = [
             image * ratio
             + prediction * (np.sqrt(1 - level * following) - np.sqrt(1 - level * current) * ratio)
             for image, prediction, level in zip(
                 images, reversed(predictions), noise_levels, strict=True
             )
         ]
+        # Residual models are exactly identity at zero noise. Match JAX's
+        # protection against roundoff in the sampler's cancelling terms.
+        images = (
+            [
+                np.where(level == 0, image, value)
+                for image, value, level in zip(images, updated, noise_levels, strict=True)
+            ]
+            if preserve_zero_noise
+            else updated
+        )
     return images[0]
