@@ -13,12 +13,15 @@ from .steps import _add_trees, _average_and_norm
 
 def objective(model, prepared, profiles, config):
     guides = prepared.guides if config.model.source_conditioning else None
+    progress = prepared.progress if config.model.progress_conditioning else None
     if config.loss.pixel_loss == "interval_mse":
         predictions, preclip = recursive_forward_with_preclip(
-            model, prepared.noisy, prepared.noise_levels, guides=guides
+            model, prepared.noisy, prepared.noise_levels, guides=guides, progress=progress
         )
     else:
-        predictions = recursive_forward(model, prepared.noisy, prepared.noise_levels, guides=guides)
+        predictions = recursive_forward(
+            model, prepared.noisy, prepared.noise_levels, guides=guides, progress=progress
+        )
         preclip = (None,) * len(predictions)
     total, denominator, metrics = jnp.zeros(()), 0.0, {}
     for level, (prediction, target, noise) in enumerate(
@@ -80,6 +83,7 @@ def make_lineart_steps(config, *, adversarial=False, patch_size=64):
                 prepared.noisy,
                 prepared.noise_levels,
                 guides=prepared.guides if config.model.source_conditioning else None,
+                progress=prepared.progress if config.model.progress_conditioning else None,
             )[0]
         )
         (_, metrics), gradient = nnx.value_and_grad(discriminator_loss, argnums=0, has_aux=True)(

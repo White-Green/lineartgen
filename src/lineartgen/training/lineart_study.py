@@ -20,7 +20,14 @@ def assert_initial_parameters(initial, model):
     original = nnx.to_pure_dict(nnx.state(initial, nnx.Param))
     current = nnx.to_pure_dict(nnx.state(model, nnx.Param))
     extras = current.keys() - original.keys()
-    assert extras <= {"guide_encoder", "guide_head", "detail_head"}
+    assert extras <= {
+        "guide_encoder",
+        "guide_head",
+        "detail_head",
+        "progress_encoder",
+        "progress_head",
+        "progress_detail",
+    }
     assert ("guide_encoder" in extras) == ("guide_head" in extras)
     jax.tree.map(np.testing.assert_array_equal, original, {k: current[k] for k in original})
     for key in extras:

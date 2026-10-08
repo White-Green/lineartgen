@@ -39,6 +39,7 @@ class UNet(nnx.Module):
         self.output_clip_gradient = config.output_clip_gradient
         self.residual_scale_floor = config.residual_scale_floor
         self.source_conditioning = config.source_conditioning
+        self.progress_conditioning = config.progress_conditioning
         self.guide_encoding = config.guide_encoding
         self.detail_channels = config.detail_channels
         self.skip_mode = config.skip_mode
@@ -117,7 +118,27 @@ class UNet(nnx.Module):
             self.detail_head.layers[-1].kernel[...] = 0
             self.detail_head.layers[-1].bias[...] = 0
 
-    def __call__(self, image, noise_level, insert, guide=None, *, return_preclip=False):
+        if self.progress_conditioning:
+            # Construct last: every inherited parameter and random draw is unchanged.
+            def progress_projection(channels):
+                return nnx.Conv(
+                    1,
+                    channels,
+                    (1, 1),
+                    padding="SAME",
+                    use_bias=False,
+                    kernel_init=nnx.initializers.zeros,
+                    rngs=rngs,
+                )
+
+            self.progress_encoder = progress_projection(self.encoders[0].layers[0].out_features)
+            self.progress_head = progress_projection(self.head.layers[0].out_features)
+            if self.detail_channels:
+                self.progress_detail = progress_projection(self.detail_channels)
+
+    def __call__(
+        self, image, noise_level, insert, guide=None, progress=None, *, return_preclip=False
+    ):
         if self.source_conditioning:
             if guide is None or guide.shape != image.shape:
                 raise ValueError("Source-conditioned UNet requires a matching original rough guide")
@@ -127,6 +148,17 @@ class UNet(nnx.Module):
             if guide is not None:
                 raise ValueError("This UNet is not configured for source conditioning")
             encoder_bias = head_bias = None
+        detail_bias = None
+        if self.progress_conditioning:
+            if progress is None or progress.shape != image.shape:
+                raise ValueError("Progress-conditioned UNet requires a matching progress map")
+            feature = 1 - progress
+            encoder_bias = encoder_bias + self.progress_encoder(feature)
+            head_bias = head_bias + self.progress_head(feature)
+            if self.detail_channels:
+                detail_bias = self.progress_detail(feature)
+        elif progress is not None:
+            raise ValueError("This UNet is not configured for progress conditioning")
 
         def upsample(x):
             return jax.image.resize(
@@ -161,6 +193,7 @@ class UNet(nnx.Module):
             output = output + self.detail_head(
                 jnp.concatenate((image, noise_level, encoded, full_resolution, x), -1),
                 linear_output=True,
+                first_bias=detail_bias,
             )
         return denoised_output(
             output,

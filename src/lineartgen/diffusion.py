@@ -24,6 +24,14 @@ class GuidedTrainingInputs(NamedTuple):
     guides: tuple
 
 
+class ProgressTrainingInputs(NamedTuple):
+    targets: tuple
+    noise_levels: tuple
+    noisy: tuple
+    guides: tuple
+    progress: tuple
+
+
 def downsample(image):
     batch, height, width, channels = image.shape
     return image.reshape(batch, height // 2, 2, width // 2, 2, channels).mean((2, 4))
@@ -36,7 +44,17 @@ def pyramid(image, levels):
     return tuple(images)
 
 
-def recursive_forward_all(model, images, noise_levels, *, guides=None):
+def _forward(model, image, noise, insert, guide, progress, **kwargs):
+    if progress is not None:
+        return model(image, noise, insert, guide, progress, **kwargs)
+    return (
+        model(image, noise, insert, **kwargs)
+        if guide is None
+        else model(image, noise, insert, guide, **kwargs)
+    )
+
+
+def recursive_forward_all(model, images, noise_levels, *, guides=None, progress=None):
     """All retained subnets share features, with a separate recursive state per prefix."""
     smallest = images[-1]
     count = getattr(model, "num_subnets", 1)
@@ -47,24 +65,24 @@ def recursive_forward_all(model, images, noise_levels, *, guides=None):
     outputs = []
     if guides is None:
         guides = (None,) * len(images)
-    for image, noise, guide in zip(
-        reversed(images), reversed(noise_levels), reversed(guides), strict=True
+    if progress is None:
+        progress = (None,) * len(images)
+    for image, noise, guide, u in zip(
+        reversed(images), reversed(noise_levels), reversed(guides), reversed(progress), strict=True
     ):
-        insert = (
-            model(image, noise, insert) if guide is None else model(image, noise, insert, guide)
-        )
+        insert = _forward(model, image, noise, insert, guide, u)
         outputs.append(insert)
     return tuple(
         tuple(output[..., i : i + 1] for output in reversed(outputs)) for i in range(count)
     )
 
 
-def recursive_forward(model, images, noise_levels, *, guides=None):
+def recursive_forward(model, images, noise_levels, *, guides=None, progress=None):
     """Return the selected prefix's predictions, including its internal smaller states."""
-    return recursive_forward_all(model, images, noise_levels, guides=guides)[-1]
+    return recursive_forward_all(model, images, noise_levels, guides=guides, progress=progress)[-1]
 
 
-def recursive_forward_with_preclip(model, images, noise_levels, *, guides=None):
+def recursive_forward_with_preclip(model, images, noise_levels, *, guides=None, progress=None):
     """Single UNet supervision values; recursive feedback always remains clipped."""
     smallest = images[-1]
     insert = jnp.zeros(
@@ -74,14 +92,12 @@ def recursive_forward_with_preclip(model, images, noise_levels, *, guides=None):
     predictions, preclip = [], []
     if guides is None:
         guides = (None,) * len(images)
-    for image, noise, guide in zip(
-        reversed(images), reversed(noise_levels), reversed(guides), strict=True
+    if progress is None:
+        progress = (None,) * len(images)
+    for image, noise, guide, u in zip(
+        reversed(images), reversed(noise_levels), reversed(guides), reversed(progress), strict=True
     ):
-        insert, raw = (
-            model(image, noise, insert, return_preclip=True)
-            if guide is None
-            else model(image, noise, insert, guide, return_preclip=True)
-        )
+        insert, raw = _forward(model, image, noise, insert, guide, u, return_preclip=True)
         predictions.append(insert)
         preclip.append(raw)
     return tuple(reversed(predictions)), tuple(reversed(preclip))
@@ -133,10 +149,42 @@ def noise_map(clean, key, config: DiffusionConfig):
     )
 
 
-def training_inputs(clean, key, config, matching, *, levels, sketch=None, with_source=False):
+def bridge_state(source, target, strength, noise, progress):
+    """Oracle-compatible conditional path; teacher appears only in training states."""
+    effective = strength * progress
+    ordinary = source * jnp.sqrt(1 - effective) + noise * jnp.sqrt(effective)
+    intermediate = (
+        jnp.sqrt(1 - effective) * target
+        + jnp.sqrt(progress) * jnp.sqrt(1 - strength) * (source - target)
+        + jnp.sqrt(effective) * noise
+    )
+    # Preserve the original initialization bitwise and protection exactly.
+    return jnp.where(strength == 0, source, jnp.where(progress == 1, ordinary, intermediate))
+
+
+def training_inputs(
+    clean,
+    key,
+    config,
+    matching,
+    *,
+    levels,
+    sketch=None,
+    with_source=False,
+    with_progress=False,
+    paired_source=None,
+):
+    if with_progress and (not with_source or matching.method != "independent"):
+        raise ValueError("Progress inputs require raw-source guidance and independent noise")
+    if config.training_path == "bridge" and not with_progress:
+        raise ValueError("Bridge training requires progress inputs")
     map_key, noise_key = jax.random.split(key)
-    source = clean
+    source = clean if paired_source is None else paired_source
+    if source.shape != clean.shape:
+        raise ValueError("Paired source must match the clean target shape")
     if sketch is not None and sketch.mode != "none":
+        if paired_source is not None:
+            raise ValueError("Paired source cannot be combined with on-the-fly sketch corruption")
         if matching.method != "independent":
             raise ValueError("Sketch augmentation currently requires independent Gaussian noise")
         source = augment_sketch(clean, jax.random.fold_in(key, 0x534B4554), sketch)
@@ -144,9 +192,22 @@ def training_inputs(clean, key, config, matching, *, levels, sketch=None, with_s
     noise_levels = pyramid(strength, levels)
     targets = pyramid(restoration_target(clean, source, strength), levels)
     sources = pyramid(source, levels)
+    progress = None
+    if with_progress:
+        draws = jax.random.uniform(
+            jax.random.fold_in(key, 0x50524753), (clean.shape[0], 2, 1, 1, 1)
+        )
+        u = jnp.where(
+            draws[:, 0] < config.progress_initial_probability,
+            1.0,
+            config.progress_minimum + (1 - config.progress_minimum) * draws[:, 1],
+        )
+        progress = tuple(jnp.broadcast_to(u, x.shape) for x in sources)
     noise_keys = jax.random.split(noise_key, levels)
     noisy = []
-    for target, source, level, k in zip(targets, sources, noise_levels, noise_keys, strict=True):
+    for index, (target, source, level, k) in enumerate(
+        zip(targets, sources, noise_levels, noise_keys, strict=True)
+    ):
         count = matching.pool_size if matching.method == "exact" else target.shape[0]
         generated = matching.generation_pool_size or count
         if generated < count:
@@ -156,7 +217,14 @@ def training_inputs(clean, key, config, matching, *, levels, sketch=None, with_s
             noise = match_noise(
                 target, level, noise, resolution=matching.cost_resolution, solver=matching.solver
             )
-        noisy.append(source * jnp.sqrt(1 - level) + noise * jnp.sqrt(level))
+        if with_progress and config.training_path == "bridge":
+            noisy.append(bridge_state(source, target, level, noise, progress[index]))
+        else:
+            effective = level * progress[index] if with_progress else level
+            noisy.append(source * jnp.sqrt(1 - effective) + noise * jnp.sqrt(effective))
+    if with_progress:
+        effective = tuple(s * u for s, u in zip(noise_levels, progress, strict=True))
+        return ProgressTrainingInputs(targets, effective, tuple(noisy), sources, progress)
     if with_source:
         return GuidedTrainingInputs(targets, noise_levels, tuple(noisy), sources)
     return TrainingInputs(targets, noise_levels, tuple(noisy))
@@ -184,7 +252,15 @@ def sample_prepared(model, images, noise_levels, *, steps, guides=None):
     for step in range(steps):
         current, following = (steps - step) / steps, (steps - step - 1) / steps
         predictions = recursive_forward(
-            model, images, tuple(level * current for level in noise_levels), guides=guides
+            model,
+            images,
+            tuple(level * current for level in noise_levels),
+            guides=guides,
+            progress=(
+                tuple(jnp.full_like(x, current) for x in images)
+                if getattr(model, "progress_conditioning", False)
+                else None
+            ),
         )
         ratio = jnp.sqrt(following / current)
         updated = tuple(

@@ -22,6 +22,7 @@ def denoise(
     steps,
     levels,
     source_conditioning=False,
+    progress_conditioning=False,
     preserve_zero_noise=False,
 ):
     rng = np.random.default_rng(seed)
@@ -50,11 +51,16 @@ def denoise(
                 np.ascontiguousarray(level * current),
                 np.ascontiguousarray(insert),
             )
-            insert = (
-                forward(*arguments, np.ascontiguousarray(guide))
-                if source_conditioning
-                else forward(*arguments)
-            )
+            if progress_conditioning:
+                if not source_conditioning:
+                    raise ValueError("Progress conditioning requires the original rough guide")
+                insert = forward(*arguments, np.ascontiguousarray(guide), np.full_like(x, current))
+            else:
+                insert = (
+                    forward(*arguments, np.ascontiguousarray(guide))
+                    if source_conditioning
+                    else forward(*arguments)
+                )
             predictions.append(insert)
         ratio = np.sqrt(following / current)
         updated = [

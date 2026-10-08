@@ -41,6 +41,9 @@ def export_model(model, config, destination, *, dynamic=True, provenance=None):
     conditioned = config.model.source_conditioning
     input_shapes = [image_shape, image_shape, insert_shape] + ([image_shape] if conditioned else [])
     input_names = ["image", "noise_level", "insert"] + (["guide"] if conditioned else [])
+    if config.model.progress_conditioning:
+        input_shapes.append(image_shape)
+        input_names.append("progress")
     graph = to_onnx(
         model,
         input_shapes,
@@ -64,6 +67,7 @@ def export_model(model, config, destination, *, dynamic=True, provenance=None):
         "dynamic": dynamic,
         "provenance": provenance or "JAX model",
         "source_conditioning": conditioned,
+        "progress_conditioning": config.model.progress_conditioning,
     }
     onnx.helper.set_model_props(graph, {"lineartgen": json.dumps(metadata)})
     onnx.checker.check_model(graph)
@@ -89,6 +93,8 @@ def export_model(model, config, destination, *, dynamic=True, provenance=None):
         }
         if conditioned:
             inputs["guide"] = random.uniform(-1, 1, (1, height, width, 1)).astype(np.float32)
+        if config.model.progress_conditioning:
+            inputs["progress"] = random.uniform(0.05, 1, (1, height, width, 1)).astype(np.float32)
         expected = np.asarray(model(*(jax.numpy.asarray(x) for x in inputs.values())))
         actual = session.run(["prediction"], inputs)[0]
         np.testing.assert_allclose(actual, expected, rtol=2e-4, atol=2e-5)

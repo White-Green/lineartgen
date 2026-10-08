@@ -60,6 +60,17 @@ def generate_pairs(seed, *, size=512):
 
 
 def prepare_inputs(clean, source, key, config, levels):
+    if config.model.progress_conditioning:
+        return training_inputs(
+            clean,
+            key,
+            config.diffusion,
+            config.matching,
+            levels=levels,
+            with_source=True,
+            with_progress=True,
+            paired_source=source,
+        )
     prepared = training_inputs(
         source, key, config.diffusion, config.matching, levels=levels, with_source=True
     )
@@ -139,11 +150,12 @@ def arms_from_root(root):
     plan = read(root / "plan.json")
     initial, _ = load_inference(plan["initial"])
     arms = {}
+    warm_methods = plan.get("warm_start_methods", [n for n in plan["arms"] if n.startswith("warm")])
     for name in plan["arms"]:
         config = load_config(root / f"configs/{name}.json")
         start = (
             initial
-            if name.startswith("warm")
+            if name in warm_methods
             else create_model(config.model, rngs=nnx.Rngs(config.train.initialization_seed))
         )
         arm = create_arm(config, start)
@@ -236,12 +248,15 @@ def train(root, *, preflight=False, end=1200):
         assert audit["step"] == 6 and audit["all_state_exact"]
     arms = arms_from_root(root)
     names = tuple(arms)
-    config = arms[names[0]]["config"]
     data = np.load(root / "train.npz")
     clean, source = data["clean"], data["source"]
-    prepare = jax.jit(
-        lambda a, b, k, levels: prepare_inputs(a, b, k, config, levels), static_argnums=3
-    )
+    preparers = {
+        name: jax.jit(
+            lambda a, b, k, levels, c=arm["config"]: prepare_inputs(a, b, k, c, levels),
+            static_argnums=3,
+        )
+        for name, arm in arms.items()
+    }
     destination = root / ("preflight" if preflight else "training")
     destination.mkdir(exist_ok=True)
     with checkpoints.manager(destination / "checkpoints", keep=3) as saved:
@@ -252,11 +267,11 @@ def train(root, *, preflight=False, end=1200):
         for step in range(start, 6 if preflight else end):
             begin = time.perf_counter()
             a, b, indices = build_batch(step, clean, source)
-            prepared = prepare(
-                a, b, jax.random.fold_in(jax.random.PRNGKey(SEED), step), step % 6 + 1
-            )
             stats = {}
             for name in names[step % len(names) :] + names[: step % len(names)]:
+                prepared = preparers[name](
+                    a, b, jax.random.fold_in(jax.random.PRNGKey(SEED), step), step % 6 + 1
+                )
                 stats[name] = update(arms[name], prepared)
             complete = step + 1
             row = dict(
@@ -320,7 +335,17 @@ def evaluate(root, step):
     for name in names:
         for mode in ("raw", "ema"):
             model, _ = load_inference(root / f"snapshots/step-{step}/{name}/{mode}")
-            forward = nnx.jit(lambda m, x, t, g: recursive_forward_with_preclip(m, x, t, guides=g))
+            forward = nnx.jit(
+                lambda m, x, t, g: recursive_forward_with_preclip(
+                    m,
+                    x,
+                    t,
+                    guides=g,
+                    progress=tuple(jnp.ones_like(a) for a in x)
+                    if m.progress_conditioning
+                    else None,
+                )
+            )
             for split in ("train", "probe"):
                 data, records = np.load(root / f"{split}.npz"), read(root / f"{split}.json")
                 predictions = []

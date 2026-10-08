@@ -65,6 +65,7 @@ def main():
             levels=levels,
             sketch=config.sketch,
             with_source=config.model.source_conditioning,
+            with_progress=config.model.progress_conditioning,
         ),
         static_argnums=2,
     )

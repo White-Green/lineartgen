@@ -26,6 +26,7 @@ class ModelConfig(Settings):
     output_clip_gradient: Literal["hard", "straight_through"] = "hard"
     residual_scale_floor: float = Field(default=0.0, ge=0, le=1)
     source_conditioning: bool = False
+    progress_conditioning: bool = False
     guide_encoding: Literal["raw", "ink", "sqrt_ink"] = "raw"
     # Optional full-resolution output branch; zero preserves the original model.
     detail_channels: int = Field(default=0, ge=0)
@@ -34,6 +35,12 @@ class ModelConfig(Settings):
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.progress_conditioning and (
+            self.architecture != "unet"
+            or not self.source_conditioning
+            or self.output_mode != "residual"
+        ):
+            raise ValueError("progress_conditioning requires a source-conditioned residual UNet")
         if self.detail_channels and (self.architecture != "unet" or not self.source_conditioning):
             raise ValueError("detail_channels requires a source-conditioned UNet")
         if self.residual_scale_floor and (
@@ -123,6 +130,9 @@ class DiffusionConfig(Settings):
     pattern_weights: tuple[float, float, float, float] = (1, 1, 1, 1)
     scale_loss_multiplier: float = Field(default=0.0, ge=0)
     sample_steps: int = Field(default=5, ge=1, le=20)
+    training_path: Literal["rough", "bridge"] = "rough"
+    progress_minimum: float = Field(default=0.05, gt=0, lt=1)
+    progress_initial_probability: float = Field(default=0.5, ge=0, le=1)
 
     @model_validator(mode="after")
     def validate_weights(self):
@@ -260,6 +270,10 @@ class ExperimentConfig(Settings):
 
     @model_validator(mode="after")
     def validate_shapes_and_schedule(self):
+        if self.diffusion.training_path == "bridge" and not self.model.progress_conditioning:
+            raise ValueError("bridge training requires progress_conditioning")
+        if self.model.progress_conditioning and self.matching.method != "independent":
+            raise ValueError("Progress-conditioned training requires independent Gaussian noise")
         if self.loss.pixel_loss == "interval_mse" and (
             self.model.architecture != "unet" or self.model.output_clip_gradient != "hard"
         ):

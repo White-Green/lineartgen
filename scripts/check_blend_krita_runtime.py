@@ -56,6 +56,7 @@ def check(checkpoint, destination):
                     steps=steps,
                     levels=len(plan.sizes),
                     source_conditioning=True,
+                    progress_conditioning=config.model.progress_conditioning,
                     preserve_zero_noise=True,
                 )
                 np.testing.assert_allclose(actual_float, expected, atol=2e-4, rtol=2e-4)

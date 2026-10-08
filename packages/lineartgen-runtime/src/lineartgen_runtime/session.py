@@ -49,19 +49,24 @@ class LineartModel:
             raise ValueError("Unsupported lineartgen model format")
         inputs = {value.name for value in self._session.get_inputs()}
         self.source_conditioning = self._metadata.get("source_conditioning", False)
+        self.progress_conditioning = self._metadata.get("progress_conditioning", False)
+        if self.progress_conditioning and not self.source_conditioning:
+            raise ValueError("Progress conditioning requires source conditioning")
         self._preserve_zero_noise = (
             self._metadata.get("model", {}).get("output_mode", "direct") == "residual"
         )
         expected_inputs = {"image", "noise_level", "insert"}
         if self.source_conditioning:
             expected_inputs.add("guide")
+        if self.progress_conditioning:
+            expected_inputs.add("progress")
         if inputs != expected_inputs:
             raise ValueError(f"Unexpected ONNX input contract: {sorted(inputs)}")
         self.backend = "onnxruntime"
         self.device = ", ".join(self._session.get_providers())
         self._lock = threading.Lock()
 
-    def forward(self, image, noise_level, insert, guide=None):
+    def forward(self, image, noise_level, insert, guide=None, progress=None):
         inputs = {"image": image, "noise_level": noise_level, "insert": insert}
         if self.source_conditioning:
             if guide is None:
@@ -69,6 +74,12 @@ class LineartModel:
             inputs["guide"] = guide
         elif guide is not None:
             raise ValueError("This model does not accept a guide")
+        if self.progress_conditioning:
+            if progress is None:
+                raise ValueError("This model requires remaining progress")
+            inputs["progress"] = progress
+        elif progress is not None:
+            raise ValueError("This model does not accept progress")
         return self._session.run(["prediction"], inputs)[0]
 
     def infer(self, *, scribble, lineart, width, height, strength, seed, denoise_steps):
@@ -95,6 +106,7 @@ class LineartModel:
                 steps=denoise_steps,
                 levels=len(plan.sizes),
                 source_conditioning=self.source_conditioning,
+                progress_conditioning=self.progress_conditioning,
                 preserve_zero_noise=self._preserve_zero_noise,
             )
         if not np.isfinite(prediction).all():
