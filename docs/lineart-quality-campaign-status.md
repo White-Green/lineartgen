@@ -1,6 +1,6 @@
 # Lineart quality campaign status
 
-Updated 2026-10-08, 20:00 UTC. **No replacement model is adopted yet.** Production
+Updated 2026-10-08, 20:05 UTC. **No replacement model is adopted yet.** Production
 weights remain unchanged. Experiments use synthetic rough inputs only, including
 corruptions of clean real lineart. The goal is less gray fringe without losing
 thin lines, continuity, width consistency, or intended separation.
@@ -17,7 +17,7 @@ thin lines, continuity, width consistency, or intended separation.
 | Controlled learnability diagnostic | Four arms completed1,200 updates; improved ink retention also creates gray branches; no sufficient fit | Completed, no adoption |
 | Residual-scale floor in the same fitting task | Both arms completed1,200; blur F1 gains below .003; five native sheets retain gray branches | Rejected; [result](residual-floor-fitting-results-20261008.md) |
 | Full-resolution detail branch, width8/16 | Width16 gains about.10 blur F1 in both local splits and reduces halo; defects remain | Width16 advances to broader study; no adoption |
-| Width16 broader strokes/mixed data | Two independent common100k starts; inherited270-test sources unchanged; GPU replay passes | Preparing2k screen and eligible10k continuation |
+| Width16 broader strokes/mixed data | Two independent common100k starts; inherited270-test sources unchanged; GPU replay passes | Training2k screen; eligible10k continuation remains conditional |
 
 The current source guide always uses the actual rough input before Gaussian
 noise, downsampled at each resolution. The new encodings are zero on white and
