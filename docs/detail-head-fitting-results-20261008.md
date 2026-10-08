@@ -30,6 +30,13 @@ substantial defects and does not replace the declared raw primary. Two additiona
 native sheets were inspected at400; their earlier loss of thin lines was recorded
 without changing the schedule or selecting the milestone.
 
+A descriptive strength split shows that most of the gain is at noise.5. Width16
+blur F1 gains are+.1867/+.2024 (train/probe) at.5, but only+.0120/+.0013 at.1.
+Clean F1 gains at.5 are+.3329/+.2534, versus+.0069/+.0016 at.1. This supports a
+substantial improvement in noisy-input handling; it does not demonstrate strong
+blur removal at low noise. The predeclared aggregate gate is unchanged. See the
+local run's`stratified-diagnostic.json` for all strengths/families/milestones.
+
 The new branch tests a full-resolution feature route and explicit noise/guide
 inputs as well as hidden width. This result supports that intervention; it does
 not isolate the old two-channel decoder as the sole cause of the artifacts.
