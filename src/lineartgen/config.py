@@ -218,6 +218,7 @@ class LossConfig(Settings):
     boundary_weight: float = Field(default=0.0, ge=0)
     boundary_radius: int = Field(default=4, ge=1, le=16)
     balance_tones: bool = True
+    tone_balance_power: float = Field(default=1.0, ge=0, le=1)
     identity_weight: float = Field(default=0.1, ge=0)
     edge_weight: float = Field(default=0.1, ge=0)
     contrast_weight: float = Field(default=0.01, ge=0)

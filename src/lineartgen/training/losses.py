@@ -16,13 +16,19 @@ def region_mean(error, weights, region):
     return (error * weights).sum() / jnp.maximum(weights.sum(), 1e-6)
 
 
-def tone_weights(clean):
+def tone_weights(clean, power=1.0):
+    if power == 0:
+        return jnp.ones_like(clean)
     black = jnp.clip((1 - clean) * 0.5, 0, 1)
     white = 1 - black
     axes = (1, 2)
     weight = black / (2 * black.mean(axes, keepdims=True) + 1e-6)
     weight += white / (2 * white.mean(axes, keepdims=True) + 1e-6)
-    return weight / (weight.mean(axes, keepdims=True) + 1e-6)
+    weight = weight / (weight.mean(axes, keepdims=True) + 1e-6)
+    if power != 1:
+        weight = jnp.power(weight, power)
+        weight = weight / weight.mean(axes, keepdims=True)
+    return weight
 
 
 def sobel(image):
@@ -43,7 +49,11 @@ def image_loss(
     prediction, clean, noise_level, config, min_noise, *, profiles=None, level=0, preclip=None
 ):
     active = noise_level > min_noise
-    weights = tone_weights(clean) if config.balance_tones else jnp.ones_like(clean)
+    weights = (
+        tone_weights(clean, config.tone_balance_power)
+        if config.balance_tones
+        else jnp.ones_like(clean)
+    )
     if config.pixel_loss == "interval_mse":
         if preclip is None:
             raise ValueError("interval_mse requires the physical pre-clip prediction")
