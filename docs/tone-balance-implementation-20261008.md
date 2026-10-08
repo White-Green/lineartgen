@@ -22,13 +22,14 @@ data copies and that only the tone exponent differs from the historical width16
 configuration. Both models still have130,605 parameters and restart from the
 original100k EMA. No locally fitted weights initialize them.
 
-The queued runner waits for these successful tests and completion of the
-independent conditional-path GPU evaluation. It then runs candidate/historical
-six-depth GPU checks, full-state and initial-forward audits, followed by the
-fixed1/400/1,200 update stops and0/400/1,200 evaluations. It stops after comparison
-and rendering twelve sheets for actual inspection. No candidate update or GPU
-validation has happened yet for this tone-weight study; CPU tests alone establish
-neither training quality nor GPU replay. No replacement is adopted.
+The independent conditional-path evaluation completed and was rejected. Both
+tone candidates then passed six-depth GPU updates with exact full-state restore.
+The historical width16 six-update replay and all36 initial forward comparisons
+are exact. The first actual update restored exactly before the fixed trajectories
+continued. The runner evaluates0/400/1,200 and stops after comparison and rendering
+twelve sheets for actual inspection. The separate partial-summary fix has two
+focused tests passing here in.93 seconds; frozen training/inference sources and
+conditions are unchanged. Learned quality remains pending. No replacement is adopted.
 
 The two experiments isolate different changes. A failure of tone tempering on
 the ordinary rough path would not rule out an interaction with bridge training.
