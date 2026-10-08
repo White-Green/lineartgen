@@ -27,11 +27,15 @@ class ModelConfig(Settings):
     residual_scale_floor: float = Field(default=0.0, ge=0, le=1)
     source_conditioning: bool = False
     guide_encoding: Literal["raw", "ink", "sqrt_ink"] = "raw"
+    # Optional full-resolution output branch; zero preserves the original model.
+    detail_channels: int = Field(default=0, ge=0)
     skip_mode: Literal["post_pool", "pre_pool"] = "post_pool"
     bottleneck_dilation: int = Field(default=1, ge=1, le=4)
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.detail_channels and (self.architecture != "unet" or not self.source_conditioning):
+            raise ValueError("detail_channels requires a source-conditioned UNet")
         if self.residual_scale_floor and (
             self.architecture != "unet" or self.output_mode != "residual"
         ):

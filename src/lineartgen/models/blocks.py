@@ -4,8 +4,10 @@ from flax import nnx
 
 
 class ConvBlock(nnx.Module):
-    def __init__(self, inputs, outputs, *, kernel_size=3, depth=3, dilation=1, rngs):
-        middle = max(inputs, outputs)
+    def __init__(
+        self, inputs, outputs, *, kernel_size=3, depth=3, dilation=1, hidden_channels=None, rngs
+    ):
+        middle = max(inputs, outputs) if hidden_channels is None else hidden_channels
         channels = [inputs] + [middle] * (depth - 1) + [outputs]
         self.layers = nnx.List(
             [

@@ -40,6 +40,7 @@ class UNet(nnx.Module):
         self.residual_scale_floor = config.residual_scale_floor
         self.source_conditioning = config.source_conditioning
         self.guide_encoding = config.guide_encoding
+        self.detail_channels = config.detail_channels
         self.skip_mode = config.skip_mode
         self.bottleneck_dilation = config.bottleneck_dilation
         encoder_inputs = [2] + [
@@ -101,6 +102,20 @@ class UNet(nnx.Module):
 
             self.guide_encoder = guide_projection(self.encoders[0].layers[0].out_features)
             self.guide_head = guide_projection(self.head.layers[0].out_features)
+        if self.detail_channels:
+            # Construct after every inherited layer so its initialization is unchanged.
+            # The final zero projection preserves the original function, while the
+            # randomly initialized hidden layers let that projection learn immediately.
+            self.detail_head = ConvBlock(
+                3 + config.channels[0] + previous,
+                1,
+                kernel_size=config.kernel_size,
+                depth=3,
+                hidden_channels=self.detail_channels,
+                rngs=rngs,
+            )
+            self.detail_head.layers[-1].kernel[...] = 0
+            self.detail_head.layers[-1].bias[...] = 0
 
     def __call__(self, image, noise_level, insert, guide=None, *, return_preclip=False):
         if self.source_conditioning:
@@ -122,6 +137,8 @@ class UNet(nnx.Module):
         skips = []
         for index, encoder in enumerate(self.encoders):
             features = encoder(x, first_bias=encoder_bias if index == 0 else None)
+            if self.detail_channels and index == 0:
+                full_resolution = features
             x = nnx.max_pool(features, window_shape=(2, 2), strides=(2, 2), padding="VALID")
             if index == 0:
                 x = jnp.concatenate((x, insert), axis=-1)
@@ -137,8 +154,16 @@ class UNet(nnx.Module):
             else:
                 x = upsample(skip if index == 0 else jnp.concatenate((skip, x), axis=-1))
             x = decoder(x)
+        output = self.head(
+            jnp.concatenate((image, x), -1), linear_output=True, first_bias=head_bias
+        )
+        if self.detail_channels:
+            output = output + self.detail_head(
+                jnp.concatenate((image, noise_level, encoded, full_resolution, x), -1),
+                linear_output=True,
+            )
         return denoised_output(
-            self.head(jnp.concatenate((image, x), -1), linear_output=True, first_bias=head_bias),
+            output,
             image,
             noise_level,
             self.output_mode,

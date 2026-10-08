@@ -16,14 +16,20 @@ METHODS = ("control", "no_contrast", "regions", "profiles", "patch_prior")
 
 
 def assert_initial_parameters(initial, model):
-    """Exact inherited tensors and zero-only optional source projections."""
+    """Exact inherited tensors and function-preserving optional additions."""
     original = nnx.to_pure_dict(nnx.state(initial, nnx.Param))
     current = nnx.to_pure_dict(nnx.state(model, nnx.Param))
     extras = current.keys() - original.keys()
-    assert extras in (set(), {"guide_encoder", "guide_head"})
+    assert extras <= {"guide_encoder", "guide_head", "detail_head"}
+    assert ("guide_encoder" in extras) == ("guide_head" in extras)
     jax.tree.map(np.testing.assert_array_equal, original, {k: current[k] for k in original})
     for key in extras:
-        for value in jax.tree.leaves(current[key]):
+        state = current[key]
+        if key == "detail_head":
+            # Only the last projection is zero. Zeroing all layers would prevent
+            # the hidden path from learning through ReLU.
+            state = state["layers"][max(state["layers"])]
+        for value in jax.tree.leaves(state):
             np.testing.assert_array_equal(value, 0)
 
 
