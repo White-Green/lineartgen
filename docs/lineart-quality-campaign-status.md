@@ -1,6 +1,6 @@
 # Lineart quality campaign status
 
-Updated 2026-10-08, 20:05 UTC. **No replacement model is adopted yet.** Production
+Updated 2026-10-08, 21:04 UTC. **No replacement model is adopted yet.** Production
 weights remain unchanged. Experiments use synthetic rough inputs only, including
 corruptions of clean real lineart. The goal is less gray fringe without losing
 thin lines, continuity, width consistency, or intended separation.
@@ -17,14 +17,17 @@ thin lines, continuity, width consistency, or intended separation.
 | Controlled learnability diagnostic | Four arms completed1,200 updates; improved ink retention also creates gray branches; no sufficient fit | Completed, no adoption |
 | Residual-scale floor in the same fitting task | Both arms completed1,200; blur F1 gains below .003; five native sheets retain gray branches | Rejected; [result](residual-floor-fitting-results-20261008.md) |
 | Full-resolution detail branch, width8/16 | Width16 gains about.10 blur F1 in both local splits and reduces halo; defects remain | Width16 advances to broader study; no adoption |
-| Width16 broader strokes/mixed data | Two independent common100k starts; inherited270-test sources unchanged; GPU replay passes | Training2k screen; eligible10k continuation remains conditional |
+| Width16 broader strokes/mixed data | Strokes completed2k with exact restored snapshots; mixed training is ongoing | Await complete numeric and20-sheet native comparison; eligible10k remains conditional |
+| Sampler-compatible conditional-path diagnostic |2,052 oracle runtime cases match the analytic path; existing training differs at intermediate states | Hypothesis only, not learned quality evidence |
+| Explicit progress and bridge fitting comparison | Independent implementation passes279 tests; matched two-arm local plan prepared and frozen | Both arms pass six-depth CPU integration/restore; GPU preflight and learned comparison pending |
 
-The current source guide always uses the actual rough input before Gaussian
-noise, downsampled at each resolution. The new encodings are zero on white and
-keep the 126,828-parameter model size. Losses, recursion1–6, stage weights,
+The source guide always uses the actual rough input before Gaussian noise,
+downsampled at each resolution. The earlier guide-encoding trial used encodings
+that are zero on white and kept the126,828-parameter model size. Its losses,
+recursion1–6, stage weights,
 sqrt(batch) learning rate, initialization, and the 10k learning-rate clock remain
 fixed. [Completed result](ink-guide-results-20261008.md) records the grid and validation.
-All 259 tests pass, all four new arms restore full GPU update states exactly,
+That trial passed259 tests; all four arms restored full GPU update states exactly,
 and both unchanged raw-guide controls reproduce historical updates bitwise.
 
 The failed independent seed informed this next hypothesis. Therefore any selected
@@ -45,3 +48,11 @@ scribble alpha1–11/255 before noise and guidance. That scale has not been chan
 [Input diagnostic](runtime-input-contrast-note-20261008.md) explains why an explicit
 synthetic BGRA quality check is required before adoption. CPU ONNX parity alone
 does not establish Windows DirectML or Krita GUI quality.
+
+The completed local detail improvement is concentrated at noise.5: blur F1 gains
+are .187/.202 in train/probe, versus .012/.001 at noise.1. The broader comparison
+therefore must not treat the aggregate local gain as proof of faint-input cleanup.
+The detail branch also costs time: provisional CPU512px one-step latency is
+190→252ms, measured during GPU training ([timing record](detail-runtime-latency-20261008.md)).
+The new [conditional-path probe](conditional-path-fitting-plan-20261008.md) keeps
+matched progress sampling in both arms; no learned improvement has been measured.

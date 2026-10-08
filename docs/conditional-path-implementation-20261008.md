@@ -54,3 +54,10 @@ does not mark inspection complete. These use stored float inputs; actual BGRA
 quality review, broader testing, independent seed and sealed new draws would
 still be needed for any advancing candidate. GPU preflight and learned-output
 quality have not yet been established for this study.
+
+A separate CPU entrypoint integration check subsequently completed both arms'
+six512px updates through depths1–6. Full model/optimizer/EMA restore is exact,
+and each arm has130,628 parameters. These states are isolated under
+`cpu-entrypoint-check/` and will never initialize the real trajectories. This
+checks the actual per-arm preparers and trainer; it is not the required GPU
+preflight or historical GPU replay. The GPU work remains pending.

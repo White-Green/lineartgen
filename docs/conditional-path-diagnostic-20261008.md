@@ -70,6 +70,16 @@ Zero-noise coordinates remain fixed; the formula is used on active coordinates.
 The endpoint velocity is singular, while the existing finite update has a
 well-defined endpoint. These qualifications matter for any implementation.
 
+
+The existing pixel term also balances tones using teacher-dependent weights, so
+its unconstrained optimum is generally a weighted conditional mean. Moreover,
+only the highest resolution has direct loss (stage multiplier0); smaller states
+receive gradients through recursion. The per-level oracle identity therefore does
+not establish a correctly learned joint probability flow across the full pyramid.
+Both choices are preserved in the paired probe. A successful comparison would be
+empirical evidence for this path under the existing objective, not a proof of the
+flow-matching assumptions for this implementation.
+
 This is a repository-specific conditional Gaussian path, not an implementation
 of a published Schrödinger bridge or a demonstrated optimal transport solution.
 Related primary work provides the general motivation: I²SB learns restoration
