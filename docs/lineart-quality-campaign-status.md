@@ -1,6 +1,6 @@
 # Lineart quality campaign status
 
-Updated 2026-10-08, 15:28 UTC. **No replacement model is adopted yet.** Production
+Updated 2026-10-08, 17:39 UTC. **No replacement model is adopted yet.** Production
 weights remain unchanged. Experiments use synthetic rough inputs only, including
 corruptions of clean real lineart. The goal is less gray fringe without losing
 thin lines, continuity, width consistency, or intended separation.
@@ -13,13 +13,14 @@ thin lines, continuity, width consistency, or intended separation.
 | Mixed tone/blur/strokes training, raw guide, 2k | Better faint-line retention, but halo and wrong bridges increase | Rejected |
 | 6.25% parameter blend of guided strokes/mixed endpoints, 2k | Primary seed: 14.3% / 14.4% halo reduction and zero strict failures | Independent confirmation required |
 | Same fixed blend, independent seed20261006 | 12.7% / 14.1% halo reduction, but 3 cut failures in 2 overlapping conditions | Rejected; no EMA-to-raw switch |
-| Ink-centered and square-root ink guides × strokes/mixed | Four endpoints training to 2k; ten fixed endpoint/blend models planned | In progress |
+| Ink-centered and square-root ink guides × strokes/mixed | Four endpoints completed 2k; all ten fixed EMA models fail strict gates | Rejected |
+| Controlled learnability diagnostic | Fit a small training-only set to isolate clipping/optimization, capacity and corruption ambiguity | Preparing |
 
 The current source guide always uses the actual rough input before Gaussian
 noise, downsampled at each resolution. The new encodings are zero on white and
 keep the 126,828-parameter model size. Losses, recursion1–6, stage weights,
 sqrt(batch) learning rate, initialization, and the 10k learning-rate clock remain
-fixed. [Current plan](ink-guide-plan-20261008.md) records the grid and validation.
+fixed. [Completed result](ink-guide-results-20261008.md) records the grid and validation.
 All 259 tests pass, all four new arms restore full GPU update states exactly,
 and both unchanged raw-guide controls reproduce historical updates bitwise.
 
