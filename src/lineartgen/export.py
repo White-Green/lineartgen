@@ -126,6 +126,7 @@ def make_spatially_dynamic(model):
         "Sqrt",
         "Mul",
         "Add",
+        "Sub",  # Pointwise centering of the optional rough-source guide.
     }
     unsupported = {node.op_type for node in model.graph.node} - supported
     if unsupported:

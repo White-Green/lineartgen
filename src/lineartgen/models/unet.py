@@ -16,12 +16,29 @@ from .blocks import ConvBlock
 from .output import denoised_output
 
 
+def encode_guide(guide, encoding):
+    """Encode the downsampled original rough source, never a clean teacher.
+
+    Ink encodings are zero on white even at padding boundaries. The square-root
+    transform boosts faint ink without adding parameters or discarding location.
+    """
+    if encoding == "raw":
+        return guide
+    ink = (1 - guide) * 0.5
+    if encoding == "ink":
+        return ink
+    if encoding == "sqrt_ink":
+        return jnp.sqrt(jnp.clip(ink, 0, 1))
+    raise ValueError(f"Unknown guide encoding: {encoding}")
+
+
 class UNet(nnx.Module):
     def __init__(self, config: ModelConfig, *, rngs: nnx.Rngs):
         self.minimum_size = config.minimum_size
         self.output_mode = config.output_mode
         self.output_clip_gradient = config.output_clip_gradient
         self.source_conditioning = config.source_conditioning
+        self.guide_encoding = config.guide_encoding
         self.skip_mode = config.skip_mode
         self.bottleneck_dilation = config.bottleneck_dilation
         encoder_inputs = [2] + [
@@ -88,7 +105,8 @@ class UNet(nnx.Module):
         if self.source_conditioning:
             if guide is None or guide.shape != image.shape:
                 raise ValueError("Source-conditioned UNet requires a matching original rough guide")
-            encoder_bias, head_bias = self.guide_encoder(guide), self.guide_head(guide)
+            encoded = encode_guide(guide, self.guide_encoding)
+            encoder_bias, head_bias = self.guide_encoder(encoded), self.guide_head(encoded)
         else:
             if guide is not None:
                 raise ValueError("This UNet is not configured for source conditioning")
