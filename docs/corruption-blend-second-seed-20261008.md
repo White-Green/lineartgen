@@ -38,3 +38,10 @@ to the selected blend. Review native crops, partial masks, repeat inference and
 blank images. Do not generate the prospective fresh synthetic set unless this
 seed comparison also passes. Fresh selection seals must bind both chosen models,
 their controls and the evaluation implementation before generating inputs.
+
+The first training launch stopped before its first optimizer update because the
+protocol lacked `prior_ramp_steps`, which the shared trainer reads even when the
+critic coefficient is zero. Restore the original value (1000) from each recipe,
+archive the original source/protocol manifests, and reseal before restarting.
+No loss, data or optimizer state is changed by this metadata repair. A real
+one-update smoke run is retained and resumed as part of the same 2k trajectory.

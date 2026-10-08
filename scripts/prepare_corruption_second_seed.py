@@ -103,6 +103,7 @@ def prepare(root, selected, baseline):
                 milestones=[2000],
                 independent_fine_tuning_seed=20261006,
                 initialization_seed=42,
+                prior_ramp_steps=read(parent / "protocol.json")["prior_ramp_steps"],
                 selected_alpha=1 / 16,
                 stop_step=2000,
                 schedule="Unchanged original 10k cosine clock; exactly 2k endpoint updates",
