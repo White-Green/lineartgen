@@ -1,6 +1,6 @@
 # Lineart quality campaign status
 
-Updated 2026-10-08, 21:04 UTC. **No replacement model is adopted yet.** Production
+Updated 2026-10-08, 22:00 UTC. **No replacement model is adopted yet.** Production
 weights remain unchanged. Experiments use synthetic rough inputs only, including
 corruptions of clean real lineart. The goal is less gray fringe without losing
 thin lines, continuity, width consistency, or intended separation.
@@ -17,9 +17,9 @@ thin lines, continuity, width consistency, or intended separation.
 | Controlled learnability diagnostic | Four arms completed1,200 updates; improved ink retention also creates gray branches; no sufficient fit | Completed, no adoption |
 | Residual-scale floor in the same fitting task | Both arms completed1,200; blur F1 gains below .003; five native sheets retain gray branches | Rejected; [result](residual-floor-fitting-results-20261008.md) |
 | Full-resolution detail branch, width8/16 | Width16 gains about.10 blur F1 in both local splits and reduces halo; defects remain | Width16 advances to broader study; no adoption |
-| Width16 broader strokes/mixed data | Strokes completed2k with exact restored snapshots; mixed training is ongoing | Await complete numeric and20-sheet native comparison; eligible10k remains conditional |
+| Width16 broader strokes/mixed data | Both completed2k; strokes screen passes but matched-guide halo and native review do not support advance; mixed fails | Rejected; [result](detail-head-broad-results-20261008.md) |
 | Sampler-compatible conditional-path diagnostic |2,052 oracle runtime cases match the analytic path; existing training differs at intermediate states | Hypothesis only, not learned quality evidence |
-| Explicit progress and bridge fitting comparison | Independent implementation passes279 tests; matched two-arm local plan prepared and frozen | Both arms pass six-depth CPU integration/restore; GPU preflight and learned comparison pending |
+| Explicit progress and bridge fitting comparison | Independent implementation passes279 tests; matched two-arm local plan prepared and frozen | GPU six-depth/full-restore, historical replay and36 initial forwards pass; paired1,200-update training started |
 
 The source guide always uses the actual rough input before Gaussian noise,
 downsampled at each resolution. The earlier guide-encoding trial used encodings
@@ -55,4 +55,4 @@ therefore must not treat the aggregate local gain as proof of faint-input cleanu
 The detail branch also costs time: provisional CPU512px one-step latency is
 190→252ms, measured during GPU training ([timing record](detail-runtime-latency-20261008.md)).
 The new [conditional-path probe](conditional-path-fitting-plan-20261008.md) keeps
-matched progress sampling in both arms; no learned improvement has been measured.
+matched progress sampling in both arms; the learned comparison is running and no improvement is established yet.

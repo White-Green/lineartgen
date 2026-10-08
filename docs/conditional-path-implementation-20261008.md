@@ -2,7 +2,7 @@
 
 The experimental implementation supports explicit remaining progress and paired
 rough-to-clean intermediate states. Defaults preserve the legacy numerical path.
-The independent broad detail-head training continues in its existing checkout.
+The independent broad detail-head comparison has finished and was rejected after native review.
 No new learned candidate or production model has been accepted.
 
 `model.progress_conditioning=true` requires a guided residual UNet. It adds
@@ -40,8 +40,11 @@ actual preparation verifies copied data and that paired configs differ only in
 
 The fixed local study is prepared under
 `runs/conditional-path-fitting-20261008/`, with a historical width16 replay root.
-Before actual training, GPU updates at all six recursion depths, exact historical
-replay, initial forward comparisons and the first-update restore remain required.
+Both arms passed GPU updates at all six recursion depths with exact full-state
+restore. A historical width16 six-update replay is bitwise exact. All36 initial
+GPU forward comparisons at1–6 levels and1/2/5 iterations are exact. The first
+actual update subsequently restored every model/optimizer/EMA array exactly
+before the fixed training continued.
 Its evaluator saves and verifies individual complete blocks, checks all expected
 conditions and preserves arrays, per-case metrics, summaries and hashes. It
 re-evaluates the original local width16 checkpoint at1/2/5 iterations and requires
@@ -52,12 +55,15 @@ Ten final native sheets are specified in the renderer: five main sheets, two
 blur repeat sheets, two blur partial-mask sheets and a blank repeat sheet. Rendering
 does not mark inspection complete. These use stored float inputs; actual BGRA
 quality review, broader testing, independent seed and sealed new draws would
-still be needed for any advancing candidate. GPU preflight and learned-output
-quality have not yet been established for this study.
+still be needed for any advancing candidate. GPU preflight has passed; learned-output
+quality has not yet been established for this study.
 
 A separate CPU entrypoint integration check subsequently completed both arms'
 six512px updates through depths1–6. Full model/optimizer/EMA restore is exact,
 and each arm has130,628 parameters. These states are isolated under
 `cpu-entrypoint-check/` and will never initialize the real trajectories. This
 checks the actual per-arm preparers and trainer; it is not the required GPU
-preflight or historical GPU replay. The GPU work remains pending.
+preflight or historical GPU replay. The subsequent GPU checks described above use separate states; actual training
+restarts from the declared original100k initialization. The fixed runner saves
+and verifies the first update, evaluates0/400/1200, re-evaluates the historical
+reference and renders the ten specified sheets. It stops for native review.
