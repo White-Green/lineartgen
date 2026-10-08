@@ -1,6 +1,6 @@
 # Lineart quality campaign status
 
-Updated 2026-10-08, 22:00 UTC. **No replacement model is adopted yet.** Production
+Updated 2026-10-08, 22:14 UTC. **No replacement model is adopted yet.** Production
 weights remain unchanged. Experiments use synthetic rough inputs only, including
 corruptions of clean real lineart. The goal is less gray fringe without losing
 thin lines, continuity, width consistency, or intended separation.
@@ -19,7 +19,8 @@ thin lines, continuity, width consistency, or intended separation.
 | Full-resolution detail branch, width8/16 | Width16 gains about.10 blur F1 in both local splits and reduces halo; defects remain | Width16 advances to broader study; no adoption |
 | Width16 broader strokes/mixed data | Both completed2k; strokes screen passes but matched-guide halo and native review do not support advance; mixed fails | Rejected; [result](detail-head-broad-results-20261008.md) |
 | Sampler-compatible conditional-path diagnostic |2,052 oracle runtime cases match the analytic path; existing training differs at intermediate states | Hypothesis only, not learned quality evidence |
-| Explicit progress and bridge fitting comparison | Independent implementation passes279 tests; matched two-arm local plan prepared and frozen | GPU six-depth/full-restore, historical replay and36 initial forwards pass; paired1,200-update training started |
+| Explicit progress and bridge fitting comparison | Independent implementation passes279 tests; matched two-arm local plan prepared and frozen | GPU six-depth/full-restore, historical replay and36 initial forwards pass; both arms completed400 with exact full-state restore; fixed comparison continues |
+| Tone-weight exponent0/.5 versus existing1 | Analytic uncertainty diagnostic motivates a loss-only comparison;284 tests pass | Prepared/frozen; queued after the conditional-path evaluation, GPU preflight pending |
 
 The source guide always uses the actual rough input before Gaussian noise,
 downsampled at each resolution. The earlier guide-encoding trial used encodings
