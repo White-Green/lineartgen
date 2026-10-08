@@ -6,6 +6,7 @@ import jax.numpy as jnp
 from .boundary import boundary_distance_loss
 from .cldice import centerline_loss
 from .ink_structure import ink_structure_losses
+from .interval import interval_squared_error
 from .lineart import line_region_loss, profile_loss
 from .paper import paper_peak_loss
 
@@ -38,10 +39,17 @@ def sobel(image):
     )
 
 
-def image_loss(prediction, clean, noise_level, config, min_noise, *, profiles=None, level=0):
+def image_loss(
+    prediction, clean, noise_level, config, min_noise, *, profiles=None, level=0, preclip=None
+):
     active = noise_level > min_noise
     weights = tone_weights(clean) if config.balance_tones else jnp.ones_like(clean)
-    error = jnp.square(prediction - clean)
+    if config.pixel_loss == "interval_mse":
+        if preclip is None:
+            raise ValueError("interval_mse requires the physical pre-clip prediction")
+        error = interval_squared_error(preclip, clean)
+    else:
+        error = jnp.square(prediction - clean)
     floor = max(min_noise, config.noise_weight_floor)
     denoise = region_mean(error / jnp.maximum(noise_level, floor), weights, active)
     identity = region_mean(error, weights, ~active)

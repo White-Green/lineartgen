@@ -42,6 +42,15 @@ def freeze(root, tests_log):
         ]
     ]
     settings.extend(sorted((root / "configs").glob("*.json")))
+    settings.extend(
+        root / name
+        for name in (
+            "plan.json",
+            "baseline-replay-audit.json",
+            "baseline-replay/preflight/results.json",
+        )
+        if (root / name).is_file()
+    )
     shutil.copyfile(tests_log, root / "tests.log")
     write(
         root / "source.json",

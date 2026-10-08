@@ -4,7 +4,7 @@ import jax
 import jax.numpy as jnp
 from flax import nnx
 
-from lineartgen.diffusion import recursive_forward
+from lineartgen.diffusion import recursive_forward, recursive_forward_with_preclip
 
 from .lineart_adversarial import discriminator_loss, generator_prior
 from .losses import image_loss
@@ -12,7 +12,13 @@ from .steps import _add_trees, _average_and_norm
 
 
 def objective(model, prepared, profiles, config):
-    predictions = recursive_forward(model, prepared.noisy, prepared.noise_levels)
+    if config.loss.pixel_loss == "interval_mse":
+        predictions, preclip = recursive_forward_with_preclip(
+            model, prepared.noisy, prepared.noise_levels
+        )
+    else:
+        predictions = recursive_forward(model, prepared.noisy, prepared.noise_levels)
+        preclip = (None,) * len(predictions)
     total, denominator, metrics = jnp.zeros(()), 0.0, {}
     for level, (prediction, target, noise) in enumerate(
         zip(predictions, prepared.targets, prepared.noise_levels, strict=True)
@@ -28,6 +34,7 @@ def objective(model, prepared, profiles, config):
             config.diffusion.min_noise,
             profiles=profiles,
             level=level,
+            preclip=preclip[level],
         )
         total += weight * loss
         denominator += weight

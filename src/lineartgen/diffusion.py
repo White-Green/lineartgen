@@ -51,6 +51,21 @@ def recursive_forward(model, images, noise_levels):
     return recursive_forward_all(model, images, noise_levels)[-1]
 
 
+def recursive_forward_with_preclip(model, images, noise_levels):
+    """Single UNet supervision values; recursive feedback always remains clipped."""
+    smallest = images[-1]
+    insert = jnp.zeros(
+        (smallest.shape[0], smallest.shape[1] // 2, smallest.shape[2] // 2, 1),
+        dtype=smallest.dtype,
+    )
+    predictions, preclip = [], []
+    for image, noise in zip(reversed(images), reversed(noise_levels), strict=True):
+        insert, raw = model(image, noise, insert, return_preclip=True)
+        predictions.append(insert)
+        preclip.append(raw)
+    return tuple(reversed(predictions)), tuple(reversed(preclip))
+
+
 def strength_from_uniform(uniform, config: DiffusionConfig):
     """Inverse CDF for training strengths, leaving all other random draws unchanged."""
     if config.strength_sampling == "uniform":

@@ -178,6 +178,7 @@ class GeometryDataConfig(Settings):
 
 
 class LossConfig(Settings):
+    pixel_loss: Literal["clipped_mse", "interval_mse"] = "clipped_mse"
     paper_peak_weight: float = Field(default=0.0, ge=0)
     paper_peak_tile: int = Field(default=8, ge=1, le=32)
     ink_keep_weight: float = Field(default=0.0, ge=0)
@@ -244,6 +245,10 @@ class ExperimentConfig(Settings):
 
     @model_validator(mode="after")
     def validate_shapes_and_schedule(self):
+        if self.loss.pixel_loss == "interval_mse" and (
+            self.model.architecture != "unet" or self.model.output_clip_gradient != "hard"
+        ):
+            raise ValueError("interval_mse requires a single UNet with hard output clipping")
         size = self.data.crop_size
         if size < self.model.minimum_size or size & (size - 1):
             raise ValueError("crop_size must be a power of two and at least the model minimum")

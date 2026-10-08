@@ -16,11 +16,14 @@ def _straight_through_clip_jvp(primals, tangents):
     return straight_through_clip(value), tangent
 
 
-def denoised_output(raw, image, noise_level, mode, clip_gradient="hard"):
+def denoised_output(raw, image, noise_level, mode, clip_gradient="hard", *, return_preclip=False):
     if mode == "residual":
         raw = image + jnp.sqrt(noise_level) * raw
     if clip_gradient == "straight_through":
-        return straight_through_clip(raw)
-    if clip_gradient != "hard":
+        prediction = straight_through_clip(raw)
+    elif clip_gradient == "hard":
+        prediction = jnp.clip(raw, -1, 1)
+    else:
         raise ValueError(f"Unknown output clip gradient: {clip_gradient}")
-    return jnp.clip(raw, -1, 1)
+    # The optional value is the physical clean estimate, not the residual head.
+    return (prediction, raw) if return_preclip else prediction

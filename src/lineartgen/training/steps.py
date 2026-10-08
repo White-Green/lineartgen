@@ -5,7 +5,7 @@ import jax.numpy as jnp
 import optax
 from flax import nnx
 
-from lineartgen.diffusion import recursive_forward_all
+from lineartgen.diffusion import recursive_forward_all, recursive_forward_with_preclip
 
 from .losses import image_loss
 
@@ -37,7 +37,12 @@ def accumulate_gradients(gradient_step, model, prepared, train):
 def make_steps(config, *, all_subnets=True):
     def objective(model, prepared):
         targets, noise_levels, noisy = prepared
-        subnets = recursive_forward_all(model, noisy, noise_levels)
+        if config.loss.pixel_loss == "interval_mse":
+            predictions, preclip = recursive_forward_with_preclip(model, noisy, noise_levels)
+            subnets = (predictions,)
+        else:
+            subnets = recursive_forward_all(model, noisy, noise_levels)
+            preclip = (None,) * len(noisy)
         if not all_subnets:
             subnets = (subnets[-1],)
         metrics = {}
@@ -51,7 +56,12 @@ def make_steps(config, *, all_subnets=True):
                 if weight == 0:
                     continue  # Gradients still traverse this scale's recursive prediction.
                 loss, parts = image_loss(
-                    prediction, target, noise, config.loss, config.diffusion.min_noise
+                    prediction,
+                    target,
+                    noise,
+                    config.loss,
+                    config.diffusion.min_noise,
+                    preclip=preclip[level],
                 )
                 total += weight * loss
                 denominator += weight

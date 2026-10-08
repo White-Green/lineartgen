@@ -67,7 +67,7 @@ class UNet(nnx.Module):
         self.decoders = nnx.List(decoders)
         self.head = block(1 + previous, 1)
 
-    def __call__(self, image, noise_level, insert):
+    def __call__(self, image, noise_level, insert, *, return_preclip=False):
         def upsample(x):
             return jax.image.resize(
                 x, (x.shape[0], x.shape[1] * 2, x.shape[2] * 2, x.shape[3]), "nearest"
@@ -98,4 +98,5 @@ class UNet(nnx.Module):
             noise_level,
             self.output_mode,
             self.output_clip_gradient,
+            return_preclip=return_preclip,
         )
