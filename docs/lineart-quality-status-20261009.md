@@ -1,42 +1,35 @@
 # 線画復元実験の現状 — 2026-10-09
 
-まだ製品モデルを置き換えていない。直近で最も改善したのは、追加Gaussianを
-CNNの特徴入力から外し、元の下描きから補正を求める構成。線の周囲のノイズや
-幅の不安定さは大きく減ったが、偽接続と一部の濃度不足が残る。
+元の下描きからCNN特徴を取る構成は有望。配布中100kモデルからはまだ置き換えていない。
+全1,562開発入力+4白紙、4モデル、反復を含む6,568条件を評価した。
+実clean線画をぼかした入力では、強度.5全域でpixel候補のhaloが76.86%減り、
+F1が.854720→.944971、濃度不足が.168443→.048584に改善した。
+実画像でも輪郭や細部の改善を確認した。ただし履歴の異なる配布モデルとの差は観測比較。
 
-実行中: 同じsource特徴で、既存pixel loss、region.1、region.1+connection.1
-を比較している。各4,000更新の固定条件で、pixel対照は完了済みモデルを厳密に
-再利用する。[計画](../../jax-signal-structure-20261009/docs/signal-structure-plan-20261009.md)。
+未解決なのは重ね描きの太さ、近接平行線と隙間の分離、反復中の状態を利用しない点。
+source-only特徴のN回推論は強度/Nの1回推論と最大1.2e-6差で、反復的に精緻化する仕組みには
+なっていない。KritaのAPIを変えずに採用する場合も、この挙動を明示して扱う必要がある。
+[広域結果](../../jax-source-feature-broad-20261009/docs/source-feature-broad-results-20261009.md)、
+[実線画の比較画像](../../jax-source-feature-broad-20261009/runs/source-feature-broad-20261009/native-review/real.png)。
 
-| 完了した比較 | 主な結果 | 判断 |
-| --- | --- | --- |
-| 4ケース共有・接続query /2k | gap中央濃度75.30%/58.76%減、PROBE保持条件4項目失敗 | 不採用 |
-| 毎更新新規形状・region/structure /4k | halo約23–25%減、細線保持など15/17項目失敗 | 不採用 |
-| 局所opacity輸送 /4k | halo64.85%/62.37%減、薄線の切断・濃度が悪化、49項目失敗 | 不採用 |
-| 下描きを出力基準に変更 /4k | 滑らかだがhalo約30–34%増、14項目失敗 | 不採用 |
-| 下描きを特徴入力にも使用 /4k | halo61.80%/57.88%減、PROBE細線幅誤差2.60→.56px、12項目失敗 | 有望な仕組み、品質は未完 |
+source特徴にregion.1 / region.1+connection.1を加えた4k比較は完了し不採用。
+haloをさらに約28–35%減らすが、濃度・線幅など保持条件21/31項目で失敗した。
+最終8枚と白紙端部1枚を確認した。
+[構造loss結果](../../jax-signal-structure-20261009/docs/signal-structure-results-20261009.md)。
 
-最新候補は非resetの従来pixelモデルに対してもhalo56.48%/52.46%減で、
-補助比較の失敗はPROBE gapの偽接続1項目。ただし本来の対照とは一部の濃度が
-悪化し、全判定を通過していない。失敗数は重複する比較項目である。
-[最新結果](source-signal-results-20261009.md)、
-[等倍出力](../../jax-source-signal-20261009/runs/source-signal-20261009/broad/step-4000/probe-blur-0.5-native.png)。
+実行中はsource特徴に局所濃度分布loss3を加える固定4k比較。対照は完了済みpixelを厳密再利用。
+起動6更新で別実行とのbitwise差が出たため一度停止した。重み最大1.86e-6、固定8入力の
+出力最大4.18e-7の差を測定し、最初の実行の状態を保存して診断を継続している。
+再学習の完全一致は主張しない。保存復元と品質の基準は維持。
+[計画](signal-transport-plan-20261009.md)、[例外記録](signal-transport-startup-amendment-20261009.md)。
 
-直近の各比較で最終8枚を実際に目視した。最新は補助3枚も確認した。
-白紙はほぼ白だが微小な端の誤差がある。保護領域は厳密一致。ONNX/BGRAの
-機能テストは通るが、実学習モデルのKrita GUI品質を確認した意味ではない。
-元画像特徴の候補はGaussian seedで変化しなくなる。この挙動変更は意図して
-記録し、実学習出力でも検証した。入力画像自体のノイズは残る。
+すべて合成下描き。130,605パラメータ、再帰1–6、段loss0、sqrt(batch)LR、縮小後Gaussianを維持。
+直近の特徴比較ではGaussian seedの違いが出力に影響しないため、反復drawを独立標本に数えない。
+広域診断の事前固定9枚と有意味な部分境界・最悪白紙の補助2枚を目視した。初期部分クロップは
+線がないため判断不能だったことを記録。保護画素は全条件で厳密一致。
+実BGRA入力・Windows/Krita GUI、新しい独立学習seed、封印確認はまだ未実施。
+十分な最小モデルサイズも未確定。封印評価は未開封。
 
-モデルは130,605パラメータ。再帰1–6、段loss0、sqrt(batch)学習率、縮小後の
-ノイズ生成を維持する。合成下描きのみ使用。新規形状の開発実験は幅・方向・
-形状を毎回変えるが、より広い実線画由来の合成下描き、重ね描き、反復推論、
-独立学習seed20261005、封印した新規合成drawによる確認はまだ未実施。
-十分な最小モデルサイズは未確定。封印評価は未開封、配布中100kモデルは据え置き。
-
-過去の詳細: [connection](connection-query-results-20261009.md)、
-[procedural](procedural-structure-results-20261009.md)、
-[transport](local-transport-training-results-20261009.md)、
-[anchor](source-anchor-results-20261009.md)。それ以前のloss/guide/反復経路の比較は
-各日付の結果文書に記録している。輸送lossの起動再実行にだけ非bitwise差があり、
-[例外記録](local-transport-startup-amendment-20261009.md)に明示した。
+過去の実験: [元画像特徴](source-signal-results-20261009.md)、
+[接続query](connection-query-results-20261009.md)、[オンライン図形](procedural-structure-results-20261009.md)、
+[旧濃度輸送](local-transport-training-results-20261009.md)、[出力基準](source-anchor-results-20261009.md)。
