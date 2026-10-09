@@ -45,7 +45,8 @@ class LineartModel:
             self._metadata = json.loads(metadata["lineartgen"])
         except (KeyError, ValueError) as error:
             raise ValueError("Model is missing lineartgen export metadata") from error
-        if self._metadata.get("format_version") != 1 or self._metadata.get("layout") != "NHWC":
+        version = self._metadata.get("format_version")
+        if version not in (1, 2) or self._metadata.get("layout") != "NHWC":
             raise ValueError("Unsupported lineartgen model format")
         inputs = {value.name for value in self._session.get_inputs()}
         self.source_conditioning = self._metadata.get("source_conditioning", False)
@@ -55,6 +56,20 @@ class LineartModel:
         self._preserve_zero_noise = (
             self._metadata.get("model", {}).get("output_mode", "direct") == "residual"
         )
+        model_config = self._metadata.get("model", {})
+        self.sampling_mode = model_config.get("sampling_mode", "diffusion")
+        if self.sampling_mode not in ("diffusion", "one_pass"):
+            raise ValueError("Unsupported sampling mode")
+        if (version == 2) != (self.sampling_mode == "one_pass"):
+            raise ValueError("One-pass restoration requires format version 2")
+        if self.sampling_mode == "one_pass" and (
+            not self.source_conditioning
+            or self.progress_conditioning
+            or not self._preserve_zero_noise
+            or model_config.get("feature_input") != "source"
+            or model_config.get("residual_base") != "source"
+        ):
+            raise ValueError("One-pass restoration requires original-source features and anchor")
         expected_inputs = {"image", "noise_level", "insert"}
         if self.source_conditioning:
             expected_inputs.add("guide")
@@ -83,6 +98,7 @@ class LineartModel:
         return self._session.run(["prediction"], inputs)[0]
 
     def infer(self, *, scribble, lineart, width, height, strength, seed, denoise_steps):
+        """Restore BGRA input; one_pass models use one pass for any valid step request."""
         width, height = operator.index(width), operator.index(height)
         seed, denoise_steps = operator.index(seed), operator.index(denoise_steps)
         if not np.isfinite(strength) or not 0 <= strength <= 1:
@@ -108,6 +124,7 @@ class LineartModel:
                 source_conditioning=self.source_conditioning,
                 progress_conditioning=self.progress_conditioning,
                 preserve_zero_noise=self._preserve_zero_noise,
+                sampling_mode=self.sampling_mode,
             )
         if not np.isfinite(prediction).all():
             raise RuntimeError("ONNX inference produced nonfinite output")

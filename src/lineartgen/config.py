@@ -28,6 +28,8 @@ class ModelConfig(Settings):
     # Experimental output anchor; the network still receives the sampled image.
     residual_base: Literal["noisy", "source"] = "noisy"
     feature_input: Literal["noisy", "source"] = "noisy"
+    # Source-only restoration does not consume intermediate diffusion states.
+    sampling_mode: Literal["diffusion", "one_pass"] = "diffusion"
     source_conditioning: bool = False
     progress_conditioning: bool = False
     guide_encoding: Literal["raw", "ink", "sqrt_ink"] = "raw"
@@ -38,6 +40,8 @@ class ModelConfig(Settings):
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.sampling_mode == "one_pass" and self.feature_input != "source":
+            raise ValueError("One-pass restoration requires source feature input")
         if self.feature_input == "source" and self.residual_base != "source":
             raise ValueError("Source feature input requires the source residual base")
         if self.residual_base == "source" and (

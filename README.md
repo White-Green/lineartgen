@@ -183,6 +183,13 @@ loss はノイズ量で正規化した誤差、濃淡のバランス、identity�
 export するのは 1 解像度の U-Net のみ。BGRA 入出力、padding、seed、段階的な denoise と
 再帰は NumPy で実行する。Krita 内では JAX / Flax / Orbax を import しない。
 
+実験用の `model.sampling_mode = "one_pass"` は、元画像特徴・元画像を基準にした残差出力を
+使うモデル専用の1回復元モード。各再帰解像度を1回評価し、指定強度をそのまま使う。
+BGRA APIは同じだが、このモードでは有効な `denoise_steps` の値とGaussian seedは結果を変えない。
+ONNX metadata形式2を使い、古いruntimeは明示的に拒否する。対応する新runtimeとの組み合わせが必要。
+既存の `diffusion` モードとmetadata形式1が既定値で、配布モデルは置き換えていない。
+検証範囲は[1回復元モードの計画](docs/one-pass-restoration-plan-20261009.md)を参照。
+
 runtime 0.2.1 から、画像とノイズ強度マップを先に各解像度へ縮小し、その後で各段に
 独立した Gaussian ノイズを一度だけ加える。複数回の denoise では各段の状態を更新して
 引き継ぎ、小さい段の clean 予測を次の段の insert に渡す。JAX の検証用 sampling も同じ順序。

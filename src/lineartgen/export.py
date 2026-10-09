@@ -58,7 +58,9 @@ def export_model(model, config, destination, *, dynamic=True, provenance=None):
     if dynamic:
         make_spatially_dynamic(graph)
     metadata = {
-        "format_version": 1,
+        # Older runtimes must reject this contract instead of silently applying
+        # the diffusion loop and changing the effective requested strength.
+        "format_version": 2 if config.model.sampling_mode == "one_pass" else 1,
         "layout": "NHWC",
         "minimum_size": minimum,
         "stop_size": max(128, minimum),

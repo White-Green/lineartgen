@@ -249,6 +249,12 @@ def sample(model, clean, key, *, strength, steps, levels):
 
 def sample_prepared(model, images, noise_levels, *, steps, guides=None):
     """Evolve an already sampled pyramid, permitting paired recursion diagnostics."""
+    if getattr(model, "sampling_mode", "diffusion") == "one_pass":
+        if steps < 1:
+            raise ValueError("steps must be positive")
+        # The request's strength remains intact. Source-only features would
+        # otherwise turn N iterations into one prediction at strength/N.
+        return recursive_forward(model, images, noise_levels, guides=guides)[0]
     for step in range(steps):
         current, following = (steps - step) / steps, (steps - step - 1) / steps
         predictions = recursive_forward(

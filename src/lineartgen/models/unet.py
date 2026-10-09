@@ -40,6 +40,7 @@ class UNet(nnx.Module):
         self.residual_scale_floor = config.residual_scale_floor
         self.residual_base = config.residual_base
         self.feature_input = config.feature_input
+        self.sampling_mode = config.sampling_mode
         self.source_conditioning = config.source_conditioning
         self.progress_conditioning = config.progress_conditioning
         self.guide_encoding = config.guide_encoding

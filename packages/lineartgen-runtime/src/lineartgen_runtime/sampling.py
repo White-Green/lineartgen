@@ -24,7 +24,16 @@ def denoise(
     source_conditioning=False,
     progress_conditioning=False,
     preserve_zero_noise=False,
+    sampling_mode="diffusion",
 ):
+    if sampling_mode not in ("diffusion", "one_pass"):
+        raise ValueError("Unsupported sampling mode")
+    if sampling_mode == "one_pass":
+        if not source_conditioning or progress_conditioning or not preserve_zero_noise:
+            raise ValueError("One-pass restoration requires a protected source-conditioned model")
+        if steps < 1:
+            raise ValueError("steps must be positive")
+        steps = 1
     rng = np.random.default_rng(seed)
     clean_scales = pyramid(clean, levels)
     noise_levels = pyramid(noise_level, levels)
