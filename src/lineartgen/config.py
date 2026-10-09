@@ -247,7 +247,7 @@ class LossConfig(Settings):
     edge_weight: float = Field(default=0.1, ge=0)
     contrast_weight: float = Field(default=0.01, ge=0)
     # Sketch degradation does not vanish with Gaussian variance. Bound its loss weight.
-    noise_weight_floor: float = Field(default=0.0, ge=0, lt=1)
+    noise_weight_floor: float = Field(default=0.0, ge=0, le=1)
     contrast_active_only: bool = False
 
     @model_validator(mode="after")
