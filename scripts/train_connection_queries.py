@@ -321,10 +321,12 @@ def evaluate(root, arms, step):
             for case in CASES:
                 for draw in DRAWS:
                     if draw != "old_transfer":
-                        np.testing.assert_array_equal(
-                            arrays[f"pixel-{split}-{case}-{draw}"],
-                            arrays[f"connection-{split}-{case}-{draw}"],
-                        )
+                        first = next(iter(arms))
+                        for method in arms:
+                            np.testing.assert_array_equal(
+                                arrays[f"{first}-{split}-{case}-{draw}"],
+                                arrays[f"{method}-{split}-{case}-{draw}"],
+                            )
         write(root / "initial-forward-audit.json", dict(all_exact=True, conditions=64))
     write(
         out / "metrics.json",
