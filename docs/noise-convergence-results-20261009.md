@@ -1,0 +1,32 @@
+# Fresh-noise fitting through4,000 updates
+
+Additional optimization helps substantially, but **the fitting problem is still not solved**. Passage increases from0/32 at800 to8/32 at4,000, entirely the corner case. Thin-line width error roughly halves and gray fringe decreases, while all eight deliberate-gap draws remain connected at25% opacity. No replacement model is adopted.
+
+This is four **independent specialists**, each trained on one previously seen synthetic TRAIN image: straight/thin/corner/gap. It is not one model learning all four, a generalization result on new drawings, or a sufficient-model-size demonstration. The [plan](noise-convergence-plan-20261009.md) resumes the exact fresh-noise800 model/optimizer/EMA state, then continues to total4,000. Architecture130,605 parameters, objective, batch1, source/target, noise keys, recursion1–6 and stage weighting0 stay fixed. The original800-step schedule remains at its1e-5 LR floor; no LR restart is used. The sqrt(batch) rule is retained. This conclusion is specific to that continuation schedule.
+
+Eight-draw means, raw one-step depth3:
+
+| Case | F1 at800 | F1 at1,600 | F1 at4,000 | Ink deficit at4,000 | Halo at800 | Halo at4,000 | Final passage |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Straight | .823870 | .843790 | .898573 | .013157 | .041680 | .014548 | 0/8 |
+| Thin | .627157 | .689775 | .762217 | .024751 | .100460 | .036069 | 0/8 |
+| Corner | .942927 | .945354 | .967372 | .007149 | .013639 | .004317 | 8/8 |
+| Gap | .851200 | .864139 | .903871 | .016990 | .035819 | .015672 | 0/8 |
+
+The unchanged screen is F1α50 >=.95, ink deficit <=.05 and halo excess <=.02. Final failures comprise24 F1 conditions,8 halo conditions and1 ink condition, with overlap. The32 conditions reuse the declared diagnostic noise draws on four TRAIN images; by this continuation they are observed development conditions, not fresh confirmation. All per-draw values remain in the artifacts. The old-transfer draw passes only the corner. Cached-input evaluation passes1/4 depth3 conditions and5/24 across all six depths: corner at depths2–6. No checkpoint, repetition count or output averaging replaces the4,000 endpoint.
+
+All five required native sheets were actually inspected. Straight/corner are visibly cleaner, and thin strokes become narrower and less noisy, but remain too heavy relative to the teacher. Depth1 is still worse, especially for thin lines. The gap stays faintly connected rather than opening like the teacher. Sparse faint off-line marks remain in some crops. The sheets use the fixed160px native crops; whole-image metrics cover512px. See `runs/noise-convergence-20261009/visual-review/` and `transfer/visual-review/`, including their hash-bound review records.
+
+The path audit confirms normal-profile width errors at800→4,000: straight.7910→.3735px, thin1.6234→.8156px, corner.3393→.1573px and gap.6168→.3850px. All four cases have zero measured cut rate over these eight draws at the existing three opacity thresholds. Gap bridge rate decreases.375→.083333 at thresholds37.5%/50%/62.5%, but all8 drawings still connect at10% and25%;2/8 connect at37.5%, none at50%. Gap-middle mean opacity decreases.3366→.1746 where the teacher is zero. This explains how ordinary overlap/connection thresholds can look much better while a visible pale bridge persists.
+
+The measurement-only maximin oracle exposes the same issue continuously: mean strongest-path bottleneck opacity for the gap decreases.427185→.345119, with final range.285095–.441711 and teacher zero. Its six intact/cut/gray-bridge controls pass. It does **not** implement or validate a training loss. The [research note](connectivity-loss-research-20261009.md) distinguishes the proposal from the previously tested grayscale skeleton adaptation and describes ways a connection loss could damage true strokes.
+
+Further diagnostics narrow the interpretation:
+
+- Replacing the rough guide with white or its spatial mean, while keeping all noisy inputs/strengths/targets unchanged, makes all four800 and4,000 specialists nearly erase their strokes (F1 zero). The model uses spatial information in the guide. This counterfactual is not an in-distribution quality test or a quantitative feature-importance measure.
+- In the sampled4,000 thin/gap outputs, **none** of the halo's extra opacity is behind the physical black clip. There is some saturation inside teacher ink (18.20%/12.36% of excess ink mass), but it does not explain the remaining halo/gap by itself. The physical preclip-loss audit has a nonzero correcting gradient in the26-pixel gap-middle strip. These are output-space derivatives, not model-parameter gradients or a causal proof about optimization.
+- Across the eight draws, empirical variance contributes about17–27% of halo MSE at4,000; most error remains in the eight-draw mean output. This finite-sample decomposition is not a population bias estimate and is not ensemble inference. It supports treating persistent width/gap error separately from noise sensitivity.
+
+Validation: numerical pin `70a98b96ba6c31d2bf505066c4c70a6afbce5006` binds246 numerical files and7 settings. Both800 checkpoint copies match the parent's entire state; all24 restored cached predictions are bitwise equal. The806 preflight restores exactly, actual801/806 restore exactly, and actual806 matches the full preflight806 state. Actual1,600 and4,000 restore exactly. Eight historical old-transfer checks are bitwise equal at each new evaluation endpoint. The104 unchanged core/test files match the earlier298-test passing manifest; changed orchestration passes Ruff/compilation and these actual-path checks. CPU diagnostics stay below the predeclared.0002 GPU-output tolerance.
+
+Main artifacts are in `runs/noise-convergence-20261009/`; auxiliary records are in `noise-convergence-path-audit-20261009/` (208 rows), `noise-convergence-loss-audit-20261009/`, `noise-guide-ablation-20261009/`, and `connectivity-capacity-oracle-20261009/`. The continuation finished at the declared4,000 endpoint. It shows that800 updates understated learnability, while this unchanged objective/schedule still leaves width and separation errors. It does not prove that longer or differently conditioned optimization cannot help, nor that the architecture lacks capacity. Joint multi-image training, broader synthetic inputs, independent training seed and actual BGRA quality remain unproven by this diagnostic. The original production model, Krita/runtime behavior and unopened sealed fresh confirmation are unchanged.
