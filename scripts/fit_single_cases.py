@@ -33,6 +33,9 @@ FIELDS = ("targets", "noise_levels", "noisy", "guides")
 
 
 def prepare(root, parent):
+    assert all(d.platform != "cpu" for d in jax.devices()), (
+        "Cache the pyramid on the historical evaluation GPU backend for exact comparisons"
+    )
     verify(parent)
     if root.exists():
         raise FileExistsError(root)
@@ -102,6 +105,7 @@ def prepare(root, parent):
         warm_start_methods=list(CASES),
         cases=CASES,
         cached_inputs_sha256=sha(cache),
+        preparation_backend=jax.devices()[0].platform,
         plan_document_sha256=sha(Path("docs/single-case-fitting-plan-20261009.md")),
         core_validation=dict(
             tests=298,
