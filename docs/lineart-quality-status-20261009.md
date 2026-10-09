@@ -1,32 +1,42 @@
-# Lineart restoration experiment status, 2026-10-09
+# 線画復元実験の現状 — 2026-10-09
 
-No replacement has been adopted. The deployed original 100k model remains the baseline. Synthetic rough inputs remain the only corruption source. The required combination—less gray fringe with preserved thin lines, opacity, width, continuity and separation—has not yet passed the complete evaluation.
+まだ製品モデルを置き換えていない。直近で最も改善したのは、追加Gaussianを
+CNNの特徴入力から外し、元の下描きから補正を求める構成。線の周囲のノイズや
+幅の不安定さは大きく減ったが、偽接続と一部の濃度不足が残る。
 
-Recent results and the next controlled comparison:
+実行中: 同じsource特徴で、既存pixel loss、region.1、region.1+connection.1
+を比較している。各4,000更新の固定条件で、pixel対照は完了済みモデルを厳密に
+再利用する。[計画](../../jax-signal-structure-20261009/docs/signal-structure-plan-20261009.md)。
 
-| Experiment | What it established | Decision |
+| 完了した比較 | 主な結果 | 判断 |
 | --- | --- | --- |
-| Full-resolution width16 detail head | Improved local fitting, roughly +.10 blur F1 over the old local guided model; broader results still have gray marks, missing fine strokes, or wrong joins | Broader candidate rejected after native review |
-| Progress-conditioned rough/bridge paths with full tone balancing | The learned five-step bridge still forms dark branching structures; blur F1 is .2115/.2488 on train/probe versus .5304/.5804 for the old one-step local reference | Both paths insufficient; bridge advancement gate rejected |
-| Tempered tone weights | Square-root weights reduce low-strength blur halos by 47.49%/49.43%, but all 24 strata exceed allowed opacity loss; unit weights fade lines further | Both rejected; all 12 final native sheets inspected |
-| Unit-weight rough/bridge paths | Much less false branching, but bridge still loses thin strokes; fails10/18 comparisons after1,200 updates and all10 native sheets reviewed | Declared bridge candidate rejected |
-| Square-root weights plus clipped opacity deficit | Coefficients .1/.3 reduce low-noise halos50.03%/51.13% and42.88%/44.91%, but fail19/13 of24 safeguards | Both rejected; all12 final native sheets inspected |
-| Physical preclip opacity deficit | Low-noise halo reduction46.09%/49.53% at.1 and42.35%/44.39% at.3; fails16/13 of24 safeguards. Final top-output saturation accounts for only about1–3% of missing opacity in the diagnostic cases | Both rejected;12 required plus2 paired final sheets inspected |
-| Fixed single-case fitting | At800 updates,3/4 depth3 and17/24 all-depth conditions pass numerical fitting; the intended gap is still bridged. Changing only noise drops own-case passage to0/4 | Completed, insufficient; next isolate noise memorization with fresh noise per update |
-| Fresh-noise single-case fitting | At800, eight-draw mean F1 improves on all four cases, but0/32 conditions pass. Thin cuts decrease while width error remains1.62px; all8 gap draws connect at25% opacity | Completed, insufficient; all5 required native sheets inspected |
-| Fresh-noise convergence continuation | At4,000,8/32 primary conditions pass (all corner); thin width error halves1.623→.816px, but all8 gap draws still connect at25% opacity | Completed, insufficient; all5 required native sheets inspected |
-| Shared four-case connection queries | At2,000, gap-middle opacity falls75.30%/58.76% versus paired pixel control on TRAIN/PROBE and gap capacity becomes0; four PROBE safeguards fail, and PROBE fitting is0/32 | Completed, insufficient; all4 required final native sheets inspected |
+| 4ケース共有・接続query /2k | gap中央濃度75.30%/58.76%減、PROBE保持条件4項目失敗 | 不採用 |
+| 毎更新新規形状・region/structure /4k | halo約23–25%減、細線保持など15/17項目失敗 | 不採用 |
+| 局所opacity輸送 /4k | halo64.85%/62.37%減、薄線の切断・濃度が悪化、49項目失敗 | 不採用 |
+| 下描きを出力基準に変更 /4k | 滑らかだがhalo約30–34%増、14項目失敗 | 不採用 |
+| 下描きを特徴入力にも使用 /4k | halo61.80%/57.88%減、PROBE細線幅誤差2.60→.56px、12項目失敗 | 有望な仕組み、品質は未完 |
 
-The opacity term measures missing opacity only at editable teacher-line pixels. It has no added force at an already correct gray edge, a protected pixel, or the background. This is a hypothesis about balancing losses, not a guarantee of correct geometry or a proof of the cause of halos. It can still cause excessive darkening under uncertainty; fixed metric safeguards and actual output inspection decide the result.
+最新候補は非resetの従来pixelモデルに対してもhalo56.48%/52.46%減で、
+補助比較の失敗はPROBE gapの偽接続1項目。ただし本来の対照とは一部の濃度が
+悪化し、全判定を通過していない。失敗数は重複する比較項目である。
+[最新結果](source-signal-results-20261009.md)、
+[等倍出力](../../jax-source-signal-20261009/runs/source-signal-20261009/broad/step-4000/probe-blur-0.5-native.png)。
 
-The completed preclip study started from the original 100k EMA, not a selected fitted endpoint, with the same local 57/57 pairs and random streams. Architecture, recursive depths1–6, stage weighting0, downsample-before-noise, sqrt(batch) learning-rate scaling, and the fixed 1,200-update schedule are preserved. The historical balanced and square-root references are retained, with paired comparisons and six-update replay of both clipped-opacity coefficients. No iteration/checkpoint switch is allowed to rescue a failed primary comparison.
+直近の各比較で最終8枚を実際に目視した。最新は補助3枚も確認した。
+白紙はほぼ白だが微小な端の誤差がある。保護領域は厳密一致。ONNX/BGRAの
+機能テストは通るが、実学習モデルのKrita GUI品質を確認した意味ではない。
+元画像特徴の候補はGaussian seedで変化しなくなる。この挙動変更は意図して
+記録し、実学習出力でも検証した。入力画像自体のノイズは残る。
 
-These small fitting studies are mechanism checks, not independent generalization evidence. A local pass must still lead to a broader study, actual BGRA input/output quality evaluation, a new training seed20261005, and the sealed fresh synthetic draws. Those fresh draws remain unopened. A sufficient minimal model size is still unknown; neither a short fitting failure nor parameter count alone settles that question.
+モデルは130,605パラメータ。再帰1–6、段loss0、sqrt(batch)学習率、縮小後の
+ノイズ生成を維持する。合成下描きのみ使用。新規形状の開発実験は幅・方向・
+形状を毎回変えるが、より広い実線画由来の合成下描き、重ね描き、反復推論、
+独立学習seed20261005、封印した新規合成drawによる確認はまだ未実施。
+十分な最小モデルサイズは未確定。封印評価は未開封、配布中100kモデルは据え置き。
 
-Detailed records: [tone-weight result](tone-balance-fitting-results-20261009.md), [plain-path result](../../jax-plain-path-20261008/docs/plain-path-fitting-results-20261009.md), [clipped-opacity result](../../jax-opacity-retention-20261009/docs/opacity-retention-fitting-results-20261009.md), [preclip-opacity result](../../jax-preclip-opacity-20261009/docs/preclip-opacity-fitting-results-20261009.md), [single-case result](single-case-fitting-results-20261009.md), [fresh-noise result](fresh-noise-fitting-results-20261009.md), and [4,000-update convergence result](noise-convergence-results-20261009.md). The runtime API and Krita plugin are unchanged by these loss-only changes.
-
-The completed continuation establishes that extra optimization improves these independent fitting problems;800 updates were not enough to assess their limit. Guide ablation confirms use of the rough image's spatial information, and output-space diagnostics do not support clipping alone as the remaining halo explanation. The [connection-query experiment](connection-query-results-20261009.md) now implements the previously measurement-only idea: it removes false bridges but does not yet preserve unseen line profiles. The fresh procedural study completed4,000 updates with all8 final native sheets reviewed. Region/structure reduce blur halos about23–25% but fail15/17 safeguards, particularly fine-line opacity and continuity. Both are insufficient. The next comparison tests a local opacity-distribution loss against the exact same saved pixel control; see procedural-structure-results-20261009.md and local-transport-training-plan-20261009.md.
-
-Local opacity transport also completed4,000 updates: halo reductions64.85%/62.37%, but49 safeguards fail and PROBE thin cuts rise.5625→1.0. All8 final native sheets inspected; rejected. Control predictions are exact; treatment startup has an explicitly documented non-bitwise replay limitation. The active next comparison is source versus noisy output anchor with paired reset heads, unchanged Gaussian inputs and recursive depths. See local-transport-training-results-20261009.md and source-anchor-plan-20261009.md.
-
-The paired source output-anchor study completed4,000: smoother strokes but34.47%/30.43% more blur halo than its reset noisy control,14 failed safeguards,9 failures against the older warm reference. All8 required plus2 supplementary final sheets reviewed; rejected. The next active source-signal comparison uses the original rough image for CNN features too; Gaussian seed invariance is intentional and explicitly tested.
+過去の詳細: [connection](connection-query-results-20261009.md)、
+[procedural](procedural-structure-results-20261009.md)、
+[transport](local-transport-training-results-20261009.md)、
+[anchor](source-anchor-results-20261009.md)。それ以前のloss/guide/反復経路の比較は
+各日付の結果文書に記録している。輸送lossの起動再実行にだけ非bitwise差があり、
+[例外記録](local-transport-startup-amendment-20261009.md)に明示した。
