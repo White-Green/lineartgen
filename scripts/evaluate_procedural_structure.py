@@ -18,6 +18,7 @@ from lineartgen.models.serialization import load_inference
 
 
 def evaluate(root, step):
+    methods = read(root / "plan.json").get("comparison_methods", list(METHODS))
     verify(root)
     plan = read(root / "plan.json")
     out = root / f"broad/step-{step}"
@@ -44,7 +45,7 @@ def evaluate(root, step):
                         )
                     )
                     info.append(dict(split=split, partial=partial, strength=strength, **record))
-        for method in METHODS:
+        for method in methods:
             folder = root / f"snapshots/step-{step}/{method}/raw"
             model, _ = load_inference(folder)
             bindings.update(
@@ -88,6 +89,7 @@ def evaluate(root, step):
 
 
 def summarize(root, step):
+    methods = read(root / "plan.json").get("comparison_methods", list(METHODS))
     out = root / f"broad/step-{step}"
     rows = read(out / "metrics.json")["rows"]
     summaries, failures = [], []
@@ -105,7 +107,7 @@ def summarize(root, step):
                         and r["kind"] != "blank"
                     ]
                     means = {}
-                    for method in METHODS:
+                    for method in methods:
                         group = [r for r in selected if r["method"] == method]
                         means[method] = {
                             k: float(np.mean([r[k] for r in group if r[k] is not None]))
@@ -116,7 +118,7 @@ def summarize(root, step):
                             )
                         }
                     checks = {}
-                    for method in ("region", "structure"):
+                    for method in (m for m in methods if m != "pixel"):
                         control, candidate = means["pixel"], means[method]
                         check = dict(
                             ink=candidate["ink_deficit_fraction"]
@@ -164,9 +166,9 @@ def summarize(root, step):
                     ]
                 )
             )
-            for method in METHODS
+            for method in methods
         }
-        for method in ("region", "structure"):
+        for method in (m for m in methods if m != "pixel"):
             passed = means[method] <= 0.9 * means["pixel"]
             halo_checks.append(dict(split=split, method=method, means=means, passed=passed))
             if not passed:
@@ -179,7 +181,7 @@ def summarize(root, step):
                 "connection_bridge_rate",
                 "gap_middle_alpha",
             )
-            for method in METHODS:
+            for method in methods:
                 group = [
                     r
                     for r in primary
@@ -191,7 +193,7 @@ def summarize(root, step):
                     for k in keys
                     if any(r[k] is not None for r in group)
                 }
-            for method in ("region", "structure"):
+            for method in (m for m in methods if m != "pixel"):
                 checks = {
                     k: means[method][k] <= means["pixel"][k] + tolerance
                     for k, tolerance in (
@@ -201,7 +203,7 @@ def summarize(root, step):
                     )
                     if k in means[method]
                 }
-                if case == "fit_gap" and method == "structure":
+                if case == "fit_gap" and method == "structure" and "region" in methods:
                     checks["gap_reduction"] = (
                         means[method]["gap_middle_alpha"]
                         <= 0.75 * means["region"]["gap_middle_alpha"]
@@ -228,26 +230,27 @@ def summarize(root, step):
 
 
 def render(root, step):
+    methods = read(root / "plan.json").get("comparison_methods", list(METHODS))
     out = root / f"broad/step-{step}"
     plan = read(root / "plan.json")
     files = {}
     for split in ("train", "probe"):
         data = np.load(plan["data"][split]["path"])
         rows = read(root / f"{split}.json")
-        results = {method: np.load(out / f"{method}-{split}.npz")["images"] for method in METHODS}
+        results = {method: np.load(out / f"{method}-{split}.npz")["images"] for method in methods}
         # Native comparisons of every fixed first-variant shape. No interpolation.
         for strength, offset in ((0.1, 0), (0.5, 57)):
-            canvas = Image.new("RGB", (160 * (2 + len(METHODS)), 180 * 9), "white")
+            canvas = Image.new("RGB", (160 * (2 + len(methods)), 180 * 9), "white")
             painter, crops = ImageDraw.Draw(canvas), []
             for row, pair in enumerate(range(38, 47)):
                 target = data["clean"][pair]
                 yy, xx = np.where(target[..., 0] < 0.96)
                 y, x = (int(np.clip(np.mean(v) - 80, 0, 352)) for v in (yy, xx))
                 values = [target, data["source"][pair]] + [
-                    results[m][offset + pair] for m in METHODS
+                    results[m][offset + pair] for m in methods
                 ]
                 for col, (name, image) in enumerate(
-                    zip(("target", "source", *METHODS), values, strict=True)
+                    zip(("target", "source", *methods), values, strict=True)
                 ):
                     gray = np.uint8(np.rint(np.clip((image[..., 0] + 1) * 127.5, 0, 255)))
                     canvas.paste(
@@ -263,14 +266,14 @@ def render(root, step):
             files[path.name] = dict(sha256=sha(path), crops=crops, inspected=False)
         # Full512px blank and protected-boundary diagnostics for one declared case.
         for label, index in (("blank", 57 + 56), ("partial_thin", 114 + 57 + 39)):
-            canvas = Image.new("RGB", (512 * (2 + len(METHODS)), 536), "white")
+            canvas = Image.new("RGB", (512 * (2 + len(methods)), 536), "white")
             painter = ImageDraw.Draw(canvas)
             pair = index % 57
             values = [data["clean"][pair], data["source"][pair]] + [
-                results[m][index] for m in METHODS
+                results[m][index] for m in methods
             ]
             for col, (name, image) in enumerate(
-                zip(("clean target", "source", *METHODS), values, strict=True)
+                zip(("clean target", "source", *methods), values, strict=True)
             ):
                 gray = np.uint8(np.rint(np.clip((image[..., 0] + 1) * 127.5, 0, 255)))
                 canvas.paste(Image.fromarray(gray).convert("RGB"), (512 * col, 24))
