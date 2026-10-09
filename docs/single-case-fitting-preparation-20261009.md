@@ -1,0 +1,11 @@
+# Fixed-case diagnostic preparation
+
+The parent preclip comparison was rejected after its complete final native review. Four independent copies of its declared.3 raw checkpoint now fit the fixed training cases in the [plan](single-case-fitting-plan-20261009.md). These include a weak thin line, a gap and a corner; the particular training corner is visibly stronger than the weak probe corner used in the previous clipping diagnostic. The cases remain exactly those declared in advance. None is a probe or fresh confirmation image.
+
+The authoritative numerical pin is `f35e134a9edc3cb6d1c2520ffd14e61dd7f4e47d`, binding244 numerical files and7 settings. The unchanged104 core/test files match the previous298-test passing run; that full suite was not redundantly rerun for this orchestration-only diagnostic. The new script passed Ruff and Python compilation, and its real cached inputs passed exact prefix checks against the existing preparation function.
+
+The initial CPU-prepared attempt is preserved in `runs/single-case-fitting-20261009-cpu-cache-preflight/`, including its source archive and initial-output failure. It performed **zero optimizer updates**. Lower pyramid values differed from the historical GPU preparation by at most2.3842e-7, causing a2.5034e-6 difference in the first checked prediction. The input cache was regenerated on GPU, preserving cases, seeds, loss, model, optimizer budget and exact-check tolerances. The amended plan records this before the authoritative run.
+
+All four authoritative depth3 initial predictions now match the stored parent GPU outputs bitwise. Every copy passed finite-gradient updates at depths1–6 and full training-state restoration at update6. Actual update1 also restored every state leaf exactly. All four models have130,605 parameters. Recursion cycles1–6, stage weighting0 and sqrt(batch) LR remain in force; each model's batch contains its own single fixed case, with noise arrays reused across updates.
+
+The runner will stop after the fixed800 updates and two required native sheets. A fitted-case success cannot establish generalization, production quality, or minimal sufficient parameter count. The production model and fresh confirmation remain unchanged.
