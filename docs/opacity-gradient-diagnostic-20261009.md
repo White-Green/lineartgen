@@ -2,7 +2,7 @@
 
 This is a separate diagnostic of the fixed400-update checkpoints, not a change to the active1,200-update experiment or an alternate selection rule. The raw square-root control and opacity coefficients.1/.3 were evaluated on the same first nine probe blur shapes at strengths.1/.5, plus the clean thin example at.5: **57 CPU forwards**, no optimizer updates. Cases and CPU/GPU tolerance were recorded before execution.
 
-The actual CPU clipped outputs match stored GPU images within **7.4804e-6 maximum absolute error**, well below the declared2e-4 audit tolerance. `runs/opacity-gradient-diagnostic-20261009/` contains the plan, source/checkpoint/array hashes, actual preclip arrays, and results. The executed helper and tracked `scripts/diagnose_opacity_clipping.py` have identical source bytes; the helper was added after the experiment's numerical freeze and did not alter any frozen file.
+The actual CPU clipped outputs match stored GPU images within **7.4804e-6 maximum absolute error**, well below the declared2e-4 audit tolerance. `runs/opacity-gradient-diagnostic-20261009/` contains the plan, source/checkpoint/array hashes, actual preclip arrays, results, and exact executed helper. `scripts/diagnose_opacity_clipping.py` is its formatted copy. This separate helper was added after the experiment's numerical freeze and did not alter any frozen file.
 
 For every teacher-line pixel whose physical preclip prediction exceeded white (+1), the derivative of the opacity term with respect to the clipped image was positive, while its derivative through the hard output clip was exactly zero. The table reports the mean per-case share of missing opacity with that blocked direct derivative, across the nine blur shapes:
 
