@@ -27,9 +27,15 @@ PROBE blur.5の濃度不足率が.179→.375へ増加し、保持条件38項目�
 新しいONNX metadata形式2が必要で、配布パッケージはまだ切り替えていない。
 [実BGRA・1回復元の検証](../../jax-one-pass-restoration-20261009/docs/one-pass-restoration-results-20261009.md)。
 
-次の比較は同じ学習済み候補からのblur対mixed合成拡張。モデル・lossは固定し、
-891学習用clean線画＋20%オンライン図形を各4,000更新する。
-[固定計画](../../jax-source-mixture-training-20261009/docs/source-mixture-training-plan-20261009.md)。
+実clean線画＋オンライン図形でのblur対mixed追加学習4,000更新も完了し、両方とも不採用。
+mixedは対照よりstrokes haloを10.24%減らしたが、blurと細線を悪化させ、
+広域121チェック中40項目失敗。最終14枚を目視、4,698広域条件を評価した。
+[結果](source-mixture-training-results-20261009.md)。
+
+実行中は、事前固定のmixed raw4kからの元画像条件patch識別器あり/なし比較。
+識別器のみ250更新のあと、両生成器を2,000更新。推論モデルのサイズは増やさない。
+[計画](../../jax-source-patch-prior-20261009/docs/source-patch-prior-plan-20261009.md)。
+[blurと透明度の識別不能例](blur-opacity-ambiguity-20261009.md)を補助診断として記録した。
 
 すべて合成下描き。130,605パラメータ、再帰1–6、段loss0、sqrt(batch)LR、縮小後Gaussianを維持。
 直近の特徴比較ではGaussian seedの違いが出力に影響しないため、反復drawを独立標本に数えない。
