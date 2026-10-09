@@ -1,0 +1,13 @@
+# Preclip opacity comparison: preparation and execution
+
+The clipped-opacity experiment completed with both arms rejected and all12 native sheets inspected. The next fixed comparison was prepared only after that decision. `runs/preclip-opacity-fitting-20261009/` holds the exact57/57 pairs and two configs; each differs from its corresponding clipped-opacity arm only in `loss.opacity_deficit_preclip=true`. Both start from the original100k EMA, not a fitted endpoint.
+
+Numerical source `93d1a1d65114c7ff4ca019997d36f3bdbef8c3bf` freezes243 files. The main root, historical balanced replay and paired clipped replay each have a source archive and manifests; they bind5/4/5 settings respectively. External balanced, square-root and clipped-opacity data/configs/snapshots are hash bound. The runner hash is `ba835d478a6031b38f773a974ecd43263c5f854f099609230dce902984240de8`. Its outer lock is `coordinator.lock`, leaving the inner trainer's `process.lock` separate.
+
+All298 CPU tests passed in432.82s, including physical-gradient checks through the actual model parameters in both training entry points. All104 test-bound files were unchanged. Six-depth GPU updates and full-state restoration passed for both candidates. Historical balanced six-update replay and both corresponding clipped-opacity six-update replays were bitwise exact. All36 initial forward comparisons were exact. Actual training update1 restored every state leaf exactly. Each model has130,605 parameters.
+
+The sequential runner performs initial evaluation,400 updates and evaluation, then1,200 updates and full whole/partial evaluation. It audits historical reference outputs, applies the unchanged raw-one-step24-stratum gate, retains432 square-root and432 corresponding clipped-opacity descriptive comparisons, and renders the twelve fixed native sheets. It cannot adopt a model automatically. See the [frozen plan](preclip-opacity-fitting-plan-20261009.md).
+
+A separate predeclared final diagnostic in `runs/preclip-opacity-final-diagnostic-20261009/` compares physical saturation on the same19 cases used at400 (nine probe blur shapes at strengths.1/.5 and one clean thin case). It uses five fixed final arms: square-root, clipped.1/.3, preclip.1/.3;95 CPU forwards and no optimizer updates. It audits outputs against stored GPU predictions within2e-4 and records both clipped and preclip counterfactual derivatives, plus the actual loss flags. Two additional paired native sheets compare corresponding clipped/preclip arms. Neither diagnostic substitutes for the primary gate or for the twelve required sheets.
+
+No fresh confirmation draws have been opened. Broader evaluation, a new training seed and actual BGRA input/output quality remain outstanding even if this local comparison passes.
