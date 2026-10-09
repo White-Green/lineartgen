@@ -279,18 +279,18 @@ def train(root, *, preflight=False, end=800):
             )
 
 
-def render(root):
+def render(root, milestones=(0, 200, 800), final_step=800):
     verify_study(root)
     out = root / "visual-review"
     out.mkdir(exist_ok=True)
     data = np.load(root / "cached-inputs.npz")
     predictions = {
-        step: np.load(root / f"evaluation/step-{step}/predictions.npz") for step in (0, 200, 800)
+        step: np.load(root / f"evaluation/step-{step}/predictions.npz") for step in milestones
     }
     files = {}
     for filename, columns in (
-        ("progress-depth3.png", [(s, 3) for s in (0, 200, 800)]),
-        ("final-all-depths.png", [(800, d) for d in range(1, 7)]),
+        ("progress-depth3.png", [(s, 3) for s in milestones]),
+        ("final-all-depths.png", [(final_step, d) for d in range(1, 7)]),
     ):
         canvas = Image.new("RGB", ((len(columns) + 2) * 160, len(CASES) * 180), "white")
         draw = ImageDraw.Draw(canvas)

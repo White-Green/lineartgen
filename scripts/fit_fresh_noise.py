@@ -136,6 +136,10 @@ def verify_fresh(root):
         sha(Path(plan["previous_transfer"]) / n) == digest
         for n, digest in plan["previous_transfer_files"].items()
     )
+    if "resume_from" in plan:
+        resume = Path(plan["resume_from"])
+        verify(resume)
+        assert all(sha(resume / n) == digest for n, digest in plan["resume_files"].items())
     assert plan["noise_seed"] == NOISE_SEED and plan["evaluation_draws"] == DRAWS
     return plan
 
@@ -159,13 +163,14 @@ def replay(root):
 
 
 def train(root, *, preflight=False, end=800):
-    verify_fresh(root)
+    plan = verify_fresh(root)
     assert all(d.platform != "cpu" for d in jax.devices())
     assert read(root / "cached-replay-audit.json")["all_state_exact"]
     if not preflight:
         assert read(root / "preflight/restore-audit.json")["all_state_exact"]
         assert read(root / "initial-forward-audit.json")["all_exact"]
-    assert end in (1, 200, 800)
+    assert end in (1, 200, 800, 801, 806, 1600, 4000)
+    preflight_end = plan.get("resume_step", 0) + 6
     arms, inputs = arms_from_root(root), cached_inputs(root)
     destination = root / ("preflight" if preflight else "training")
     destination.mkdir(exist_ok=True)
@@ -177,7 +182,7 @@ def train(root, *, preflight=False, end=800):
         if not preflight and start == 0:
             snapshot(root, arms, 0)
         names = tuple(arms)
-        for step in range(start, 6 if preflight else end):
+        for step in range(start, preflight_end if preflight else end):
             begin = time.perf_counter()
             depth = step % 6 + 1
             stats = {
@@ -193,9 +198,9 @@ def train(root, *, preflight=False, end=800):
                     f.write(json.dumps(row, allow_nan=False) + "\n")
                 write(destination / "progress.json", row)
                 print(json.dumps(row), flush=True)
-            if complete % 100 == 0 or preflight and complete == 6 or complete == end:
+            if complete % 100 == 0 or preflight and complete == preflight_end or complete == end:
                 lineart_state.save(saved, arms, complete)
-            if not preflight and complete in (200, 800):
+            if not preflight and complete in (200, 800, 1600, 4000):
                 snapshot(root, arms, complete)
                 evaluate(root, arms, inputs, complete)
         restored = arms_from_root(root)
@@ -213,7 +218,7 @@ def train(root, *, preflight=False, end=800):
 
 def transfer(root, step):
     plan = verify_fresh(root)
-    assert step in (0, 200, 800)
+    assert step in (0, 200, 800, 1600, 4000)
     out = root / f"transfer/step-{step}"
     out.mkdir(parents=True, exist_ok=True)
     assert not (out / "metrics.json").exists()
@@ -285,13 +290,19 @@ def transfer(root, step):
     print(dict(transfer_step=step, conditions=len(rows)), flush=True)
 
 
-def render_transfer(root):
+def render_transfer(root, step=800):
     verify_fresh(root)
     out = root / "transfer/visual-review"
     out.mkdir(exist_ok=True)
-    scores = read(root / "transfer/step-800/metrics.json")
-    predictions = np.load(root / "transfer/step-800/predictions.npz")
+    scores = read(root / f"transfer/step-{step}/metrics.json")
+    predictions = np.load(root / f"transfer/step-{step}/predictions.npz")
     cached = np.load(root / "cached-inputs.npz")
+    parent_predictions = None
+    plan = read(root / "plan.json")
+    if "resume_from" in plan:
+        parent_predictions = np.load(
+            Path(plan["resume_from"]) / "transfer/step-800/predictions.npz"
+        )
     files = {}
     for selector in ("old_transfer", "replicate_0", "worst_f1"):
         canvas = Image.new("RGB", (5 * 160, 4 * 180), "white")
@@ -318,8 +329,20 @@ def render_transfer(root):
             imgs = [target, source] + [
                 predictions[f"{mode}-{name}-{noise}"] for mode in ("initial", "fixed", "fresh")
             ]
+            if parent_predictions is not None:
+                imgs[3] = parent_predictions[f"fresh-{name}-{noise}"]
             for col, (label, value) in enumerate(
-                zip(("target", "source", "initial", "fixed800", "fresh800"), imgs, strict=True)
+                zip(
+                    (
+                        "target",
+                        "source",
+                        "initial",
+                        "fresh800" if parent_predictions is not None else "fixed800",
+                        f"fresh{step}",
+                    ),
+                    imgs,
+                    strict=True,
+                )
             ):
                 gray = np.uint8(np.rint(np.clip((value[..., 0] + 1) * 127.5, 0, 255)))
                 canvas.paste(
