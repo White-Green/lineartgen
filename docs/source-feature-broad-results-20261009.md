@@ -17,7 +17,7 @@
 
 pixelの実線画blur haloは76.86%減少し、F1 .854720→.944971。重ね描きでは細い線を失わなくなったが太さが残り、haloは改善していない。等倍画像でも、ぼかした実線画の角・曲線・細部が鮮明になる一方、重ね描きの太線化と近接平行線の融合を確認した。
 
-[実線画の等倍比較](../runs/source-feature-broad-20261009/native-review/real.png)、[図形blur](../runs/source-feature-broad-20261009/native-review/blur-05.png)、[重ね描き](../runs/source-feature-broad-20261009/native-review/strokes-05.png)。
+[実線画の等倍比較](../../jax-source-feature-broad-20261009/runs/source-feature-broad-20261009/native-review/real.png)、[図形blur](../../jax-source-feature-broad-20261009/runs/source-feature-broad-20261009/native-review/blur-05.png)、[重ね描き](../../jax-source-feature-broad-20261009/runs/source-feature-broad-20261009/native-review/strokes-05.png)。
 
 **反復の制約**: source-only特徴のN回推論と、強度/Nでの1回推論を228組比較した。最大差は1.192093e-6。元の入力だけで特徴と出力基準を作るため、途中の生成状態を次の反復が利用しない。1/2/5回の画像が改善して見える場合も強度条件が変わった効果であり、反復的な精緻化とは言えない。Gaussian seedへの非依存と合わせ、配布前に推論方式の扱いを決める必要がある。今回samplerやKritaは変更していない。
 
@@ -25,4 +25,4 @@ pixelの実線画blur haloは76.86%減少し、F1 .854720→.944971。重ね描�
 
 数値コード948ca04と入力/モデルを事前固定し、全件網羅・source/保存物hashを監査した。float入力とBGRA出力変換による評価であり、実BGRA入力API/Windows/Krita GUIの試験ではない。既存開発データを再利用しており、自然下描きペア・独立学習seed・封印確認は未使用。
 
-[計画](source-feature-broad-plan-20261009.md)、[監査](../runs/source-feature-broad-20261009/final-audit.json)。この結果はlocal構造lossの不合格を覆さない。次の元画像特徴+局所濃度分布loss比較は別の固定実験として継続中。
+[計画](../../jax-source-feature-broad-20261009/docs/source-feature-broad-plan-20261009.md)、[監査](../../jax-source-feature-broad-20261009/runs/source-feature-broad-20261009/final-audit.json)。この結果はlocal構造lossの不合格を覆さない。次の元画像特徴+局所濃度分布loss比較は別の固定実験として継続中。

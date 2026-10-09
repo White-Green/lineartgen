@@ -31,9 +31,9 @@ BGRA量子化で入力に最大.004314の差が生じるため、JAX比較にも
 用いた。この入力差をモデル差と混同していない。数値コードa6b776aと入力・checkpointを
 推論前に固定し、最終6枚を実際に確認した。
 
-[実線画の出力](../runs/one-pass-restoration-20261009/real-0.5-native.png)、
-[図形・保護境界](../runs/one-pass-restoration-20261009/geometry-boundary-0.5-native.png)、
-[監査](../runs/one-pass-restoration-20261009/final-audit.json)。
+[実線画の出力](../../jax-one-pass-restoration-20261009/runs/one-pass-restoration-20261009/real-0.5-native.png)、
+[図形・保護境界](../../jax-one-pass-restoration-20261009/runs/one-pass-restoration-20261009/geometry-boundary-0.5-native.png)、
+[監査](../../jax-one-pass-restoration-20261009/runs/one-pass-restoration-20261009/final-audit.json)。
 ぼかしからの復元は良好だが、元モデルに残る重ね描きの太さ・近接線の融合・隙間の誤接続は
 解決していない。これは推論契約の検証であり、品質の採用判定を通過したわけではない。
 Windows DirectML、Krita GUI、独立学習seedと封印確認は未実施。

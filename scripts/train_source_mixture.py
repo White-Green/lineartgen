@@ -147,7 +147,7 @@ def make_arms(root):
             predictions, physical = recursive_forward_with_preclip(
                 model, prepared.noisy, prepared.noise_levels, guides=prepared.guides
             )
-            return image_loss(
+            loss, metrics = image_loss(
                 predictions[0],
                 prepared.targets[0],
                 prepared.noise_levels[0],
@@ -155,6 +155,7 @@ def make_arms(root):
                 config.diffusion.min_noise,
                 preclip=physical[0],
             )
+            return loss, dict(metrics, loss=loss)
 
         def make_gradient(objective):
             @nnx.jit

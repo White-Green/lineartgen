@@ -17,17 +17,25 @@ haloをさらに約28–35%減らすが、濃度・線幅など保持条件21/31
 最終8枚と白紙端部1枚を確認した。
 [構造loss結果](../../jax-signal-structure-20261009/docs/signal-structure-results-20261009.md)。
 
-実行中はsource特徴に局所濃度分布loss3を加える固定4k比較。対照は完了済みpixelを厳密再利用。
-起動6更新で別実行とのbitwise差が出たため一度停止した。重み最大1.86e-6、固定8入力の
-出力最大4.18e-7の差を測定し、最初の実行の状態を保存して診断を継続している。
-再学習の完全一致は主張しない。保存復元と品質の基準は維持。
-[計画](signal-transport-plan-20261009.md)、[例外記録](signal-transport-startup-amendment-20261009.md)。
+source特徴の局所濃度分布loss3は4,000更新を完了し不採用。haloは約65–77%減ったが、
+PROBE blur.5の濃度不足率が.179→.375へ増加し、保持条件38項目失敗。
+最終8枚と白紙最悪端部を確認した。起動時の非bitwise差は記録を維持し、
+保存復元とraw/EMA書き出しの完全一致は確認済み。[結果](../../jax-signal-transport-20261009/docs/signal-transport-results-20261009.md)。
+
+元画像特徴向けの明示的な1回復元モードを別ブランチで実装し、学習済み候補で
+実BGRA 84条件＋seed変更28条件を確認。JAXとの最大差は1階調で、保護画素は一致した。
+新しいONNX metadata形式2が必要で、配布パッケージはまだ切り替えていない。
+[実BGRA・1回復元の検証](../../jax-one-pass-restoration-20261009/docs/one-pass-restoration-results-20261009.md)。
+
+次の比較は同じ学習済み候補からのblur対mixed合成拡張。モデル・lossは固定し、
+891学習用clean線画＋20%オンライン図形を各4,000更新する。
+[固定計画](../../jax-source-mixture-training-20261009/docs/source-mixture-training-plan-20261009.md)。
 
 すべて合成下描き。130,605パラメータ、再帰1–6、段loss0、sqrt(batch)LR、縮小後Gaussianを維持。
 直近の特徴比較ではGaussian seedの違いが出力に影響しないため、反復drawを独立標本に数えない。
 広域診断の事前固定9枚と有意味な部分境界・最悪白紙の補助2枚を目視した。初期部分クロップは
 線がないため判断不能だったことを記録。保護画素は全条件で厳密一致。
-実BGRA入力・Windows/Krita GUI、新しい独立学習seed、封印確認はまだ未実施。
+Windows/Krita GUI、新しい独立学習seed、封印確認はまだ未実施。
 十分な最小モデルサイズも未確定。封印評価は未開封。
 
 過去の実験: [元画像特徴](source-signal-results-20261009.md)、
