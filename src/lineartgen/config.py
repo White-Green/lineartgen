@@ -27,6 +27,7 @@ class ModelConfig(Settings):
     residual_scale_floor: float = Field(default=0.0, ge=0, le=1)
     # Experimental output anchor; the network still receives the sampled image.
     residual_base: Literal["noisy", "source"] = "noisy"
+    feature_input: Literal["noisy", "source"] = "noisy"
     source_conditioning: bool = False
     progress_conditioning: bool = False
     guide_encoding: Literal["raw", "ink", "sqrt_ink"] = "raw"
@@ -37,6 +38,8 @@ class ModelConfig(Settings):
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.feature_input == "source" and self.residual_base != "source":
+            raise ValueError("Source feature input requires the source residual base")
         if self.residual_base == "source" and (
             self.architecture != "unet"
             or self.output_mode != "residual"

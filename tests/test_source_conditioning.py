@@ -125,13 +125,21 @@ def test_runtime_guide_remains_original_and_downsampled_at_every_iteration():
         np.testing.assert_array_equal(actual, expected[2 - index % 3])
 
 
-@pytest.mark.parametrize("residual_base", ["noisy", "source"])
-def test_guided_onnx_preserves_krita_api_and_matches_jax(tmp_path, residual_base):
+@pytest.mark.parametrize(
+    "residual_base,feature_input", [("noisy", "noisy"), ("source", "noisy"), ("source", "source")]
+)
+def test_guided_onnx_preserves_krita_api_and_matches_jax(tmp_path, residual_base, feature_input):
     pytest.importorskip("jax2onnx")
     from lineartgen.export import export_model
 
     c = config()
-    c = c.model_copy(update={"model": c.model.model_copy(update={"residual_base": residual_base})})
+    c = c.model_copy(
+        update={
+            "model": c.model.model_copy(
+                update={"residual_base": residual_base, "feature_input": feature_input}
+            )
+        }
+    )
     model = create_model(c.model, rngs=nnx.Rngs(7))
     # Exercise nonzero learned branches so ignoring the guide cannot pass.
     model.guide_encoder.kernel[...] = 0.03

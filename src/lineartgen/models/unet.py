@@ -39,6 +39,7 @@ class UNet(nnx.Module):
         self.output_clip_gradient = config.output_clip_gradient
         self.residual_scale_floor = config.residual_scale_floor
         self.residual_base = config.residual_base
+        self.feature_input = config.feature_input
         self.source_conditioning = config.source_conditioning
         self.progress_conditioning = config.progress_conditioning
         self.guide_encoding = config.guide_encoding
@@ -140,6 +141,7 @@ class UNet(nnx.Module):
     def __call__(
         self, image, noise_level, insert, guide=None, progress=None, *, return_preclip=False
     ):
+        sampled = image
         if self.source_conditioning:
             if guide is None or guide.shape != image.shape:
                 raise ValueError("Source-conditioned UNet requires a matching original rough guide")
@@ -160,6 +162,9 @@ class UNet(nnx.Module):
                 detail_bias = self.progress_detail(feature)
         elif progress is not None:
             raise ValueError("This UNet is not configured for progress conditioning")
+
+        if self.feature_input == "source":
+            image = guide
 
         def upsample(x):
             return jax.image.resize(
@@ -200,7 +205,7 @@ class UNet(nnx.Module):
         # without also having to cancel every sampled Gaussian pixel. Keep
         # the incoming image at protected pixels, including repeated sampling.
         anchor = (
-            jnp.where(noise_level > 0, guide, image) if self.residual_base == "source" else image
+            jnp.where(noise_level > 0, guide, sampled) if self.residual_base == "source" else image
         )
         return denoised_output(
             output,
