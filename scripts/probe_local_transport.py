@@ -13,17 +13,18 @@ from lineartgen.training.local_transport import local_opacity_transport
 from lineartgen.training.losses import image_loss
 
 
-def run(root, config_path):
+def run(root, config_path, distance):
     assert not root.exists()
     root.mkdir(parents=True)
     config = load_config(config_path)
-    weights = (0.0, 0.1, 0.3, 1.0, 3.0)
+    weights = (0.0, 0.1, 0.3, 1.0, 3.0, 10.0)
     write(
         root / "plan.json",
         dict(
             widths=[0.6, 1.4, 3.4],
             shifts=[1, 2],
             tile=16,
+            distance=distance,
             candidates="41 interpolations, their opaque union and blank",
             coefficients=weights,
             config=str(config_path.resolve()),
@@ -64,7 +65,9 @@ def run(root, config_path):
                     )[0]
                     for c in configs
                 ]
-                transport = local_opacity_transport(prediction, targets, noise > 0)
+                transport = local_opacity_transport(
+                    prediction, targets, noise > 0, distance=distance
+                )
                 return jnp.stack((*bases, transport))
 
             values = np.asarray(score(jnp.asarray(np.stack(candidates))))
@@ -114,7 +117,7 @@ def run(root, config_path):
         ),
     )
     for row in summaries:
-        if row["coefficient"] in (0.0, 1.0, 3.0):
+        if row["coefficient"] in (0.0, 1.0, 3.0, 10.0):
             print(row)
 
 
@@ -122,5 +125,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--config", type=Path, required=True)
+    parser.add_argument("--distance", choices=("squared", "smooth_absolute"), default="squared")
     args = parser.parse_args()
-    run(args.root, args.config)
+    run(args.root, args.config, args.distance)

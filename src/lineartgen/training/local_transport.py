@@ -21,7 +21,7 @@ def _tiles(image, size):
     )
 
 
-def local_opacity_transport(preclip, target, active, *, tile=16):
+def local_opacity_transport(preclip, target, active, *, tile=16, distance="squared"):
     """Match each tile's sorted opacity; retain AA targets and protected pixels.
 
     White targets represent a saturation interval. Gray and black targets
@@ -36,7 +36,12 @@ def local_opacity_transport(preclip, target, active, *, tile=16):
     prediction = jnp.where(active, (1 - preclip) / 2, truth)
     p, y = jnp.sort(_tiles(prediction, tile), axis=-1), jnp.sort(_tiles(truth, tile), axis=-1)
     difference = jnp.where(y == 0, jax.nn.relu(p), p - y)
-    error = difference**2
+    if distance == "squared":
+        error = difference**2
+    elif distance == "smooth_absolute":
+        error = jnp.sqrt(difference**2 + 1e-6) - 0.001
+    else:
+        raise ValueError(f"Unknown local transport distance: {distance}")
     ink = y > 0.02
     core = jnp.where(ink, error, 0).sum(-1) / jnp.maximum(ink.sum(-1), 1)
     paper = jnp.where(~ink, error, 0).sum(-1) / jnp.maximum((~ink).sum(-1), 1)

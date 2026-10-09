@@ -1,17 +1,23 @@
 import jax
 import jax.numpy as jnp
 import numpy as np
+import pytest
 
 from lineartgen.training.local_transport import local_opacity_transport
 
 
-def test_antialias_identity_saturation_and_protection():
+@pytest.mark.parametrize("distance", ["squared", "smooth_absolute"])
+def test_antialias_identity_saturation_and_protection(distance):
     alpha = np.zeros((1, 16, 16, 1), np.float32)
     alpha[:, :, 7, :] = 1
     alpha[:, :, 6, :] = 0.25
     target = jnp.asarray(1 - 2 * alpha)
     active = jnp.ones_like(target, dtype=bool)
-    run = jax.jit(jax.value_and_grad(local_opacity_transport))
+
+    def loss(p, y, a):
+        return local_opacity_transport(p, y, a, distance=distance)
+
+    run = jax.jit(jax.value_and_grad(loss))
     value, gradient = run(target, target, active)
     assert value == 0 and np.count_nonzero(gradient) == 0
     physical = jnp.where(target == 1, 2.0, target)
