@@ -207,6 +207,7 @@ class LossConfig(Settings):
     paper_peak_weight: float = Field(default=0.0, ge=0)
     paper_peak_tile: int = Field(default=8, ge=1, le=32)
     ink_keep_weight: float = Field(default=0.0, ge=0)
+    opacity_deficit_weight: float = Field(default=0.0, ge=0, allow_inf_nan=False)
     neighbor_keep_weight: float = Field(default=0.0, ge=0)
     neighbor_paper_weight: float = Field(default=0.0, ge=0)
     neighbor_radius: int = Field(default=1, ge=0, le=4)

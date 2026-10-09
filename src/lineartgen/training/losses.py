@@ -8,6 +8,7 @@ from .cldice import centerline_loss
 from .ink_structure import ink_structure_losses
 from .interval import interval_squared_error
 from .lineart import line_region_loss, profile_loss
+from .opacity import opacity_deficit_loss
 from .paper import paper_peak_loss
 
 
@@ -78,6 +79,10 @@ def image_loss(
     loss = denoise + config.identity_weight * identity
     loss += config.edge_weight * edge + config.contrast_weight * contrast
     parts = {"denoise": denoise, "identity": identity, "edge": edge, "contrast": contrast}
+    if config.opacity_deficit_weight:
+        opacity_deficit = opacity_deficit_loss(prediction, clean, active)
+        loss += config.opacity_deficit_weight * opacity_deficit
+        parts["opacity_deficit"] = opacity_deficit
     if config.paper_peak_weight:
         paper = paper_peak_loss(prediction, clean, active, tile=config.paper_peak_tile)
         loss += config.paper_peak_weight * paper
