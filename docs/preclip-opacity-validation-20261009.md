@@ -1,0 +1,9 @@
+# Physical-preclip opacity validation
+
+Implementation and the conditional follow-up plan are committed at `a5bc4c1` on `experiment/preclip-opacity-fitting-20261009`. The opacity-only extension is opt-in; ordinary pixel loss, hard-clipped inference and recursive feedback retain their previous behavior. Both training entry points supply physical preclip values when enabled. Unsupported nested/STE configurations and a preclip flag without a positive opacity coefficient are rejected.
+
+The focused run passed12 tests in26.37s. The complete CPU suite passed **298 tests, 3 inherited deprecation warnings, 432.82s**. All104 source/test files bound at the beginning of the full run remain unchanged. Ruff passed for the changed implementation and preparation script, which also compiled successfully. Logs and file hashes are under `runs/preclip-opacity-validation-20261009/`.
+
+The tests demonstrate a nonzero corrective gradient through the opacity term at physical values above white, agreement inside the image range, stationary correct gray values, no extra force on background/protected/over-dark values, and propagation to actual model parameters in both trainers. The known fully white-saturated example has zero parameter gradient with the old clipped-opacity term and nonzero gradient with the extension. Stage weights0/.5 and clipped recursive outputs are exercised.
+
+These checks establish implementation behavior, not learned image quality. At this record, no preclip candidate GPU update has run; preparation and training await the completed clipped-opacity decision. If the clipped comparison advances, this follow-up is deferred. If rejected, its frozen coefficients.1/.3, fixed data/schedule/gates, both historical and clipped-arm exact replays, and final native review remain required before local advancement.
