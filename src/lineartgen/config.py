@@ -113,6 +113,8 @@ class DataConfig(Settings):
     image_scale: float = Field(default=1.1, gt=0)
     alpha_mode: Literal["ignore", "white"] = "ignore"
     prepared_root: Path | None = None
+    # Read the level-0 teacher while independently retaining sampled recursion depth.
+    native_training_targets: bool = False
 
     @model_validator(mode="after")
     def validate_scales(self):
@@ -124,6 +126,8 @@ class DataConfig(Settings):
             or len(set(self.scale_levels)) != len(self.scale_levels)
         ):
             raise ValueError("scale_levels must give a unique nonnegative level per directory")
+        if self.native_training_targets and 0 not in self.resolved_scale_levels:
+            raise ValueError("native_training_targets requires a level-0 directory")
         return self
 
     @property

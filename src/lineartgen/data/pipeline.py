@@ -125,7 +125,10 @@ class LoadSample:
         source = self.sources[rng.integers(len(self.sources))]
         scale_rng = np.random.default_rng([self.seed, int(index) // self.batch_size, 1])
         variant_index = int(scale_rng.integers(len(source.variants)))
-        path, width, height = source.variants[variant_index]
+        teacher_index = variant_index
+        if self.training and self.config.native_training_targets:
+            teacher_index = self.config.resolved_scale_levels.index(0)
+        path, width, height = source.variants[teacher_index]
         if self.config.prepared_root is not None:
             prepared = self.config.prepared_root / path.relative_to(self.config.root).with_suffix(
                 path.suffix + ".tif"
