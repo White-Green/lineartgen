@@ -208,6 +208,7 @@ class LossConfig(Settings):
     paper_peak_tile: int = Field(default=8, ge=1, le=32)
     ink_keep_weight: float = Field(default=0.0, ge=0)
     opacity_deficit_weight: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    opacity_deficit_preclip: bool = False
     neighbor_keep_weight: float = Field(default=0.0, ge=0)
     neighbor_paper_weight: float = Field(default=0.0, ge=0)
     neighbor_radius: int = Field(default=1, ge=0, le=4)
@@ -226,6 +227,12 @@ class LossConfig(Settings):
     # Sketch degradation does not vanish with Gaussian variance. Bound its loss weight.
     noise_weight_floor: float = Field(default=0.0, ge=0, lt=1)
     contrast_active_only: bool = False
+
+    @model_validator(mode="after")
+    def validate_opacity_preclip(self):
+        if self.opacity_deficit_preclip and not self.opacity_deficit_weight:
+            raise ValueError("opacity_deficit_preclip requires a positive opacity_deficit_weight")
+        return self
 
 
 class TrainConfig(Settings):
@@ -280,6 +287,10 @@ class ExperimentConfig(Settings):
             self.model.architecture != "unet" or self.model.output_clip_gradient != "hard"
         ):
             raise ValueError("interval_mse requires a single UNet with hard output clipping")
+        if self.loss.opacity_deficit_preclip and (
+            self.model.architecture != "unet" or self.model.output_clip_gradient != "hard"
+        ):
+            raise ValueError("Preclip opacity requires a single UNet with hard output clipping")
         size = self.data.crop_size
         if size < self.model.minimum_size or size & (size - 1):
             raise ValueError("crop_size must be a power of two and at least the model minimum")

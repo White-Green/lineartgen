@@ -80,7 +80,14 @@ def image_loss(
     loss += config.edge_weight * edge + config.contrast_weight * contrast
     parts = {"denoise": denoise, "identity": identity, "edge": edge, "contrast": contrast}
     if config.opacity_deficit_weight:
-        opacity_deficit = opacity_deficit_loss(prediction, clean, active)
+        if config.opacity_deficit_preclip and preclip is None:
+            raise ValueError("Preclip opacity requires the physical pre-clip prediction")
+        opacity_deficit = opacity_deficit_loss(
+            preclip if config.opacity_deficit_preclip else prediction,
+            clean,
+            active,
+            unclipped=config.opacity_deficit_preclip,
+        )
         loss += config.opacity_deficit_weight * opacity_deficit
         parts["opacity_deficit"] = opacity_deficit
     if config.paper_peak_weight:
