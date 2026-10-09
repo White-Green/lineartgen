@@ -316,7 +316,7 @@ def evaluate(root, arms, step):
                         )
                     )
     np.savez_compressed(out / "predictions.npz", **arrays)
-    if step == 0:
+    if step == 0 and read(root / "plan.json").get("initial_outputs_equal", True):
         for split in ("train", "probe"):
             for case in CASES:
                 for draw in DRAWS:

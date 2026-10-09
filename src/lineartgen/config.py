@@ -25,6 +25,8 @@ class ModelConfig(Settings):
     # Experimental backward rule; both choices have the same clipped forward values.
     output_clip_gradient: Literal["hard", "straight_through"] = "hard"
     residual_scale_floor: float = Field(default=0.0, ge=0, le=1)
+    # Experimental output anchor; the network still receives the sampled image.
+    residual_base: Literal["noisy", "source"] = "noisy"
     source_conditioning: bool = False
     progress_conditioning: bool = False
     guide_encoding: Literal["raw", "ink", "sqrt_ink"] = "raw"
@@ -35,6 +37,15 @@ class ModelConfig(Settings):
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.residual_base == "source" and (
+            self.architecture != "unet"
+            or self.output_mode != "residual"
+            or not self.source_conditioning
+            or self.progress_conditioning
+        ):
+            raise ValueError(
+                "Source residual base requires a guided residual UNet without progress"
+            )
         if self.progress_conditioning and (
             self.architecture != "unet"
             or not self.source_conditioning
