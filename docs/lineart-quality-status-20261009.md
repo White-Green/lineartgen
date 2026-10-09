@@ -13,6 +13,7 @@ Recent results and the next controlled comparison:
 | Square-root weights plus clipped opacity deficit | Coefficients .1/.3 reduce low-noise halos50.03%/51.13% and42.88%/44.91%, but fail19/13 of24 safeguards | Both rejected; all12 final native sheets inspected |
 | Physical preclip opacity deficit | Low-noise halo reduction46.09%/49.53% at.1 and42.35%/44.39% at.3; fails16/13 of24 safeguards. Final top-output saturation accounts for only about1–3% of missing opacity in the diagnostic cases | Both rejected;12 required plus2 paired final sheets inspected |
 | Fixed single-case fitting | At800 updates,3/4 depth3 and17/24 all-depth conditions pass numerical fitting; the intended gap is still bridged. Changing only noise drops own-case passage to0/4 | Completed, insufficient; next isolate noise memorization with fresh noise per update |
+| Fresh-noise single-case fitting | Same four independent models/cases/budget, but resample Gaussian noise every update; assess eight independent diagnostic noise draws | Running in `jax-fresh-noise-fit-20261009`; cached six-update full-state replay and fresh preflight passed |
 
 The opacity term measures missing opacity only at editable teacher-line pixels. It has no added force at an already correct gray edge, a protected pixel, or the background. This is a hypothesis about balancing losses, not a guarantee of correct geometry or a proof of the cause of halos. It can still cause excessive darkening under uncertainty; fixed metric safeguards and actual output inspection decide the result.
 
