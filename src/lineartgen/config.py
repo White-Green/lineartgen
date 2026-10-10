@@ -231,7 +231,7 @@ class GeometryDataConfig(Settings):
 
 
 class LossConfig(Settings):
-    pixel_loss: Literal["clipped_mse", "interval_mse"] = "clipped_mse"
+    pixel_loss: Literal["clipped_mse", "interval_mse", "clipped_l1"] = "clipped_mse"
     paper_peak_weight: float = Field(default=0.0, ge=0)
     paper_peak_tile: int = Field(default=8, ge=1, le=32)
     ink_keep_weight: float = Field(default=0.0, ge=0)

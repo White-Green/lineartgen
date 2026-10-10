@@ -32,6 +32,12 @@ def tone_weights(clean, power=1.0):
     return weight
 
 
+def absolute_error(prediction, target):
+    """Absolute error with the zero subgradient at an exact match."""
+    delta = prediction - target
+    return jnp.where(delta == 0, jnp.zeros_like(delta), jnp.abs(delta))
+
+
 def sobel(image):
     kernel = jnp.array(
         [
@@ -59,6 +65,8 @@ def image_loss(
         if preclip is None:
             raise ValueError("interval_mse requires the physical pre-clip prediction")
         error = interval_squared_error(preclip, clean)
+    elif config.pixel_loss == "clipped_l1":
+        error = absolute_error(prediction, clean)
     else:
         error = jnp.square(prediction - clean)
     floor = max(min_noise, config.noise_weight_floor)
