@@ -19,6 +19,7 @@ def objective(model, prepared, profiles, config):
         or config.loss.opacity_deficit_preclip
         or config.loss.gap_clearance_weight
         or config.loss.paper_band_weight
+        or config.loss.edge_energy_weight
     ):
         predictions, preclip = recursive_forward_with_preclip(
             model, prepared.noisy, prepared.noise_levels, guides=guides, progress=progress

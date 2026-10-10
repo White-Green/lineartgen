@@ -257,6 +257,7 @@ class LossConfig(Settings):
     opacity_deficit_preclip: bool = False
     gap_clearance_weight: float = Field(default=0.0, ge=0, allow_inf_nan=False)
     gap_clearance_radius: int = Field(default=3, ge=1, le=8)
+    edge_energy_weight: float = Field(default=0.0, ge=0, allow_inf_nan=False)
     paper_band_weight: float = Field(default=0.0, ge=0, allow_inf_nan=False)
     paper_band_radius: int = Field(default=3, ge=1, le=8)
     neighbor_keep_weight: float = Field(default=0.0, ge=0)
@@ -344,11 +345,14 @@ class ExperimentConfig(Settings):
             raise ValueError(
                 f"{self.loss.pixel_loss} requires a single UNet with hard output clipping"
             )
-        if (self.loss.gap_clearance_weight or self.loss.paper_band_weight) and (
-            self.model.architecture != "unet" or self.model.output_clip_gradient != "hard"
-        ):
+        if (
+            self.loss.gap_clearance_weight
+            or self.loss.paper_band_weight
+            or self.loss.edge_energy_weight
+        ) and (self.model.architecture != "unet" or self.model.output_clip_gradient != "hard"):
             raise ValueError(
-                "Paper clearance losses require a single UNet with hard output clipping"
+                "Paper clearance and edge energy losses require a single UNet "
+                "with hard output clipping"
             )
         if self.loss.opacity_deficit_preclip and (
             self.model.architecture != "unet" or self.model.output_clip_gradient != "hard"

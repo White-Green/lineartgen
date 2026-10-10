@@ -5,6 +5,7 @@ import jax.numpy as jnp
 
 from .boundary import boundary_distance_loss
 from .cldice import centerline_loss
+from .edge_energy import edge_energy_loss
 from .gap_clearance import gap_clearance_loss
 from .ink_structure import ink_structure_losses
 from .interval import interval_absolute_error, interval_squared_error
@@ -124,6 +125,12 @@ def image_loss(
         clearance = gap_clearance_loss(preclip, clean, active, config.gap_clearance_radius)
         loss += config.gap_clearance_weight * clearance
         parts["gap_clearance"] = clearance
+    if config.edge_energy_weight:
+        if preclip is None:
+            raise ValueError("edge_energy requires physical preclip predictions")
+        energy = edge_energy_loss(preclip, clean, active)
+        loss += config.edge_energy_weight * energy
+        parts["edge_energy"] = energy
     if config.paper_band_weight:
         if preclip is None:
             raise ValueError("paper_band requires physical preclip predictions")

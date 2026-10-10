@@ -44,6 +44,7 @@ def make_steps(config, *, all_subnets=True):
             or config.loss.opacity_deficit_preclip
             or config.loss.gap_clearance_weight
             or config.loss.paper_band_weight
+            or config.loss.edge_energy_weight
         ):
             predictions, preclip = recursive_forward_with_preclip(
                 model, noisy, noise_levels, guides=guides, progress=progress
