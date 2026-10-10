@@ -7,6 +7,8 @@ from optimizer-step/item keys. No evaluation image or probe is used for training
 import numpy as np
 from PIL import Image, ImageDraw
 
+from .coverage import draw_coverage
+
 KINDS = ("straight", "thin", "bezier", "corner", "junction", "crossing", "parallel", "gap", "taper")
 
 
@@ -129,7 +131,7 @@ def draw_geometry(rng, size, config, *, kind=None, include_paths=False):
 
 def mix_geometry(clean, config, *, seed, step, image_scale, include_paths=False):
     """Replace selected targets; leave the original crop stream and all other RNGs untouched."""
-    if config.probability == 0:
+    if config.probability == 0 and config.coverage_probability == 0:
         return clean, []
     if clean.ndim != 4 or clean.shape[1] != clean.shape[2] or clean.shape[3] != 1:
         raise ValueError("Geometry replacement requires square NHWC grayscale batches")
@@ -146,4 +148,13 @@ def mix_geometry(clean, config, *, seed, step, image_scale, include_paths=False)
         )
         result[item] = np.clip((gray * 2 - 1) * image_scale, -1, 1)
         records.append(dict(item=int(item), key=key, **metadata))
+    if config.coverage_probability:
+        coverage_rng = np.random.default_rng([seed, step, 0x434F5653])
+        coverage = coverage_rng.random(len(clean)) < config.coverage_probability
+        coverage[selected] = False
+        for item in np.flatnonzero(coverage):
+            key = [seed, step, int(item), 0x434F5645]
+            gray, metadata = draw_coverage(np.random.default_rng(key), clean.shape[1], config)
+            result[item] = np.clip((gray * 2 - 1) * image_scale, -1, 1)
+            records.append(dict(item=int(item), key=key, **metadata))
     return result, records

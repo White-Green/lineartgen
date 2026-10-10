@@ -216,11 +216,17 @@ class GeometryDataConfig(Settings):
     supersampling: int = Field(default=4, ge=2, le=8)
     minimum_width: float = Field(default=0.6, gt=0)
     maximum_width: float = Field(default=12.0, gt=0)
+    # Conditional probability among crops not replaced by the original paths.
+    coverage_probability: float = Field(default=0.0, ge=0, le=1)
+    coverage_minimum_width: float = Field(default=16.0, gt=0)
+    coverage_maximum_width: float = Field(default=128.0, gt=0)
 
     @model_validator(mode="after")
     def validate_widths(self):
         if self.minimum_width > self.maximum_width:
             raise ValueError("Geometry width bounds must be ordered")
+        if self.coverage_minimum_width > self.coverage_maximum_width:
+            raise ValueError("Coverage width bounds must be ordered")
         return self
 
 
