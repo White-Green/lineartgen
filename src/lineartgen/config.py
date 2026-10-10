@@ -255,6 +255,8 @@ class LossConfig(Settings):
     ink_keep_weight: float = Field(default=0.0, ge=0)
     opacity_deficit_weight: float = Field(default=0.0, ge=0, allow_inf_nan=False)
     opacity_deficit_preclip: bool = False
+    gap_clearance_weight: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    gap_clearance_radius: int = Field(default=3, ge=1, le=8)
     neighbor_keep_weight: float = Field(default=0.0, ge=0)
     neighbor_paper_weight: float = Field(default=0.0, ge=0)
     neighbor_radius: int = Field(default=1, ge=0, le=4)
@@ -340,6 +342,10 @@ class ExperimentConfig(Settings):
             raise ValueError(
                 f"{self.loss.pixel_loss} requires a single UNet with hard output clipping"
             )
+        if self.loss.gap_clearance_weight and (
+            self.model.architecture != "unet" or self.model.output_clip_gradient != "hard"
+        ):
+            raise ValueError("gap_clearance requires a single UNet with hard output clipping")
         if self.loss.opacity_deficit_preclip and (
             self.model.architecture != "unet" or self.model.output_clip_gradient != "hard"
         ):

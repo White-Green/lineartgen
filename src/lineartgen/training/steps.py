@@ -39,7 +39,11 @@ def make_steps(config, *, all_subnets=True):
         targets, noise_levels, noisy = prepared[:3]
         guides = prepared.guides if config.model.source_conditioning else None
         progress = prepared.progress if config.model.progress_conditioning else None
-        if config.loss.pixel_loss == "interval_mse" or config.loss.opacity_deficit_preclip:
+        if (
+            config.loss.pixel_loss in ("interval_mse", "interval_l1")
+            or config.loss.opacity_deficit_preclip
+            or config.loss.gap_clearance_weight
+        ):
             predictions, preclip = recursive_forward_with_preclip(
                 model, noisy, noise_levels, guides=guides, progress=progress
             )

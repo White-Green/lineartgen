@@ -5,6 +5,7 @@ import jax.numpy as jnp
 
 from .boundary import boundary_distance_loss
 from .cldice import centerline_loss
+from .gap_clearance import gap_clearance_loss
 from .ink_structure import ink_structure_losses
 from .interval import interval_absolute_error, interval_squared_error
 from .lineart import line_region_loss, profile_loss
@@ -116,6 +117,12 @@ def image_loss(
         )
         loss += config.opacity_deficit_weight * opacity_deficit
         parts["opacity_deficit"] = opacity_deficit
+    if config.gap_clearance_weight:
+        if preclip is None:
+            raise ValueError("gap_clearance requires physical preclip predictions")
+        clearance = gap_clearance_loss(preclip, clean, active, config.gap_clearance_radius)
+        loss += config.gap_clearance_weight * clearance
+        parts["gap_clearance"] = clearance
     if config.paper_peak_weight:
         paper = paper_peak_loss(prediction, clean, active, tile=config.paper_peak_tile)
         loss += config.paper_peak_weight * paper
