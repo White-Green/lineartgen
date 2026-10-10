@@ -267,6 +267,7 @@ class LossConfig(Settings):
     boundary_radius: int = Field(default=4, ge=1, le=16)
     balance_tones: bool = True
     tone_balance_power: float = Field(default=1.0, ge=0, le=1)
+    local_tone_radius: int = Field(default=0, ge=0, le=16)
     identity_weight: float = Field(default=0.1, ge=0)
     edge_weight: float = Field(default=0.1, ge=0)
     contrast_weight: float = Field(default=0.01, ge=0)
@@ -276,6 +277,8 @@ class LossConfig(Settings):
 
     @model_validator(mode="after")
     def validate_opacity_preclip(self):
+        if self.local_tone_radius and (not self.balance_tones or not self.tone_balance_power):
+            raise ValueError("local_tone_radius requires enabled nonzero tone balancing")
         if self.opacity_deficit_preclip and not self.opacity_deficit_weight:
             raise ValueError("opacity_deficit_preclip requires a positive opacity_deficit_weight")
         return self

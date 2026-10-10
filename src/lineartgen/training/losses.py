@@ -17,7 +17,7 @@ def region_mean(error, weights, region):
     return (error * weights).sum() / jnp.maximum(weights.sum(), 1e-6)
 
 
-def tone_weights(clean, power=1.0):
+def tone_weights(clean, power=1.0, local_radius=0):
     if power == 0:
         return jnp.ones_like(clean)
     black = jnp.clip((1 - clean) * 0.5, 0, 1)
@@ -29,6 +29,20 @@ def tone_weights(clean, power=1.0):
     if power != 1:
         weight = jnp.power(weight, power)
         weight = weight / weight.mean(axes, keepdims=True)
+    if local_radius:
+        window = 2 * local_radius + 1
+
+        def local_sum(x):
+            x = jax.lax.reduce_window(x, 0.0, jax.lax.add, (1, 1, window, 1), (1, 1, 1, 1), "SAME")
+            return jax.lax.reduce_window(
+                x, 0.0, jax.lax.add, (1, window, 1, 1), (1, 1, 1, 1), "SAME"
+            )
+
+        density = local_sum(black) / local_sum(jnp.ones_like(black))
+        local = black / (2 * density + 1e-6)
+        local += white / (2 * (1 - density) + 1e-6)
+        weight *= jnp.power(local, power)
+        weight /= weight.mean(1, keepdims=True).mean(2, keepdims=True)
     return weight
 
 
@@ -57,7 +71,7 @@ def image_loss(
 ):
     active = noise_level > min_noise
     weights = (
-        tone_weights(clean, config.tone_balance_power)
+        tone_weights(clean, config.tone_balance_power, config.local_tone_radius)
         if config.balance_tones
         else jnp.ones_like(clean)
     )
