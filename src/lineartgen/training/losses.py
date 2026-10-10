@@ -6,7 +6,7 @@ import jax.numpy as jnp
 from .boundary import boundary_distance_loss
 from .cldice import centerline_loss
 from .ink_structure import ink_structure_losses
-from .interval import interval_squared_error
+from .interval import interval_absolute_error, interval_squared_error
 from .lineart import line_region_loss, profile_loss
 from .opacity import opacity_deficit_loss
 from .paper import paper_peak_loss
@@ -61,10 +61,14 @@ def image_loss(
         if config.balance_tones
         else jnp.ones_like(clean)
     )
-    if config.pixel_loss == "interval_mse":
+    if config.pixel_loss in ("interval_mse", "interval_l1"):
         if preclip is None:
-            raise ValueError("interval_mse requires the physical pre-clip prediction")
-        error = interval_squared_error(preclip, clean)
+            raise ValueError(f"{config.pixel_loss} requires the physical pre-clip prediction")
+        error = (
+            interval_absolute_error(preclip, clean)
+            if config.pixel_loss == "interval_l1"
+            else interval_squared_error(preclip, clean)
+        )
     elif config.pixel_loss == "clipped_l1":
         error = absolute_error(prediction, clean)
     else:

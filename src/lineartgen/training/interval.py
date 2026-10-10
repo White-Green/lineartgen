@@ -15,3 +15,11 @@ def interval_squared_error(preclip, clean):
     difference = jnp.where(clean == 1, jnp.minimum(difference, 0), difference)
     difference = jnp.where(clean == -1, jnp.maximum(difference, 0), difference)
     return jnp.square(difference)
+
+
+def interval_absolute_error(preclip, clean):
+    """Absolute distance to the same valid set, with zero subgradient at a match."""
+    difference = preclip - clean
+    difference = jnp.where(clean == 1, jnp.minimum(difference, 0), difference)
+    difference = jnp.where(clean == -1, jnp.maximum(difference, 0), difference)
+    return jnp.where(difference == 0, jnp.zeros_like(difference), jnp.abs(difference))

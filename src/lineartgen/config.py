@@ -231,7 +231,7 @@ class GeometryDataConfig(Settings):
 
 
 class LossConfig(Settings):
-    pixel_loss: Literal["clipped_mse", "interval_mse", "clipped_l1"] = "clipped_mse"
+    pixel_loss: Literal["clipped_mse", "interval_mse", "clipped_l1", "interval_l1"] = "clipped_mse"
     paper_peak_weight: float = Field(default=0.0, ge=0)
     paper_peak_tile: int = Field(default=8, ge=1, le=32)
     ink_keep_weight: float = Field(default=0.0, ge=0)
@@ -311,10 +311,12 @@ class ExperimentConfig(Settings):
             raise ValueError("bridge training requires progress_conditioning")
         if self.model.progress_conditioning and self.matching.method != "independent":
             raise ValueError("Progress-conditioned training requires independent Gaussian noise")
-        if self.loss.pixel_loss == "interval_mse" and (
+        if self.loss.pixel_loss in ("interval_mse", "interval_l1") and (
             self.model.architecture != "unet" or self.model.output_clip_gradient != "hard"
         ):
-            raise ValueError("interval_mse requires a single UNet with hard output clipping")
+            raise ValueError(
+                f"{self.loss.pixel_loss} requires a single UNet with hard output clipping"
+            )
         if self.loss.opacity_deficit_preclip and (
             self.model.architecture != "unet" or self.model.output_clip_gradient != "hard"
         ):
