@@ -90,6 +90,8 @@ def evaluate(root, step):
 
 def summarize(root, step):
     methods = read(root / "plan.json").get("comparison_methods", list(METHODS))
+    control_method = read(root / "plan.json").get("local_control_method", "pixel")
+    assert control_method in methods
     out = root / f"broad/step-{step}"
     rows = read(out / "metrics.json")["rows"]
     summaries, failures = [], []
@@ -118,8 +120,8 @@ def summarize(root, step):
                             )
                         }
                     checks = {}
-                    for method in (m for m in methods if m != "pixel"):
-                        control, candidate = means["pixel"], means[method]
+                    for method in (m for m in methods if m != control_method):
+                        control, candidate = means[control_method], means[method]
                         check = dict(
                             ink=candidate["ink_deficit_fraction"]
                             <= control["ink_deficit_fraction"] + 0.005,
@@ -168,8 +170,8 @@ def summarize(root, step):
             )
             for method in methods
         }
-        for method in (m for m in methods if m != "pixel"):
-            passed = means[method] <= 0.9 * means["pixel"]
+        for method in (m for m in methods if m != control_method):
+            passed = means[method] <= 0.9 * means[control_method]
             halo_checks.append(dict(split=split, method=method, means=means, passed=passed))
             if not passed:
                 failures.append(dict(method=method, split=split, guard="blur_halo_10percent"))
@@ -193,9 +195,9 @@ def summarize(root, step):
                     for k in keys
                     if any(r[k] is not None for r in group)
                 }
-            for method in (m for m in methods if m != "pixel"):
+            for method in (m for m in methods if m != control_method):
                 checks = {
-                    k: means[method][k] <= means["pixel"][k] + tolerance
+                    k: means[method][k] <= means[control_method][k] + tolerance
                     for k, tolerance in (
                         ("profile_width_mae_px", 0.10),
                         ("connection_cut_rate", 0.01),

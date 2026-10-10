@@ -101,6 +101,10 @@ def prepare(root):
             warm_start_methods=list(METHODS),
             comparison_methods=["band4000", *METHODS],
             control_methods=["band4000"],
+            local_control_method="band4000",
+            replay_source=str(
+                WORKTREES / "jax-paper-band-long-run-20261010/runs/paper-band-long-run-20261010"
+            ),
             control_parents=references,
             matched_controls=matched,
             parents=parent_records,

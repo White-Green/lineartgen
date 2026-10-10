@@ -16,6 +16,7 @@ with (root / "coordinator.lock").open("a") as lock:
     assert read(root / "test-results.json")["passed"]
     commands = [
         ("startup4006", ["scripts/train_paper_band_long_run.py", "train", "--end", "4006"]),
+        ("startup-replay", ["scripts/audit_paper_band_replay.py"]),
         ("local4000", ["scripts/evaluate_procedural_structure.py", "--step", "4000"]),
         ("control4000", ["scripts/train_paper_band_long_run.py", "audit-broad", "--end", "4000"]),
     ]
