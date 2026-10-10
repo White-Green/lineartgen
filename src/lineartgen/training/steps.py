@@ -107,7 +107,7 @@ def create_optimizer(model, config):
         init_value=peak / 10 if train.warmup_steps else peak,
         peak_value=peak,
         warmup_steps=train.warmup_steps,
-        decay_steps=train.steps,
+        decay_steps=train.learning_rate_decay_steps or train.steps,
         end_value=train.minimum_learning_rate,
     )
     optimizer = nnx.Optimizer(

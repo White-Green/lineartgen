@@ -266,6 +266,8 @@ class LossConfig(Settings):
 
 class TrainConfig(Settings):
     steps: int = Field(default=100_000, ge=1)
+    # Keep a completed decay schedule when extending a restored training run.
+    learning_rate_decay_steps: int | None = Field(default=None, ge=1)
     batch_size: int = Field(default=4, ge=1)
     accumulate_steps: int = Field(default=4, ge=1)
     # Base rate before sqrt(effective_batch_size); minimum remains absolute, as in Burn.
@@ -327,6 +329,9 @@ class ExperimentConfig(Settings):
             raise ValueError("crop_size must be a power of two and at least the model minimum")
         if self.train.warmup_steps >= self.train.steps:
             raise ValueError("warmup_steps must be less than steps")
+        decay_steps = self.train.learning_rate_decay_steps or self.train.steps
+        if self.train.warmup_steps >= decay_steps:
+            raise ValueError("warmup_steps must be less than learning_rate_decay_steps")
         if self.train.minimum_learning_rate > self.train.peak_learning_rate:
             raise ValueError("minimum_learning_rate must not exceed the sqrt(batch)-scaled peak")
         if self.sketch.mode != "none" and self.matching.method != "independent":
