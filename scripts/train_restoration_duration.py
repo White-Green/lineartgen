@@ -6,6 +6,7 @@ import hashlib
 import json
 import shutil
 import time
+from collections import Counter
 from pathlib import Path
 
 import jax
@@ -280,6 +281,49 @@ def audit_broad(root, step):
     )
 
 
+def sampling_resume(destination, start, segment_start):
+    path = destination / "sampling.jsonl"
+    lines = path.read_text().splitlines() if path.exists() else []
+    kept, removed = [], []
+    for index, line in enumerate(lines):
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            if index != len(lines) - 1:
+                raise
+            removed.append(line)
+            continue
+        (kept if row["step"] <= start else removed).append(line)
+    rows = [json.loads(line) for line in kept]
+    assert [row["step"] for row in rows] == list(range(START + 1, start + 1))
+    if removed:
+        write(
+            destination / "sampling-resume-history" / f"{time.time_ns()}.json",
+            dict(checkpoint_step=start, removed=removed),
+        )
+        path.write_text("".join(line + "\n" for line in kept))
+    counts = Counter({d: 0 for d in range(1, 7)})
+    teachers = Counter()
+    for row in rows:
+        assert sum(row["teacher_counts"].values()) == 4
+        if row["step"] > segment_start:
+            counts[row["depth"]] += 1
+            teachers.update(row["teacher_counts"])
+    return counts, teachers
+
+
+def retain_milestone(root, saved, arms, step):
+    restore_audit(root, saved, arms, step)
+    shutil.copytree(
+        root / f"training/checkpoints/{step}",
+        root / f"milestone-checkpoints/{step}",
+        dirs_exist_ok=True,
+    )
+    if step != 4006:
+        snapshot(root, arms, step)
+        evaluate(root, arms, step)
+
+
 def train(root, end):
     check(root)
     assert end in (4006, 8000, STEPS) and jax.devices()[0].platform != "cpu"
@@ -299,25 +343,23 @@ def train(root, end):
         if saved.latest_step() is None:
             restore_parents(root, arms)
             lineart_state.save(saved, arms, START)
-            restore_audit(root, saved, arms, START)
-            shutil.copytree(
-                destination / f"checkpoints/{START}", root / f"milestone-checkpoints/{START}"
-            )
-            snapshot(root, arms, START)
-            evaluate(root, arms, START)
             start = START
         else:
             start = lineart_state.restore(saved, arms)
             restore_journal(destination, start)
-        assert start <= end
+        segment_start = {4006: 4000, 8000: 4006, 16000: 8000}[end]
+        assert segment_start <= start <= end
+        if start == START:
+            retain_milestone(root, saved, arms, START)
         if end > 4006:
             assert read(destination / "restore-audit-4006.json")["all_state_exact"]
         stream = batches(
             training, config.data, batch_size=4, count=end - start, seed=SEED, start=start
         )
         key = jax.random.PRNGKey(SEED)
-        counts = {d: 0 for d in range(1, 7)}
-        teachers = {}
+        counts, teachers = sampling_resume(destination, start, segment_start)
+        if start == end:
+            retain_milestone(root, saved, arms, end)
         try:
             for step, batch in enumerate(stream, start=start):
                 begin = time.perf_counter()
@@ -328,10 +370,12 @@ def train(root, end):
                     step=step,
                     image_scale=config.data.image_scale,
                 )
+                batch_teachers = Counter()
                 for record in records:
                     kind = record["kinds"][0] if record.get("coverage") else "original_geometry"
-                    teachers[kind] = teachers.get(kind, 0) + 1
-                teachers["native_corpus"] = teachers.get("native_corpus", 0) + 4 - len(records)
+                    batch_teachers[kind] += 1
+                batch_teachers["native_corpus"] = 4 - len(records)
+                teachers.update(batch_teachers)
                 depth = config.diffusion.levels_for_scale(
                     512, config.model.minimum_size, batch.scale_level
                 )
@@ -369,6 +413,15 @@ def train(root, end):
                     seconds=time.perf_counter() - begin,
                     clean_sha256=hashlib.sha256(clean.tobytes()).hexdigest(),
                 )
+                sampling = dict(
+                    step=complete,
+                    depth=depth,
+                    scale_level=batch.scale_level,
+                    teacher_counts=dict(batch_teachers),
+                    clean_sha256=row["clean_sha256"],
+                )
+                with (destination / "sampling.jsonl").open("a") as f:
+                    f.write(json.dumps(sampling) + "\n")
                 if step < START + 6 or complete % 25 == 0:
                     with (destination / "training.jsonl").open("a") as f:
                         f.write(json.dumps(row, allow_nan=False) + "\n")
@@ -377,20 +430,13 @@ def train(root, end):
                 if complete % 100 == 0 or complete == 4006:
                     lineart_state.save(saved, arms, complete)
                 if complete in (4006, 8000, STEPS):
-                    restore_audit(root, saved, arms, complete)
-                    shutil.copytree(
-                        destination / f"checkpoints/{complete}",
-                        root / f"milestone-checkpoints/{complete}",
-                    )
-                    if complete != 4006:
-                        snapshot(root, arms, complete)
-                        evaluate(root, arms, complete)
+                    retain_milestone(root, saved, arms, complete)
         finally:
             stream.close()
         write(
-            destination / f"segment-{start}-{end}.json",
+            destination / f"segment-{segment_start}-{end}.json",
             dict(
-                start=start,
+                start=segment_start,
                 end=end,
                 depth_counts=counts,
                 teacher_counts=teachers,
