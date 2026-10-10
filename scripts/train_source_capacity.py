@@ -56,8 +56,14 @@ def prepare(root):
         }
     )
     save_config(config, root / "configs/wide.json")
-    model, initial_config = load_inference(initial)
+    model, initial_config = load_inference(parent / "snapshots/step-0/l1/raw")
     assert initial_config.model == base.model
+    reference, _ = load_inference(initial)
+    jax.tree.map(
+        np.testing.assert_array_equal,
+        nnx.state(model, nnx.Param),
+        nnx.state(reference, nnx.Param),
+    )
     expanded = widen_unet(model, base.model, config.model, seed=2026101083)
     warm = root / "expanded-initial"
     save_inference(
