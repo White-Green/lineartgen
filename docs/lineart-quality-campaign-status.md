@@ -1,3 +1,5 @@
+Current results are tracked in [the 2026-10-10 status](lineart-quality-status-20261009.md). The following is the retained 2026-10-08 historical summary.
+
 # Lineart quality campaign status
 
 Updated 2026-10-08, 22:53 UTC. **No replacement model is adopted yet.** Production
