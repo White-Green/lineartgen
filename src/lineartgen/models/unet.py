@@ -53,13 +53,14 @@ class UNet(nnx.Module):
         ]
         encoder_outputs = [config.channels[0] + 1, *config.channels[1:]]
 
-        def block(inputs, outputs, dilation=1):
+        def block(inputs, outputs, dilation=1, hidden_channels=None):
             return ConvBlock(
                 inputs,
                 outputs,
                 kernel_size=config.kernel_size,
                 depth=config.convolutions_per_block,
                 dilation=dilation,
+                hidden_channels=hidden_channels,
                 rngs=rngs,
             )
 
@@ -80,6 +81,8 @@ class UNet(nnx.Module):
         for index, (skip_channels, outputs) in enumerate(
             zip(reversed(encoder_outputs), reversed(encoder_inputs), strict=True)
         ):
+            if index == len(config.channels) - 1:
+                outputs = config.final_decoder_channels
             decoders.append(
                 block(
                     skip_channels + previous,
@@ -89,7 +92,7 @@ class UNet(nnx.Module):
             )
             previous = outputs
         self.decoders = nnx.List(decoders)
-        self.head = block(1 + previous, 1)
+        self.head = block(1 + previous, 1, hidden_channels=config.head_hidden_channels)
         if self.source_conditioning:
             # Zero additions preserve the existing model at initialization. The
             # original rough image is available at inference, unlike the teacher.

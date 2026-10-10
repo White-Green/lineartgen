@@ -35,11 +35,17 @@ class ModelConfig(Settings):
     guide_encoding: Literal["raw", "ink", "sqrt_ink"] = "raw"
     # Optional full-resolution output branch; zero preserves the original model.
     detail_channels: int = Field(default=0, ge=0)
+    final_decoder_channels: int = Field(default=2, ge=2)
+    head_hidden_channels: int | None = Field(default=None, ge=1)
     skip_mode: Literal["post_pool", "pre_pool"] = "post_pool"
     bottleneck_dilation: int = Field(default=1, ge=1, le=4)
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.architecture != "unet" and (
+            self.final_decoder_channels != 2 or self.head_hidden_channels is not None
+        ):
+            raise ValueError("Output channel overrides require a UNet")
         if self.sampling_mode == "one_pass" and self.feature_input != "source":
             raise ValueError("One-pass restoration requires source feature input")
         if self.feature_input == "source" and self.residual_base != "source":

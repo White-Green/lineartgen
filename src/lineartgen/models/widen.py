@@ -41,11 +41,11 @@ def widen_unet(model, old_config, new_config, *, seed):
     if not isinstance(model, UNet):
         raise ValueError("Widening requires a non-nested UNet")
     old, new = old_config.model_dump(), new_config.model_dump()
-    for key in ("channels", "detail_channels"):
+    for key in ("channels", "detail_channels", "final_decoder_channels", "head_hidden_channels"):
         old.pop(key)
         new.pop(key)
     if old != new:
-        raise ValueError("Only channels and detail_channels may change")
+        raise ValueError("Only channel widths may change")
     a, b = old_config.channels, new_config.channels
     if len(a) != len(b) or any(x > y for x, y in zip(a, b, strict=True)):
         raise ValueError("Every channel width must be preserved or increased")
@@ -53,6 +53,12 @@ def widen_unet(model, old_config, new_config, *, seed):
         raise ValueError("The detail branch must already exist in both models")
     if old_config.detail_channels > new_config.detail_channels:
         raise ValueError("Detail width cannot shrink")
+    if old_config.final_decoder_channels > new_config.final_decoder_channels:
+        raise ValueError("Final decoder width cannot shrink")
+    old_hidden = old_config.head_hidden_channels or (1 + old_config.final_decoder_channels)
+    new_hidden = new_config.head_hidden_channels or (1 + new_config.final_decoder_channels)
+    if old_hidden > new_hidden:
+        raise ValueError("Head hidden width cannot shrink")
     widened = UNet(new_config, rngs=nnx.Rngs(seed))
     for i, (source, target) in enumerate(zip(model.encoders, widened.encoders, strict=True)):
         inputs = range(2) if i == 0 else list(range(a[i - 1]))

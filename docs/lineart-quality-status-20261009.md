@@ -90,6 +90,11 @@ CPUで各1k学習した。大きい判別器の識別AUROCは改善したが、�
 229チェック中58失敗。白紙最大alpha.135919も上限超過。44テスト、14枚の最終画像、全状態復元・対照一致を確認。
 [結果](../../jax-strong-corruption-mixture-20261010/docs/strong-corruption-mixture-results-20261010.md)。
 
+**V準備完了:** Qで狭いままだった最終decoderを2→16、主head中間層を3→32へ拡大。
+130,605→151,245パラメータ。データ・loss・初期関数を固定してRと4k比較する。
+25テスト、166教師batchと全6段前処理の一致を確認。学習前GPU出力照合に通れば実startup6を保持して継続する。
+[事前計画](output-capacity-plan-20261010.md)。
+
 再帰1–6、段loss倍率0、sqrt(batch)LR、縮小後Gaussian、保護画素の一致を維持。source特徴モデルは追加Gaussianのseedを変えても同じ出力なので、反復drawを独立標本に数えない。Iの1回復元モードは新しいruntime metadata形式2を要し、配布パッケージは未変更。
 
 独立学習seed・封印した新条件の確認・Windows/Krita GUI検証は未実施。繰り返し見ている開発出力での改善だけを最終確認とは扱わない。十分な最小モデルサイズも未確定。
