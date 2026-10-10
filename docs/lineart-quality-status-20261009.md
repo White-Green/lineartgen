@@ -58,6 +58,9 @@ haloは.094889から.107789／.137291に増え、太線化・隙間融合が残�
 **追加の拡張診断:** max-dilationで線幅や平行線の隙間が消え、異なる正解から同じfloat下描きが
 できる反例を2組確認した。発生頻度の推定ではなく、Qの条件は未変更。
 [反例と次のデータ仮説](morphology-ambiguity-20261010.md)。
+Oの固定34パネルを調べると、strokes余剰inkの26.89%が誤った黒飽和にあり、現在の全lossの
+直接勾配が0だった。interval L1なら戻す向きの勾配が出ることを確認。学習改善は未確認。
+[勾配診断](wrong-saturation-gradient-20261010.md)。
 
 再帰1–6、段loss倍率0、sqrt(batch)LR、縮小後Gaussian、保護画素の一致を維持。source特徴モデルは追加Gaussianのseedを変えても同じ出力なので、反復drawを独立標本に数えない。Iの1回復元モードは新しいruntime metadata形式2を要し、配布パッケージは未変更。
 
