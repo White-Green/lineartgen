@@ -85,11 +85,10 @@ CPUで各1k学習した。大きい判別器の識別AUROCは改善したが、�
 [固定生成器の判別器診断](../../jax-fixed-generator-critic-20261010/docs/fixed-generator-critic-results-20261010.md)。
 
 
-**U実行中:** 強いぼけ・低濃度を同時に持つ図形教師は、従来4kではblur53枚／strokes53枚だった。
-元の拡張と強い拡張を半分ずつ混ぜる比較を固定し、同じ教師・family drawのまま482枚／414枚へ増やす。
-編集マスク適用前の割当数であり、細線だけの件数ではない。44テスト、166教師batchの一致、全6段のマスク・ノイズを確認。
-Tの最終14枚確認と不採用監査が完了したため、Rを対照に同じ初期値から4kの比較を開始した。
-[事前計画](../../jax-strong-corruption-mixture-20261010/docs/strong-corruption-mixture-plan-20261010.md)。
+**U完了・不採用:** 強いぼけ・低濃度の割当を増やすと、図形blurの濃度不足は.108294→.025083、
+切断率は.083333→0へ改善。一方、橋渡しは.125→.333333、strokes線幅誤差は2.339986→2.770459pxとなり、
+229チェック中58失敗。白紙最大alpha.135919も上限超過。44テスト、14枚の最終画像、全状態復元・対照一致を確認。
+[結果](../../jax-strong-corruption-mixture-20261010/docs/strong-corruption-mixture-results-20261010.md)。
 
 再帰1–6、段loss倍率0、sqrt(batch)LR、縮小後Gaussian、保護画素の一致を維持。source特徴モデルは追加Gaussianのseedを変えても同じ出力なので、反復drawを独立標本に数えない。Iの1回復元モードは新しいruntime metadata形式2を要し、配布パッケージは未変更。
 
