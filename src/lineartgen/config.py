@@ -201,11 +201,22 @@ class SketchAugmentationConfig(Settings):
     dilation_radius: int = Field(default=2, ge=0, le=2)
     dilation_blend: float = Field(default=1.0, ge=0, le=1)
     displacement: float = Field(default=2.0, ge=0, le=8)
+    strong_probability: float = Field(default=0.0, ge=0, le=1)
+    strong_opacity_min: float = Field(default=0.2, gt=0, le=1)
+    strong_opacity_max: float = Field(default=0.45, gt=0, le=1)
+    strong_blur_sigma_min: float = Field(default=1.5, ge=0, le=4)
+    strong_blur_sigma_max: float = Field(default=2.5, ge=0, le=4)
+    strong_displacement: float = Field(default=3.0, ge=0, le=8)
 
     @model_validator(mode="after")
     def validate_ranges(self):
         if self.opacity_min > self.opacity_max or self.blur_sigma_min > self.blur_sigma_max:
             raise ValueError("Sketch augmentation bounds must be ordered")
+        if (
+            self.strong_opacity_min > self.strong_opacity_max
+            or self.strong_blur_sigma_min > self.strong_blur_sigma_max
+        ):
+            raise ValueError("Strong sketch augmentation bounds must be ordered")
         return self
 
 

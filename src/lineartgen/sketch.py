@@ -74,6 +74,26 @@ def displaced_strokes(ink, key, maximum_radius, displacement, dilation_blend=1.0
 def augment_sketch(clean, key, config: SketchAugmentationConfig):
     if config.mode == "none" or config.probability == 0:
         return clean
+    if config.strong_probability:
+        # The independent selector leaves family, enablement, component draws,
+        # downstream masks and Gaussian keys untouched. Keep the zero/default
+        # path below exactly as before, including the original blur kernel size.
+        ordinary = config.model_copy(update={"strong_probability": 0.0})
+        strong = ordinary.model_copy(
+            update={
+                "opacity_min": config.strong_opacity_min,
+                "opacity_max": config.strong_opacity_max,
+                "blur_sigma_min": config.strong_blur_sigma_min,
+                "blur_sigma_max": config.strong_blur_sigma_max,
+                "displacement": config.strong_displacement,
+            }
+        )
+        choose = jax.random.bernoulli(
+            jax.random.fold_in(key, 5), config.strong_probability, (clean.shape[0], 1, 1, 1)
+        )
+        return jnp.where(
+            choose, augment_sketch(clean, key, strong), augment_sketch(clean, key, ordinary)
+        )
     batch = clean.shape[0]
     enabled = jax.random.bernoulli(jax.random.fold_in(key, 0), config.probability, (batch, 1, 1, 1))
     opacity = jax.random.uniform(
