@@ -11,6 +11,7 @@ from .interval import interval_absolute_error, interval_squared_error
 from .lineart import line_region_loss, profile_loss
 from .opacity import opacity_deficit_loss
 from .paper import paper_peak_loss
+from .paper_band import paper_band_loss
 
 
 def region_mean(error, weights, region):
@@ -123,6 +124,12 @@ def image_loss(
         clearance = gap_clearance_loss(preclip, clean, active, config.gap_clearance_radius)
         loss += config.gap_clearance_weight * clearance
         parts["gap_clearance"] = clearance
+    if config.paper_band_weight:
+        if preclip is None:
+            raise ValueError("paper_band requires physical preclip predictions")
+        band = paper_band_loss(preclip, clean, active, config.paper_band_radius)
+        loss += config.paper_band_weight * band
+        parts["paper_band"] = band
     if config.paper_peak_weight:
         paper = paper_peak_loss(prediction, clean, active, tile=config.paper_peak_tile)
         loss += config.paper_peak_weight * paper
