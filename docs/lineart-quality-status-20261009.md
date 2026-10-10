@@ -1,49 +1,42 @@
-# 線画復元実験の現状 — 2026-10-09
+# 線画復元実験の現状 — 2026-10-10更新
 
-元の下描きからCNN特徴を取る構成は有望。配布中100kモデルからはまだ置き換えていない。
-全1,562開発入力+4白紙、4モデル、反復を含む6,568条件を評価した。
-実clean線画をぼかした入力では、強度.5全域でpixel候補のhaloが76.86%減り、
-F1が.854720→.944971、濃度不足が.168443→.048584に改善した。
-実画像でも輪郭や細部の改善を確認した。ただし履歴の異なる配布モデルとの差は観測比較。
+**採用条件を満たす新モデルはまだ得られていない。** 現時点で最も有望なのは、追加Gaussianではなく元の下描きからCNN特徴を取る130,605パラメータの候補E。配布中100kモデルは置き換えていない。
 
-未解決なのは重ね描きの太さ、近接平行線と隙間の分離、反復中の状態を利用しない点。
-source-only特徴のN回推論は強度/Nの1回推論と最大1.2e-6差で、反復的に精緻化する仕組みには
-なっていない。KritaのAPIを変えずに採用する場合も、この挙動を明示して扱う必要がある。
-[広域結果](../../jax-source-feature-broad-20261009/docs/source-feature-broad-results-20261009.md)、
-[実線画の比較画像](../../jax-source-feature-broad-20261009/runs/source-feature-broad-20261009/native-review/real.png)。
+候補Eは、既存コーパスをぼかした入力の強度.5・全域平均で、配布モデルに対してhaloが76.86%少なく、F1が.854720→.944971、濃度不足が.168443→.048584だった。ただし学習履歴の異なるモデルの観測比較であり、太い重ね線・近接平行線・隙間は未解決。
+[広域診断と画像](../../jax-source-feature-broad-20261009/docs/source-feature-broad-results-20261009.md)。
 
-source特徴にregion.1 / region.1+connection.1を加えた4k比較は完了し不採用。
-haloをさらに約28–35%減らすが、濃度・線幅など保持条件21/31項目で失敗した。
-最終8枚と白紙端部1枚を確認した。
-[構造loss結果](../../jax-signal-structure-20261009/docs/signal-structure-results-20261009.md)。
+| 完了した追加比較 | 結果 |
+|---|---|
+| F: region / region+connection loss、4k | halo約28–35%減、濃度などの保持条件21/31項目失敗。不採用 |
+| H: 局所濃度分布loss、4k | halo約65–77%減るが、PROBE濃度不足.179→.375、38項目失敗。不採用 |
+| I: 明示的1回復元とBGRA/ONNX | 実BGRA84条件＋seed変更28条件、最大差1階調、保護画素一致。実装契約は検証済み、画質採用とは別 |
+| J: コーパス＋20%図形のblur対mixed拡張、各4k | tone改善はあるが、強いblurの細線保持が悪化。広域40項目失敗。不採用 |
+| K: source条件付きpatch判別器、warmup250＋各2k | halo減少は対照比blur3.11%／strokes0.73%。広域165チェック中17項目失敗、最終14枚確認。不採用 |
 
-source特徴の局所濃度分布loss3は4,000更新を完了し不採用。haloは約65–77%減ったが、
-PROBE blur.5の濃度不足率が.179→.375へ増加し、保持条件38項目失敗。
-最終8枚と白紙最悪端部を確認した。起動時の非bitwise差は記録を維持し、
-保存復元とraw/EMA書き出しの完全一致は確認済み。[結果](../../jax-signal-transport-20261009/docs/signal-transport-results-20261009.md)。
+詳細: [F](../../jax-signal-structure-20261009/docs/signal-structure-results-20261009.md)、[H](../../jax-signal-transport-20261009/docs/signal-transport-results-20261009.md)、[I](../../jax-one-pass-restoration-20261009/docs/one-pass-restoration-results-20261009.md)、[J](../../jax-source-mixture-training-20261009/docs/source-mixture-training-results-20261009.md)、[K](../../jax-source-patch-prior-20261009/docs/source-patch-prior-results-20261009.md)。
 
-元画像特徴向けの明示的な1回復元モードを別ブランチで実装し、学習済み候補で
-実BGRA 84条件＋seed変更28条件を確認。JAXとの最大差は1階調で、保護画素は一致した。
-新しいONNX metadata形式2が必要で、配布パッケージはまだ切り替えていない。
-[実BGRA・1回復元の検証](../../jax-one-pass-restoration-20261009/docs/one-pass-restoration-results-20261009.md)。
+教師画像の点検で、高倍率画像自体に幅広いグレー領域がある例を確認した。256学習クロップでは、倍率別の教師で白紙39枚、元解像度に切り替えると0枚だった。幅広い中間グレーの画素割合も減った。少数の点検結果であり、コーパス全体の比率や出力問題の単独原因を確定したわけではない。
+[教師点検](../../jax-native-target-training-20261009/docs/native-teacher-audit-20261009.md)。
 
-実clean線画＋オンライン図形でのblur対mixed追加学習4,000更新も完了し、両方とも不採用。
-mixedは対照よりstrokes haloを10.24%減らしたが、blurと細線を悪化させ、
-広域121チェック中40項目失敗。最終14枚を目視、4,698広域条件を評価した。
-[結果](source-mixture-training-results-20261009.md)。
+**L完了・不採用:** 元解像度教師ではコーパスblur/strokesのhaloが対照比61.83%/54.57%減少。
+ただし黒い内部まで薄くする副作用があり、保持条件70/165項目失敗。部分編集の黒い領域では
+平均alphaが1から.65/.62まで低下した。最終14枚を確認した。
+[結果](../../jax-native-target-training-20261009/docs/native-target-training-results-20261009.md)。
 
-実行中は、事前固定のmixed raw4kからの元画像条件patch識別器あり/なし比較。
-識別器のみ250更新のあと、両生成器を2,000更新。推論モデルのサイズは増やさない。
-[計画](../../jax-source-patch-prior-20261009/docs/source-patch-prior-plan-20261009.md)。
-[blurと透明度の識別不能例](blur-opacity-ambiguity-20261009.md)を補助診断として記録した。
+**M完了・不採用:** 同じ元解像度教師で画素lossの強度重みを均一にすると細線は濃くなったが、
+コーパスblur/strokesのhaloは対照比19.05%/12.65%増えた。黒い内部のalphaも.68程度にとどまり、
+保持条件53/165項目失敗。最終14枚を確認した。
+[結果](../../jax-source-flat-loss-20261009/docs/source-flat-loss-results-20261009.md)。
 
-すべて合成下描き。130,605パラメータ、再帰1–6、段loss0、sqrt(batch)LR、縮小後Gaussianを維持。
-直近の特徴比較ではGaussian seedの違いが出力に影響しないため、反復drawを独立標本に数えない。
-広域診断の事前固定9枚と有意味な部分境界・最悪白紙の補助2枚を目視した。初期部分クロップは
-線がないため判断不能だったことを記録。保護画素は全条件で厳密一致。
-Windows/Krita GUI、新しい独立学習seed、封印確認はまだ未実施。
-十分な最小モデルサイズも未確定。封印評価は未開封。
+**進行中N:** 元解像度教師に白紙・黒ベタ・塗りつぶした図形・太い線を追加する比較。
+期待比率はコーパス70%・従来の細線図形20%・新しい合成教師10%。
+逆強度重みと均一重みの2条件を同じ初期値・同じ入力列から各4k更新し、L/Mの対照と比べる。
+旧166バッチ、元の図形、置換しないコーパス画像、再開後の入力、全再帰段の準備配列が一致し、
+23テストを通過。数値コードa1f7aa7で固定し、学習開始済み。効果はまだ未検証。
+[固定計画](../../jax-ink-area-coverage-20261010/docs/ink-area-coverage-plan-20261010.md)。
 
-過去の実験: [元画像特徴](source-signal-results-20261009.md)、
-[接続query](connection-query-results-20261009.md)、[オンライン図形](procedural-structure-results-20261009.md)、
-[旧濃度輸送](local-transport-training-results-20261009.md)、[出力基準](source-anchor-results-20261009.md)。
+下描きはすべて合成。評価の`real`は既存コーパス画像という意味で、自然な下描き／清書の対ではない。コーパス生成スクリプトには画像生成モデルとSwinIR拡大が含まれる。正確な細線幅は、ぼけと透明度の組合せから一意に決まらない場合も実証した。[8bit入力の曖昧性](../../jax-source-mixture-training-20261009/docs/blur-opacity-ambiguity-20261009.md)。
+
+再帰1–6、段loss倍率0、sqrt(batch)LR、縮小後Gaussian、保護画素の一致を維持。source特徴モデルは追加Gaussianのseedを変えても同じ出力なので、反復drawを独立標本に数えない。Iの1回復元モードは新しいruntime metadata形式2を要し、配布パッケージは未変更。
+
+独立学習seed・封印した新条件の確認・Windows/Krita GUI検証は未実施。繰り返し見ている開発出力での改善だけを最終確認とは扱わない。十分な最小モデルサイズも未確定。
