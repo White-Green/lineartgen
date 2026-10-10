@@ -36,6 +36,7 @@ with (root / "coordinator.lock").open("a") as lock:
     commands.extend(
         [
             ("development", ["scripts/evaluate_core_retention_data.py", "evaluate"]),
+            ("transfer", ["scripts/evaluate_core_retention_transfer.py", "evaluate"]),
             ("audit", ["scripts/train_core_retention_data.py", "audit"]),
         ]
     )

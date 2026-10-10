@@ -54,6 +54,8 @@ def prepare(root):
     save_config(config, root / "configs/core50.json")
     gate = parent
     verify(gate)
+    transfer = root.parent / "core-retention-transfer-20261010/manifest.json"
+    assert len(read(transfer)["cases"]) == 376
     controls, control_parents = {}, {"pixel": dict(root=str(parent), method="interval")}
     for step in (0, 1000, STEPS):
         source = parent / f"snapshots/step-{step}/interval"
@@ -101,6 +103,8 @@ def prepare(root):
             initial_outputs_equal=True,
             interval_gate=str(gate),
             interval_source_sha256=sha(gate / "source.json"),
+            transfer_manifest=str(transfer),
+            transfer_manifest_sha256=sha(transfer),
             inputs_sha256=sha(root / "inputs.npz"),
             queries_sha256=sha(root / "queries.json"),
             dataset_sha256=sha(root / "dataset.json"),
@@ -131,6 +135,7 @@ def check(root):
     assert sha(root / "source.tar.gz") == read(root / "source.json")["archive_sha256"]
     for path, digest in plan["reused_control_files"].items():
         assert sha(Path(path)) == digest
+    assert sha(Path(plan["transfer_manifest"])) == plan["transfer_manifest_sha256"]
     return plan
 
 
