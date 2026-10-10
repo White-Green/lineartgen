@@ -32,7 +32,7 @@ def gaussian_blur(ink, sigma, maximum_sigma):
     return jax.vmap(apply)(ink, sigma)
 
 
-def displaced_strokes(ink, key, maximum_radius, displacement):
+def displaced_strokes(ink, key, maximum_radius, displacement, dilation_blend=1.0):
     batch, height, width, _ = ink.shape
     radii = jax.random.randint(jax.random.fold_in(key, 1), (batch, 1, 1, 1), 0, maximum_radius + 1)
     widened = ink
@@ -41,6 +41,10 @@ def displaced_strokes(ink, key, maximum_radius, displacement):
             ink, 0.0, jax.lax.max, (1, 2 * radius + 1, 2 * radius + 1, 1), (1, 1, 1, 1), "SAME"
         )
         widened = jnp.where(radii == radius, dilated, widened)
+    # Retain some of the original ink profile before adding displaced copies.
+    # Keep the default path exact for frozen experiments and evaluation inputs.
+    if dilation_blend != 1.0:
+        widened = (1 - dilation_blend) * ink + dilation_blend * widened
     yy, xx = jnp.meshgrid(jnp.arange(height), jnp.arange(width), indexing="ij")
     strengths = jax.random.uniform(
         jax.random.fold_in(key, 2), (3, batch, 1, 1, 1), minval=0.35, maxval=1.0
@@ -89,7 +93,11 @@ def augment_sketch(clean, key, config: SketchAugmentationConfig):
     )
     if config.mode in ("strokes", "mixed"):
         strokes = displaced_strokes(
-            ink, jax.random.fold_in(key, 3), config.dilation_radius, config.displacement
+            ink,
+            jax.random.fold_in(key, 3),
+            config.dilation_radius,
+            config.displacement,
+            config.dilation_blend,
         )
         ink = jnp.where(family == 2, strokes, ink) if family is not None else strokes
     if config.mode in ("blur", "strokes", "mixed"):

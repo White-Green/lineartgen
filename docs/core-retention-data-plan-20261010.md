@@ -1,0 +1,21 @@
+# S: retain a line core in synthetic displaced strokes
+
+Prepare this hypothesis before seeing R's final outputs. Run only if R completes its fixed screen and image review without a passing candidate. If R passes, prioritize its independent confirmation. This study does not alter R or remove its failures.
+
+The frozen Q augmentation diagnostic constructed two pairs of different clean images with identical float32 rough inputs. Max-dilation alone can erase both width and the gap between parallel lines. This is a counterexample, not a frequency estimate or an explanation for every failure.
+
+Add `sketch.dilation_blend`, default1. Before the existing displaced copies and their compositing, replace the widened ink with `(1-blend)*original_ink + blend*widened_ink`. The candidate uses blend.5; the default path stays bitwise unchanged. Enablement, family selection, dilation radius, displacement fields, copy opacities, blur and opacity draws keep their keys. Only enabled strokes with a nonzero dilation radius can change. Keep all teachers, batch identities, virtual recursion depths, strength maps and Gaussian draws. Protected targets remain the actual changed input, and active targets remain clean. A preliminary diagnostic must verify whether the two previously fixed collisions become distinguishable after the same blur/opacity and 8bit conversion; this does not prove general invertibility.
+
+`pixel` reuses R `interval` raw/EMA0/1k/4k. `core50` starts from the same E raw4k parameters with a fresh optimizer and EMA. Keep interval L1 and every auxiliary term, the130,605-parameter model, original-strength one-pass source features, native teachers, geometry.2/conditional coverage.125,80%mixed augmentation, seed2026100961,batch4,peakLR1e-4 via sqrt(batch),warmup100,cosine4k to1e-5,EMA.999. Only dilation_blend changes. Recursion1–6,stage multiplier0 with recursive gradients and downsample-before-Gaussian remain intact.
+
+Before training: test default and other-family compatibility, bounds, white preservation, deterministic draw isolation, the two fixed collisions, actual optimizer updates and full-state restore. Replay all166 parent clean hashes, crop resume6–11, and all six prepared depths; compare strength maps exactly and reconstructed Gaussian contributions within5e-7 roundoff. Verify active/protected targets and that source changes occur only in the intended items. Freeze code/configs/inputs/controls, retain startup6 and full states6/1k/4k, raw/EMA1k/4k. Fixed primary is raw4k, with no checkpoint substitution.
+
+Use the **unchanged old corruption inputs** for the local64+456 conditions per method and broader1,566 conditions per method (E,R,S:4,698 outputs). This is a transfer test to the original task, not an evaluation generated from the candidate's new augmentation. Reproduce both reused references exactly. Keep the same229 numerical checks, with R as matched control and E as initial reference:
+
+1. Whole geometry blur.5 F1>=.90 and cut rate<=.02.
+2. Whole corpus blur/strokes.5 halo<=.02/.10.
+3. Available real/geometry clean/tone/blur/strokes groups at.1/.5,whole/partial: halo<=each reference*1.1+.0005,F1 drop<=.005,ink-deficit increase<=.01.
+4. Whole geometry width MAE increase<=.10px,cut/bridge increase<=.01 versus both references.
+5. Edited black interiors717/727 meanalpha>=.95,blank maximumalpha<=.05,finite outputs and exact protected pixels.
+
+Review all8 final local and6 broad sheets, retain all failures, and inspect fine lines, intentional gaps, halos and filled regions. Additional Gaussian draws are not independent evidence for this source-only model. Use synthetic inputs only. Independent training seed, sealed inputs and BGRA/ONNX confirmation are downstream of a passing development candidate. No production/plugin/CI changes.

@@ -199,6 +199,7 @@ class SketchAugmentationConfig(Settings):
     blur_sigma_min: float = Field(default=0.0, ge=0, le=4)
     blur_sigma_max: float = Field(default=2.0, ge=0, le=4)
     dilation_radius: int = Field(default=2, ge=0, le=2)
+    dilation_blend: float = Field(default=1.0, ge=0, le=1)
     displacement: float = Field(default=2.0, ge=0, le=8)
 
     @model_validator(mode="after")
