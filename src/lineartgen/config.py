@@ -32,6 +32,7 @@ class ModelConfig(Settings):
     sampling_mode: Literal["diffusion", "one_pass"] = "diffusion"
     source_conditioning: bool = False
     progress_conditioning: bool = False
+    progress_modulation: Literal["none", "fourier_film"] = "none"
     guide_encoding: Literal["raw", "ink", "sqrt_ink"] = "raw"
     # Optional full-resolution output branch; zero preserves the original model.
     detail_channels: int = Field(default=0, ge=0)
@@ -42,6 +43,8 @@ class ModelConfig(Settings):
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.progress_modulation != "none" and not self.progress_conditioning:
+            raise ValueError("Progress modulation requires progress_conditioning")
         if self.architecture != "unet" and (
             self.final_decoder_channels != 2 or self.head_hidden_channels is not None
         ):

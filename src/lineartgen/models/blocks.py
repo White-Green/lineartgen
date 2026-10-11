@@ -23,11 +23,14 @@ class ConvBlock(nnx.Module):
             ]
         )
 
-    def __call__(self, x, *, linear_output=False, first_bias=None):
+    def __call__(self, x, *, linear_output=False, first_bias=None, first_modulation=None):
         for index, layer in enumerate(self.layers):
             x = layer(x)
             if index == 0 and first_bias is not None:
                 x = x + first_bias
+            if index == 0 and first_modulation is not None:
+                scale, shift = first_modulation
+                x = x * (1 + scale) + shift
             if not linear_output or index < len(self.layers) - 1:
                 x = nnx.relu(x)
         return x

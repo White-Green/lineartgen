@@ -16,6 +16,13 @@ from .blocks import ConvBlock
 from .output import denoised_output
 
 
+def progress_basis(progress):
+    """Nine bounded time features; no teacher or pooled image information."""
+    tau = 1 - progress
+    angles = jnp.pi * tau * jnp.asarray([1, 2, 4, 8], dtype=progress.dtype)
+    return jnp.concatenate((tau, jnp.sin(angles), jnp.cos(angles)), axis=-1)
+
+
 def encode_guide(guide, encoding):
     """Encode the downsampled original rough source, never a clean teacher.
 
@@ -43,6 +50,7 @@ class UNet(nnx.Module):
         self.sampling_mode = config.sampling_mode
         self.source_conditioning = config.source_conditioning
         self.progress_conditioning = config.progress_conditioning
+        self.progress_modulation = config.progress_modulation
         self.guide_encoding = config.guide_encoding
         self.detail_channels = config.detail_channels
         self.skip_mode = config.skip_mode
@@ -142,6 +150,27 @@ class UNet(nnx.Module):
             if self.detail_channels:
                 self.progress_detail = progress_projection(self.detail_channels)
 
+        if self.progress_modulation == "fourier_film":
+            # Append after all inherited draws. Zero projections preserve the
+            # old function initially while enabling time-dependent gain and bias.
+            blocks = [*self.encoders, *self.decoders, self.head]
+            if self.detail_channels:
+                blocks.append(self.detail_head)
+            self.progress_modulators = nnx.List(
+                [
+                    nnx.Conv(
+                        9,
+                        2 * block.layers[0].out_features,
+                        (1, 1),
+                        padding="SAME",
+                        kernel_init=nnx.initializers.zeros,
+                        bias_init=nnx.initializers.zeros,
+                        rngs=rngs,
+                    )
+                    for block in blocks
+                ]
+            )
+
     def __call__(
         self,
         image,
@@ -179,6 +208,14 @@ class UNet(nnx.Module):
         if self.feature_input == "source":
             image = guide
 
+        basis = progress_basis(progress) if self.progress_modulation == "fourier_film" else None
+
+        def modulation(index, x):
+            if basis is None:
+                return None
+            features = jax.image.resize(basis, (*x.shape[:3], basis.shape[-1]), "nearest")
+            return jnp.split(self.progress_modulators[index](features), 2, axis=-1)
+
         def upsample(x):
             return jax.image.resize(
                 x, (x.shape[0], x.shape[1] * 2, x.shape[2] * 2, x.shape[3]), "nearest"
@@ -187,7 +224,11 @@ class UNet(nnx.Module):
         x = jnp.concatenate((image, noise_level), axis=-1)
         skips = []
         for index, encoder in enumerate(self.encoders):
-            features = encoder(x, first_bias=encoder_bias if index == 0 else None)
+            features = encoder(
+                x,
+                first_bias=encoder_bias if index == 0 else None,
+                first_modulation=modulation(index, x),
+            )
             if self.detail_channels and index == 0:
                 full_resolution = features
             x = nnx.max_pool(features, window_shape=(2, 2), strides=(2, 2), padding="VALID")
@@ -204,15 +245,19 @@ class UNet(nnx.Module):
                 x = jnp.concatenate((skip, upsample(x)), axis=-1)
             else:
                 x = upsample(skip if index == 0 else jnp.concatenate((skip, x), axis=-1))
-            x = decoder(x)
+            x = decoder(x, first_modulation=modulation(len(self.encoders) + index, x))
         output = self.head(
-            jnp.concatenate((image, x), -1), linear_output=True, first_bias=head_bias
+            jnp.concatenate((image, x), -1),
+            linear_output=True,
+            first_bias=head_bias,
+            first_modulation=modulation(len(self.encoders) + len(self.decoders), x),
         )
         if self.detail_channels:
             output = output + self.detail_head(
                 jnp.concatenate((image, noise_level, encoded, full_resolution, x), -1),
                 linear_output=True,
                 first_bias=detail_bias,
+                first_modulation=modulation(len(self.encoders) + len(self.decoders) + 1, x),
             )
         if return_network_output:
             if return_preclip or return_features:
