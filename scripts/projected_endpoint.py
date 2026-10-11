@@ -9,7 +9,7 @@ import jax.numpy as jnp
 import numpy as np
 from bridge_time_grid import time_nodes
 from campaign_protocol import read, sha, write
-from diagnose_learnability import verify
+from diagnose_learnability import freeze, verify
 from geometry_velocity_fit import EVAL_SEED, PROBE, TRAIN, arrays
 from paper_band_fit import fit_checks
 from PIL import Image, ImageDraw
@@ -354,4 +354,4 @@ if __name__ == "__main__":
     parser.add_argument("action", choices=("prepare", "freeze", "evaluate"))
     parser.add_argument("--root", type=Path, required=True)
     args = parser.parse_args()
-    globals()[args.action](args.root.resolve())
+    {"prepare": prepare, "freeze": freeze, "evaluate": evaluate}[args.action](args.root.resolve())
