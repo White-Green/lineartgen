@@ -152,6 +152,7 @@ class UNet(nnx.Module):
         *,
         return_preclip=False,
         return_features=False,
+        return_network_output=False,
     ):
         sampled = image
         if self.source_conditioning:
@@ -213,6 +214,10 @@ class UNet(nnx.Module):
                 linear_output=True,
                 first_bias=detail_bias,
             )
+        if return_network_output:
+            if return_preclip or return_features:
+                raise ValueError("Raw network output cannot be combined with other return modes")
+            return output
         # A source anchor asks the head to restore the original rough image,
         # without also having to cancel every sampled Gaussian pixel. Keep
         # the incoming image at protected pixels, including repeated sampling.
