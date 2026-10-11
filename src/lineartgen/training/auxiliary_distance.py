@@ -14,6 +14,11 @@ class AuxiliaryDistance(nnx.Module):
         if not config.source_conditioning or not config.detail_channels:
             raise ValueError("Expected source conditioning and a full-resolution detail head")
         self.core = nnx.clone(core)
+        self.source_conditioning = core.source_conditioning
+        self.progress_conditioning = core.progress_conditioning
+        self.sampling_mode = core.sampling_mode
+        self.output_mode = core.output_mode
+        self.minimum_size = core.minimum_size
         self.auxiliary = ConvBlock(
             3 + config.channels[0] + config.final_decoder_channels,
             1,
@@ -66,7 +71,7 @@ def objective(model, prepared, config, weight):
     field = distance_supervision(
         16 * distance,
         prepared["distance"],
-        prepared["target"],
+        prepared.get("field_clean", prepared["target"]),
         prepared["levels"][0] > config.diffusion.min_noise,
     )
     loss = base + weight * field
