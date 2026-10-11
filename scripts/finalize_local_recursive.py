@@ -14,6 +14,10 @@ assert tests["passed"]
 for name, digest in tests["logs"].items():
     assert sha(root / name) == digest
 initial = read(root / "initial-audit.json")
+replayed = read(root / "initial-replay.json")
+assert replayed["parameters_exact"] and replayed["configs_exact"] and replayed["data_exact"]
+for path, digest in replayed["bound_files"].items():
+    assert sha(Path(path)) == digest
 data = read(root / "data-audit.json")
 assert data["disjoint"] and data["train"] == list(TRAIN) and data["probe"] == list(PROBE)
 assert data["inputs_sha256"] == sha(root / "inputs.npz")
@@ -120,6 +124,7 @@ result = dict(
             "target-oracle.json",
             "data-audit.json",
             "initial-audit.json",
+            "initial-replay.json",
             "control-preflight.json",
             "training/sampling.jsonl",
             "prefix-audit.json",

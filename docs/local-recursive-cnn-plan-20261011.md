@@ -45,3 +45,11 @@ This is a fixed-pair fitting pilot, not independent confirmation. No new
 training seed, sealed holdout, actual Krita/BGRA, ONNX support, plugin change,
 production default, deployment or adoption. Any continuation or numerical
 change after results requires a new frozen plan/worktree.
+
+Execution correction before any SGD: the first CI worktree stopped while
+comparing CPU-prepared initial weights to GPU-regenerated random weights
+(max absolute roundoff4.47e-8). This worktree compares the persisted initial
+weights exactly, rather than assuming cross-backend random initialization is
+bitwise identical. All model weights, data, objective, schedule, seeds and
+evaluation conditions remain unchanged. Record exact parameter-array equality
+with both original CPU-prepared initial models before learning.

@@ -252,9 +252,11 @@ def train(root):
 
             p = inputs(prepared_batch(*data, 0, 3)[0])
             values = []
-            for arm in arms.values():
+            for name, arm in arms.items():
                 assert int(arm["optimizer"].step[...]) == 0
-                assert_initial_parameters(fresh_model(arm["config"]), arm["model"])
+                assert_initial_parameters(
+                    load_inference(root / f"initials/{name}")[0], arm["model"]
+                )
                 for n in (0, 1, STEPS - 1):
                     assert abs(float(arm["schedule"](n)) - 1e-4) < 1e-10
                 values.append(
