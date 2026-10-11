@@ -6,7 +6,6 @@ import shutil
 from pathlib import Path
 
 import jax
-import jax.numpy as jnp
 import numpy as np
 from campaign_protocol import read, sha, write
 from diagnose_learnability import freeze, snapshot, update, verify
@@ -37,7 +36,7 @@ SAVED = (0, 6, 400, STEPS)
 def arrays(root, ids):
     with np.load(root / "inputs.npz") as data:
         return tuple(
-            jnp.asarray(np.stack([data[f"{i}-{field}"] for i in ids]))
+            np.stack([data[f"{i}-{field}"] for i in ids])
             for field in ("image", "source", "strength")
         )
 
@@ -73,6 +72,7 @@ def audit_data(root):
 
 
 def prepared_batch(clean, source, strength, depth):
+    clean, source, strength = map(np.asarray, (clean, source, strength))
     p = prepared_inputs(clean, source, strength, depth)
     p["distance"] = jax.numpy.asarray(np.stack([coverage_distance(x) for x in np.asarray(clean)]))
     return p
@@ -202,12 +202,13 @@ def train(root):
     data = arrays(root, TRAIN)
     prepared = {d: prepared_batch(*data, d) for d in range(1, 7)}
     control = load_inference(root / "control")[0]
-    control_prediction = run_sample(control, *arrays(root, TRAIN + PROBE), 3)
     with np.load(
         Path(read(root / "plan.json")["parent"]) / "evaluation/step-1200/predictions.npz"
     ) as reference:
-        for i, value in zip(TRAIN + PROBE, control_prediction, strict=True):
-            np.testing.assert_array_equal(value, reference[f"band-{i}"])
+        for ids in (TRAIN, PROBE):
+            control_prediction = run_sample(control, *arrays(root, ids), 3)
+            for i, value in zip(ids, control_prediction, strict=True):
+                np.testing.assert_array_equal(value, reference[f"band-{i}"])
     write(root / "control-preflight.json", dict(eight_outputs_exact=True))
     out = root / "training"
     out.mkdir(exist_ok=True)
@@ -351,7 +352,8 @@ def evaluate(root):
                         if depth == 3 and method in METHODS:
                             displays[(method, i)] = value
         clean, source, strength = arrays(root, TRAIN)
-        strength = strength.at[:, :, :256].set(0)
+        strength = strength.copy()
+        strength[:, :, :256] = 0
         for method, model in models.items():
             prediction = run_sample(model, clean, source, strength, 6)
             assert np.isfinite(prediction).all()

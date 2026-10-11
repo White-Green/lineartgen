@@ -41,3 +41,9 @@ outputs must replay exactly. Five sheets: train/probe native and overviews plus
 partial native. All finite and protected prepared-float pixels exact. Partial
 mask is an invariant check, not a trained mask-quality claim. No production,
 plugin, defaults, sealed conditions or independent training seed consumed.
+
+Preflight repair: the original frozen BH run stopped before any update because
+JAX arrays reached the legacy host pyramid. This worktree converts to NumPy
+before any resize and retains original batch4 grouping. Host-pyramid exactness
+is tested at depths1/6; no scientific condition or acceptance threshold changes.
+See the [original repair record](../../jax-distance-supervision-fit-20261011/docs/distance-supervision-preflight-repair-20261011.md).

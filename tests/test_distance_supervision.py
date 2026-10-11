@@ -1,10 +1,12 @@
 import jax
 import jax.numpy as jnp
 import numpy as np
+import pytest
 from diagnose_learnability import update
 from distance_supervision_fit import make_arms, objective, prepared_batch
 from flax import nnx
 from paper_band_fit import objective as base_objective
+from paper_band_fit import prepared_inputs as legacy_prepared_inputs
 
 from lineartgen.config import ExperimentConfig, LossConfig, ModelConfig, TrainConfig, save_config
 from lineartgen.models import create_model
@@ -106,3 +108,17 @@ def test_actual_update_and_optimizer_ema_restore(tmp_path):
         lineart_state.payload(arms, 2),
         lineart_state.payload(restored, 2),
     )
+
+
+@pytest.mark.parametrize("depth", [1, 6])
+def test_device_inputs_convert_before_legacy_host_pyramid(depth):
+    rng = np.random.default_rng(81)
+    clean = rng.uniform(-1, 1, (2, 512, 512, 1)).astype(np.float32)
+    source = (1 - 0.3 * (1 - clean)).astype(np.float32)
+    strength = np.full_like(clean, 0.5)
+    strength[:, :, :256] = 0
+    actual = prepared_batch(*map(jnp.asarray, (clean, source, strength)), depth)
+    distance = actual.pop("distance")
+    expected = legacy_prepared_inputs(clean, source, strength, depth)
+    jax.tree.map(np.testing.assert_array_equal, actual, expected)
+    np.testing.assert_array_equal(distance, np.stack([coverage_distance(x) for x in clean]))
