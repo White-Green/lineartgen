@@ -81,7 +81,9 @@ APは初期の評価集計で比較名の不具合があり、別worktreeで修�
 
 - [BIの結果と出力画像](../../jax-distance-margin-fit-20261011/docs/distance-margin-fit-results-20261011.md)
 
-- [BJの結果と出力画像](distance-duration-results-20261011.md)
+- [BJの結果と出力画像](../../jax-distance-duration-20261011/docs/distance-duration-results-20261011.md)
+
+- [BKの結果と出力画像](aux-distance-results-20261011.md)
 
 独立した学習seed・封印した合成条件での確認・実際のBGRA入出力での品質確認は、
 採用候補が成立した後の工程として残る。Windows/Krita GUIでの確認は行っていない。
