@@ -143,7 +143,15 @@ class UNet(nnx.Module):
                 self.progress_detail = progress_projection(self.detail_channels)
 
     def __call__(
-        self, image, noise_level, insert, guide=None, progress=None, *, return_preclip=False
+        self,
+        image,
+        noise_level,
+        insert,
+        guide=None,
+        progress=None,
+        *,
+        return_preclip=False,
+        return_features=False,
     ):
         sampled = image
         if self.source_conditioning:
@@ -211,7 +219,7 @@ class UNet(nnx.Module):
         anchor = (
             jnp.where(noise_level > 0, guide, sampled) if self.residual_base == "source" else image
         )
-        return denoised_output(
+        result = denoised_output(
             output,
             anchor,
             noise_level,
@@ -220,3 +228,8 @@ class UNet(nnx.Module):
             return_preclip=return_preclip,
             scale_floor=self.residual_scale_floor,
         )
+        if return_features:
+            if not self.detail_channels or not self.source_conditioning:
+                raise ValueError("Auxiliary features require source conditioning and detail head")
+            return result, jnp.concatenate((image, noise_level, encoded, full_resolution, x), -1)
+        return result
