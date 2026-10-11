@@ -104,7 +104,7 @@ def test_invalid_or_unsupported_preclip_configs_are_rejected():
     with pytest.raises(ValueError, match="positive opacity"):
         LossConfig(opacity_deficit_preclip=True)
     for model in [dict(architecture="nested"), dict(output_clip_gradient="straight_through")]:
-        with pytest.raises(ValueError, match="single UNet with hard"):
+        with pytest.raises(ValueError, match="single UNet or local CNN with hard"):
             ExperimentConfig.model_validate(
                 dict(
                     model=model,

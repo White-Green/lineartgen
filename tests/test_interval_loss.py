@@ -148,5 +148,5 @@ def test_serialized_inference_and_export_keep_clipped_api(tmp_path):
 
 def test_reject_unsupported_surrogate_or_nested_combination():
     for model in [dict(output_clip_gradient="straight_through"), dict(architecture="nested")]:
-        with pytest.raises(ValueError, match="single UNet with hard"):
+        with pytest.raises(ValueError, match="single UNet or local CNN with hard"):
             ExperimentConfig.model_validate(dict(model=model, loss=dict(pixel_loss="interval_mse")))

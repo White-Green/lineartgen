@@ -14,7 +14,7 @@ class Settings(BaseModel):
 
 
 class ModelConfig(Settings):
-    architecture: Literal["unet", "nested"] = "unet"
+    architecture: Literal["unet", "nested", "local"] = "unet"
     channels: tuple[int, ...] = (4, 10, 20, 40)
     convolutions_per_block: int = Field(default=3, ge=1)
     kernel_size: int = Field(default=3, ge=1)
@@ -40,9 +40,32 @@ class ModelConfig(Settings):
     head_hidden_channels: int | None = Field(default=None, ge=1)
     skip_mode: Literal["post_pool", "pre_pool"] = "post_pool"
     bottleneck_dilation: int = Field(default=1, ge=1, le=4)
+    local_blocks: int = Field(default=3, ge=1)
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.architecture == "local":
+            if not (
+                len(self.channels) == 1
+                and self.convolutions_per_block == 2
+                and self.kernel_size == 3
+                and self.source_conditioning
+                and self.progress_conditioning
+                and self.progress_modulation == "fourier_film"
+                and self.output_mode == "residual"
+                and self.residual_base == "noisy"
+                and self.feature_input == "noisy"
+                and self.sampling_mode == "diffusion"
+                and self.guide_encoding == "raw"
+                and self.skip_mode == "post_pool"
+                and self.bottleneck_dilation == 1
+            ):
+                raise ValueError(
+                    "Local CNN requires one width, two 3x3 convolutions per block, "
+                    "raw-source/noisy residual features and Fourier progress conditioning"
+                )
+        elif self.local_blocks != 3:
+            raise ValueError("local_blocks applies only to the local architecture")
         if self.progress_modulation != "none" and not self.progress_conditioning:
             raise ValueError("Progress modulation requires progress_conditioning")
         if self.architecture != "unet" and (
@@ -63,11 +86,13 @@ class ModelConfig(Settings):
                 "Source residual base requires a guided residual UNet without progress"
             )
         if self.progress_conditioning and (
-            self.architecture != "unet"
+            self.architecture not in ("unet", "local")
             or not self.source_conditioning
             or self.output_mode != "residual"
         ):
-            raise ValueError("progress_conditioning requires a source-conditioned residual UNet")
+            raise ValueError(
+                "progress_conditioning requires a source-conditioned residual UNet or local CNN"
+            )
         if self.detail_channels and (self.architecture != "unet" or not self.source_conditioning):
             raise ValueError("detail_channels requires a source-conditioned UNet")
         if self.residual_scale_floor and (
@@ -76,8 +101,8 @@ class ModelConfig(Settings):
             raise ValueError("residual_scale_floor requires a residual UNet")
         if not self.source_conditioning and self.guide_encoding != "raw":
             raise ValueError("guide_encoding requires source_conditioning=True")
-        if self.architecture != "unet" and self.source_conditioning:
-            raise ValueError("Source conditioning currently requires architecture='unet'")
+        if self.architecture not in ("unet", "local") and self.source_conditioning:
+            raise ValueError("Source conditioning requires a UNet or local CNN")
         if self.architecture != "unet" and self.output_clip_gradient != "hard":
             raise ValueError("Surrogate output gradients currently require architecture='unet'")
         if not self.channels or min(self.channels) < 1:
@@ -343,24 +368,32 @@ class ExperimentConfig(Settings):
         if self.model.progress_conditioning and self.matching.method != "independent":
             raise ValueError("Progress-conditioned training requires independent Gaussian noise")
         if self.loss.pixel_loss in ("interval_mse", "interval_l1") and (
-            self.model.architecture != "unet" or self.model.output_clip_gradient != "hard"
+            self.model.architecture not in ("unet", "local")
+            or self.model.output_clip_gradient != "hard"
         ):
             raise ValueError(
-                f"{self.loss.pixel_loss} requires a single UNet with hard output clipping"
+                f"{self.loss.pixel_loss} requires a single UNet or local CNN "
+                "with hard output clipping"
             )
         if (
             self.loss.gap_clearance_weight
             or self.loss.paper_band_weight
             or self.loss.edge_energy_weight
-        ) and (self.model.architecture != "unet" or self.model.output_clip_gradient != "hard"):
+        ) and (
+            self.model.architecture not in ("unet", "local")
+            or self.model.output_clip_gradient != "hard"
+        ):
             raise ValueError(
-                "Paper clearance and edge energy losses require a single UNet "
+                "Paper clearance and edge energy losses require a single UNet or local CNN "
                 "with hard output clipping"
             )
         if self.loss.opacity_deficit_preclip and (
-            self.model.architecture != "unet" or self.model.output_clip_gradient != "hard"
+            self.model.architecture not in ("unet", "local")
+            or self.model.output_clip_gradient != "hard"
         ):
-            raise ValueError("Preclip opacity requires a single UNet with hard output clipping")
+            raise ValueError(
+                "Preclip opacity requires a single UNet or local CNN with hard output clipping"
+            )
         size = self.data.crop_size
         if size < self.model.minimum_size or size & (size - 1):
             raise ValueError("crop_size must be a power of two and at least the model minimum")
