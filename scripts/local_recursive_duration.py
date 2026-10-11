@@ -4,6 +4,7 @@ import argparse
 import fcntl
 import hashlib
 import json
+import os
 import shutil
 import time
 from pathlib import Path
@@ -116,18 +117,38 @@ def make_arms(root):
 
 def control_preflight(root):
     parent = Path(read(root / "plan.json")["parent"])
+    blocks = 0
     for name in TRAINED:
         initial = load_inference(root / f"initials/{name}")[0]
         for steps, directory in ((2, "evaluation"), (32, "evaluation32")):
             for split, ids in (("train", TRAIN), ("probe", PROBE)):
                 _, source, strength = arrays(root, ids)
-                key = jax.random.fold_in(
-                    jax.random.PRNGKey(EVAL_SEED), 300 + int(split == "probe") * 10
-                )
-                value = run_sample(initial, source, strength, key, 3, steps=steps)
-                with np.load(parent / f"{directory}/predictions/{split}-d3-r0-{name}.npz") as old:
-                    np.testing.assert_array_equal(value, old["physical"])
-    write(root / "control-preflight.json", dict(thirtytwo_CI_outputs_exact=True))
+                for depth in (1, 3, 6):
+                    for draw in range(4):
+                        key = jax.random.fold_in(
+                            jax.random.PRNGKey(EVAL_SEED),
+                            depth * 100 + int(split == "probe") * 10 + draw,
+                        )
+                        value = run_sample(initial, source, strength, key, depth, steps=steps)
+                        reference = (
+                            parent / directory / f"predictions/{split}-d{depth}-r{draw}-{name}.npz"
+                        )
+                        with np.load(reference) as old:
+                            np.testing.assert_array_equal(value, old["physical"])
+                            np.testing.assert_array_equal(np.clip(value, -1, 1), old["prediction"])
+                        blocks += 1
+                        write(root / "control-progress.json", dict(blocks=blocks, total=100))
+            _, source, strength = arrays(root, TRAIN)
+            strength = strength.at[:, :, :256].set(0)
+            key = jax.random.fold_in(jax.random.PRNGKey(EVAL_SEED), 9000)
+            value = run_sample(initial, source, strength, key, 6, steps=steps)
+            with np.load(parent / directory / f"predictions/partial-d6-{name}.npz") as old:
+                np.testing.assert_array_equal(value, old["physical"])
+                np.testing.assert_array_equal(np.clip(value, -1, 1), old["prediction"])
+            blocks += 1
+            write(root / "control-progress.json", dict(blocks=blocks, total=100))
+    assert blocks == 100
+    write(root / "control-preflight.json", dict(CI_output_blocks_exact=blocks))
 
 
 def prepare(root):
@@ -182,6 +203,22 @@ def prepare(root):
             "evaluation32/metrics.json",
         )
     ]
+    diagnostic = Path(
+        "../jax-local-recursive-duration-20261011/runs/local-recursive-duration-20261011"
+    ).resolve()
+    bound += [
+        diagnostic / n
+        for n in (
+            "source.json",
+            "initial-audit.json",
+            "prefix-investigation.json",
+            "prefix-deterministic-investigation.json",
+            "prefix-repeat-vjp-investigation.json",
+            "resize-probe-cpu.json",
+            "resize-probe-default.json",
+            "resize-probe-deterministic.json",
+        )
+    ]
     initial = root / "initials/local"
     write(
         root / "plan.json",
@@ -224,7 +261,17 @@ def check(root):
 
 
 def train(root):
+    assert os.environ.get("XLA_FLAGS", "") == "", "This run requires the audited default XLA flags"
     check(root)
+    write(
+        root / "backend-audit.json",
+        dict(
+            flags=os.environ.get("XLA_FLAGS", ""),
+            device_kind=jax.devices()[0].device_kind,
+            platform_version=jax.devices()[0].client.platform_version,
+            nearest_double_jvp="broadcast transpose with fixed four-term reduction",
+        ),
+    )
     assert read(root / "test-results.json")["passed"]
     assert jax.devices()[0].platform != "cpu"
     arms = make_arms(root)
@@ -372,6 +419,7 @@ def run_sample(model, source, strength, key, depth, method="initial", steps=32):
 
 
 def evaluate(root, steps=2):
+    assert os.environ.get("XLA_FLAGS", "") == ""
     plan = check(root)
     assert read(root / "snapshot-audit.json")["raw_ema_exact"]
     models = {m: load_inference(root / f"snapshots/step-{STEPS}/{m}/raw")[0] for m in TRAINED}

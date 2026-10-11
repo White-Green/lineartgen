@@ -14,6 +14,7 @@ from lineartgen.config import ModelConfig
 
 from .blocks import ConvBlock
 from .output import denoised_output
+from .upsample import nearest_double
 
 
 def progress_basis(progress):
@@ -216,10 +217,7 @@ class UNet(nnx.Module):
             features = jax.image.resize(basis, (*x.shape[:3], basis.shape[-1]), "nearest")
             return jnp.split(self.progress_modulators[index](features), 2, axis=-1)
 
-        def upsample(x):
-            return jax.image.resize(
-                x, (x.shape[0], x.shape[1] * 2, x.shape[2] * 2, x.shape[3]), "nearest"
-            )
+        upsample = nearest_double
 
         x = jnp.concatenate((image, noise_level), axis=-1)
         skips = []

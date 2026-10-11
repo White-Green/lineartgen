@@ -15,7 +15,7 @@ and nested-width models are unchanged; the local pilot has no width nesting.
 
 Test exact inherited state, independent model updates, checkpoint restore and
 next-update equality for both architectures. Bind the prior25-test record.
-Before SGD reproduce32 fixed CI outputs; verify full parent state equality,
+Before SGD reproduce100 fixed CI output blocks; verify full parent state equality,
 replay six actual updates and restore complete states1200/1206/3600/6000 with
 all16 raw/EMA exports. Record all4800 input hashes and per-update wall times.
 No checkpoint selection or early quality-based stopping.
@@ -37,3 +37,24 @@ Continued four-pair fitting cannot establish behavior on diverse widths,
 corruptions, strengths, partial masks or ambiguity. Broader synthetic training,
 independent seed, sealed conditions, BGRA/ONNX and Krita checks remain later work.
 No production, plugin, runtime default, deployment or adoption change.
+
+
+Execution correction: the first CJ worktree stopped after six updates at a
+bitwise replay assertion. Identical inputs and initial full state produced
+up to1.49e-8 run-to-run state differences under ordinary GPU settings. Testing
+both XLA deterministic flags on this installed ROCm setup produced incorrect
+nearest-resize gradients on six of eight exact integer probes (CPU and default
+GPU passed all eight), as well as much larger state differences. Those flags
+are rejected, not used for training. This is an observation about this installed
+setup, not a claim about every JAX/ROCm system. No external bug report is sent.
+
+Keep ordinary XLA flags empty and the original nearest-resize forward operation.
+For exact2x upsampling in the local CNN and single U-Net, specify its equivalent
+JVP as reshape/broadcast; its transpose sums the four corresponding output
+adjoints directly. No parameter, architecture, mathematical loss, data, schedule
+or input/output-contract change. Floating-point summation order changes, so the
+trajectory need not match ordinary scatter accumulation bitwise. A temporary
+six-update diagnostic with this JVP had exact metrics and full model/Adam/EMA
+replay. The actual frozen implementation must pass the same check. Verify all100
+CI output blocks before learning, plus analytical forward/JVP/VJP tests and the
+continuation-state test. Width-nested model implementation remains untouched.

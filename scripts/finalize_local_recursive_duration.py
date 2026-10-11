@@ -65,7 +65,8 @@ for steps, directory in ((2, "evaluation"), (32, "evaluation32")):
     assert replay["exact"] and len(replay["files"]) == len(set(replay["files"])) == (50)
     assert replay["metric_rows_exact"] == (192)
     all_metrics[steps] = metrics
-assert read(root / "control-preflight.json")["thirtytwo_CI_outputs_exact"]
+assert read(root / "control-preflight.json")["CI_output_blocks_exact"] == 100
+assert read(root / "backend-audit.json")["flags"] == ""
 sampling = [json.loads(s) for s in (root / "training/sampling.jsonl").read_text().splitlines()]
 assert [r["step"] for r in sampling] == list(range(START + 1, STEPS + 1))
 assert all(r["depth"] == (r["step"] - 1) % 6 + 1 for r in sampling)
@@ -131,6 +132,7 @@ result = dict(
             "data-audit.json",
             "initial-audit.json",
             "control-preflight.json",
+            "backend-audit.json",
             "training/sampling.jsonl",
             "prefix-audit.json",
             "replay-audit-2.json",

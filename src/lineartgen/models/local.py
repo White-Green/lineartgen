@@ -4,12 +4,12 @@ Only the external image pyramid resizes images. This stage never pools or
 strides its feature maps. Width nesting is not implemented by this architecture.
 """
 
-import jax
 import jax.numpy as jnp
 from flax import nnx
 
 from .output import denoised_output
 from .unet import progress_basis
+from .upsample import nearest_double
 
 
 class LocalBlock(nnx.Module):
@@ -85,7 +85,7 @@ class LocalCNN(nnx.Module):
             raise ValueError("Insert must be the immediate smaller image")
         if image.shape[1] % 2 or image.shape[2] % 2:
             raise ValueError("LocalCNN requires even image dimensions")
-        up = jax.image.resize(insert, image.shape, "nearest")
+        up = nearest_double(insert)
         basis = progress_basis(progress)
         features = jnp.concatenate((image - 1, guide - 1, noise_level, up - 1), axis=-1)
         gain, shift = jnp.split(self.stem_modulation(basis), 2, axis=-1)
