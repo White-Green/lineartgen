@@ -13,7 +13,7 @@ from .upsample import nearest_double
 
 
 class LocalBlock(nnx.Module):
-    def __init__(self, width, *, rngs):
+    def __init__(self, width, *, rngs, pyramid_conditioning=False):
         self.first = nnx.Conv(width, width, (3, 3), padding="SAME", rngs=rngs)
         self.second = nnx.Conv(width, width, (3, 3), padding="SAME", rngs=rngs)
         self.modulation = nnx.Conv(
@@ -24,9 +24,21 @@ class LocalBlock(nnx.Module):
             bias_init=nnx.initializers.zeros_init(),
             rngs=rngs,
         )
+        if pyramid_conditioning:
+            self.pyramid_modulation = nnx.Conv(
+                1,
+                2 * width,
+                (1, 1),
+                use_bias=False,
+                kernel_init=nnx.initializers.zeros_init(),
+                rngs=rngs,
+            )
 
-    def __call__(self, x, basis):
-        gain, shift = jnp.split(self.modulation(basis), 2, axis=-1)
+    def __call__(self, x, basis, pyramid_code=None):
+        modulation = self.modulation(basis)
+        if pyramid_code is not None:
+            modulation = modulation + self.pyramid_modulation(pyramid_code)
+        gain, shift = jnp.split(modulation, 2, axis=-1)
         h = nnx.silu(self.first(x) * (1 + gain) + shift)
         return nnx.silu(x + self.second(h))
 
@@ -43,6 +55,7 @@ class LocalCNN(nnx.Module):
         self.sampling_mode = config.sampling_mode
         self.residual_base = config.residual_base
         self.feature_input = config.feature_input
+        self.pyramid_conditioning = config.pyramid_conditioning
         width = config.channels[0]
         self.stem = nnx.Conv(4, width, (3, 3), padding="SAME", rngs=rngs)
         self.stem_modulation = nnx.Conv(
@@ -53,7 +66,23 @@ class LocalCNN(nnx.Module):
             bias_init=nnx.initializers.zeros_init(),
             rngs=rngs,
         )
-        self.blocks = nnx.List([LocalBlock(width, rngs=rngs) for _ in range(config.local_blocks)])
+        if self.pyramid_conditioning != "none":
+            self.stem_pyramid_modulation = nnx.Conv(
+                1,
+                2 * width,
+                (1, 1),
+                use_bias=False,
+                kernel_init=nnx.initializers.zeros_init(),
+                rngs=rngs,
+            )
+        self.blocks = nnx.List(
+            [
+                LocalBlock(
+                    width, rngs=rngs, pyramid_conditioning=self.pyramid_conditioning != "none"
+                )
+                for _ in range(config.local_blocks)
+            ]
+        )
         self.head = nnx.Conv(
             width,
             1,
@@ -71,6 +100,7 @@ class LocalCNN(nnx.Module):
         guide=None,
         progress=None,
         *,
+        pyramid_level=0,
         return_preclip=False,
         return_network_output=False,
     ):
@@ -87,12 +117,19 @@ class LocalCNN(nnx.Module):
             raise ValueError("LocalCNN requires even image dimensions")
         up = nearest_double(insert)
         basis = progress_basis(progress)
+        pyramid_code = None
+        if self.pyramid_conditioning != "none":
+            value = 1 + pyramid_level / 5 if self.pyramid_conditioning == "level" else 1
+            pyramid_code = jnp.full_like(image, value)
         signal = guide if self.feature_input == "source" else image
         features = jnp.concatenate((signal - 1, guide - 1, noise_level, up - 1), axis=-1)
-        gain, shift = jnp.split(self.stem_modulation(basis), 2, axis=-1)
+        modulation = self.stem_modulation(basis)
+        if pyramid_code is not None:
+            modulation = modulation + self.stem_pyramid_modulation(pyramid_code)
+        gain, shift = jnp.split(modulation, 2, axis=-1)
         x = nnx.silu(self.stem(features) * (1 + gain) + shift)
         for block in self.blocks:
-            x = block(x, basis)
+            x = block(x, basis, pyramid_code)
         output = self.head(x)
         if return_network_output:
             if return_preclip:

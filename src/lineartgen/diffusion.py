@@ -44,7 +44,9 @@ def pyramid(image, levels):
     return tuple(images)
 
 
-def _forward(model, image, noise, insert, guide, progress, **kwargs):
+def _forward(model, image, noise, insert, guide, progress, *, pyramid_level=0, **kwargs):
+    if getattr(model, "pyramid_conditioning", "none") != "none":
+        kwargs["pyramid_level"] = pyramid_level
     if progress is not None:
         return model(image, noise, insert, guide, progress, **kwargs)
     return (
@@ -67,10 +69,18 @@ def recursive_forward_all(model, images, noise_levels, *, guides=None, progress=
         guides = (None,) * len(images)
     if progress is None:
         progress = (None,) * len(images)
-    for image, noise, guide, u in zip(
-        reversed(images), reversed(noise_levels), reversed(guides), reversed(progress), strict=True
+    for index, (image, noise, guide, u) in enumerate(
+        zip(
+            reversed(images),
+            reversed(noise_levels),
+            reversed(guides),
+            reversed(progress),
+            strict=True,
+        )
     ):
-        insert = _forward(model, image, noise, insert, guide, u)
+        insert = _forward(
+            model, image, noise, insert, guide, u, pyramid_level=len(images) - 1 - index
+        )
         outputs.append(insert)
     return tuple(
         tuple(output[..., i : i + 1] for output in reversed(outputs)) for i in range(count)
@@ -94,10 +104,25 @@ def recursive_forward_with_preclip(model, images, noise_levels, *, guides=None, 
         guides = (None,) * len(images)
     if progress is None:
         progress = (None,) * len(images)
-    for image, noise, guide, u in zip(
-        reversed(images), reversed(noise_levels), reversed(guides), reversed(progress), strict=True
+    for index, (image, noise, guide, u) in enumerate(
+        zip(
+            reversed(images),
+            reversed(noise_levels),
+            reversed(guides),
+            reversed(progress),
+            strict=True,
+        )
     ):
-        insert, raw = _forward(model, image, noise, insert, guide, u, return_preclip=True)
+        insert, raw = _forward(
+            model,
+            image,
+            noise,
+            insert,
+            guide,
+            u,
+            pyramid_level=len(images) - 1 - index,
+            return_preclip=True,
+        )
         predictions.append(insert)
         preclip.append(raw)
     return tuple(reversed(predictions)), tuple(reversed(preclip))

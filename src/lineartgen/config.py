@@ -41,9 +41,15 @@ class ModelConfig(Settings):
     skip_mode: Literal["post_pool", "pre_pool"] = "post_pool"
     bottleneck_dilation: int = Field(default=1, ge=1, le=4)
     local_blocks: int = Field(default=3, ge=1)
+    # Experimental physical pyramid level; independent of denoising progress.
+    pyramid_conditioning: Literal["none", "constant", "level"] = "none"
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.pyramid_conditioning != "none" and not (
+            self.architecture == "local" and self.sampling_mode == "one_pass"
+        ):
+            raise ValueError("Pyramid conditioning currently requires a one-pass local CNN")
         if self.architecture == "local":
             if not (
                 len(self.channels) == 1

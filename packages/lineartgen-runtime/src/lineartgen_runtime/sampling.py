@@ -25,7 +25,12 @@ def denoise(
     progress_conditioning=False,
     preserve_zero_noise=False,
     sampling_mode="diffusion",
+    pyramid_conditioning="none",
 ):
+    if pyramid_conditioning not in ("none", "constant", "level"):
+        raise ValueError("Unsupported pyramid conditioning")
+    if pyramid_conditioning != "none" and not (source_conditioning and sampling_mode == "one_pass"):
+        raise ValueError("Pyramid conditioning requires one-pass source conditioning")
     if sampling_mode not in ("diffusion", "one_pass"):
         raise ValueError("Unsupported sampling mode")
     if sampling_mode == "one_pass":
@@ -52,9 +57,10 @@ def denoise(
             (smallest.shape[0], smallest.shape[1] // 2, smallest.shape[2] // 2, 1), np.float32
         )
         predictions = []
-        for x, level, guide in zip(
-            reversed(images), reversed(noise_levels), reversed(clean_scales), strict=True
+        for index, (x, level, guide) in enumerate(
+            zip(reversed(images), reversed(noise_levels), reversed(clean_scales), strict=True)
         ):
+            extra = {} if pyramid_conditioning == "none" else dict(pyramid_level=levels - 1 - index)
             arguments = (
                 np.ascontiguousarray(x),
                 np.ascontiguousarray(level * current),
@@ -63,10 +69,12 @@ def denoise(
             if progress_conditioning:
                 if not source_conditioning:
                     raise ValueError("Progress conditioning requires the original rough guide")
-                insert = forward(*arguments, np.ascontiguousarray(guide), np.full_like(x, current))
+                insert = forward(
+                    *arguments, np.ascontiguousarray(guide), np.full_like(x, current), **extra
+                )
             else:
                 insert = (
-                    forward(*arguments, np.ascontiguousarray(guide))
+                    forward(*arguments, np.ascontiguousarray(guide), **extra)
                     if source_conditioning
                     else forward(*arguments)
                 )

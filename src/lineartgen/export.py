@@ -12,6 +12,8 @@ from lineartgen.training import checkpoints
 
 
 def export_model(model, config, destination, *, dynamic=True, provenance=None):
+    if config.model.pyramid_conditioning != "none":
+        raise ValueError("Pyramid-conditioned research models need an explicit ONNX level input")
     import onnx
     import onnxruntime as ort
     from jax2onnx import to_onnx
