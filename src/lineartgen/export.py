@@ -12,6 +12,8 @@ from lineartgen.training import checkpoints
 
 
 def export_model(model, config, destination, *, dynamic=True, provenance=None):
+    if config.model.source_preprocess != "raw":
+        raise ValueError("Full source normalization is not validated for ONNX/runtime packaging")
     if any(d != 1 for d in config.model.local_dilations):
         raise ValueError("Dilated local CNN export is not validated")
     if config.model.source_cue != "raw":

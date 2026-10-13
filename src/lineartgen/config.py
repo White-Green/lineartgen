@@ -30,6 +30,8 @@ class ModelConfig(Settings):
     feature_input: Literal["noisy", "source"] = "noisy"
     # Experimental shape cue; the second feature and residual anchor stay raw.
     source_cue: Literal["raw", "local_peak"] = "raw"
+    # Normalize the full guide before the pyramid, including the active residual anchor.
+    source_preprocess: Literal["raw", "local_peak_full"] = "raw"
     # Source-only restoration does not consume intermediate diffusion states.
     sampling_mode: Literal["diffusion", "one_pass"] = "diffusion"
     source_conditioning: bool = False
@@ -49,6 +51,15 @@ class ModelConfig(Settings):
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.source_preprocess != "raw" and not (
+            self.architecture == "local"
+            and self.feature_input == "source"
+            and self.sampling_mode == "one_pass"
+            and self.source_cue == "raw"
+        ):
+            raise ValueError(
+                "Full source normalization requires a source-only local CNN with raw cue"
+            )
         if self.local_dilations and (
             self.architecture != "local"
             or len(self.local_dilations) != self.local_blocks

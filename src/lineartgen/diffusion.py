@@ -56,6 +56,17 @@ def _forward(model, image, noise, insert, guide, progress, *, pyramid_level=0, *
     )
 
 
+def source_guides(model, guides):
+    """Normalize once at original resolution; coarse levels retain area coverage."""
+    if getattr(model, "source_preprocess", "raw") == "local_peak_full":
+        if guides is None or not guides or guides[0] is None:
+            raise ValueError("Full source normalization requires an original guide")
+        from lineartgen.models.local import local_contrast_cue
+
+        return pyramid(local_contrast_cue(guides[0]), len(guides))
+    return guides
+
+
 def recursive_forward_all(model, images, noise_levels, *, guides=None, progress=None):
     """All retained subnets share features, with a separate recursive state per prefix."""
     smallest = images[-1]
@@ -65,6 +76,7 @@ def recursive_forward_all(model, images, noise_levels, *, guides=None, progress=
         dtype=smallest.dtype,
     )
     outputs = []
+    guides = source_guides(model, guides)
     if guides is None:
         guides = (None,) * len(images)
     if progress is None:
@@ -100,6 +112,7 @@ def recursive_forward_with_preclip(model, images, noise_levels, *, guides=None, 
         dtype=smallest.dtype,
     )
     predictions, preclip = [], []
+    guides = source_guides(model, guides)
     if guides is None:
         guides = (None,) * len(images)
     if progress is None:

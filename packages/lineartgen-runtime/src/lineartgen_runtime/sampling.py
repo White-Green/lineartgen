@@ -13,6 +13,22 @@ def pyramid(image, count):
     return result
 
 
+def local_contrast_source(guide):
+    """NumPy counterpart of full-resolution local-peak normalization."""
+    ink = np.clip((1 - guide) / 2, 0, 1)
+    peak = ink
+    for axis in (1, 2):
+        padding = [(0, 0)] * 4
+        padding[axis] = (16, 16)
+        padded = np.pad(peak, padding, mode="constant")
+        peak = np.zeros_like(ink)
+        for offset in range(33):
+            region = [slice(None)] * 4
+            region[axis] = slice(offset, offset + ink.shape[axis])
+            np.maximum(peak, padded[tuple(region)], out=peak)
+    return 1 - np.float32(0.8) * ink / np.maximum(peak, np.float32(0.02))
+
+
 def denoise(
     forward,
     clean,
@@ -26,7 +42,12 @@ def denoise(
     preserve_zero_noise=False,
     sampling_mode="diffusion",
     pyramid_conditioning="none",
+    source_preprocess="raw",
 ):
+    if source_preprocess not in ("raw", "local_peak_full"):
+        raise ValueError("Unsupported source preprocessing")
+    if source_preprocess != "raw" and not (source_conditioning and sampling_mode == "one_pass"):
+        raise ValueError("Full source normalization requires one-pass source conditioning")
     if pyramid_conditioning not in ("none", "constant", "level"):
         raise ValueError("Unsupported pyramid conditioning")
     if pyramid_conditioning != "none" and not (source_conditioning and sampling_mode == "one_pass"):
@@ -41,6 +62,11 @@ def denoise(
         steps = 1
     rng = np.random.default_rng(seed)
     clean_scales = pyramid(clean, levels)
+    guides = (
+        pyramid(local_contrast_source(clean), levels)
+        if source_preprocess == "local_peak_full"
+        else clean_scales
+    )
     noise_levels = pyramid(noise_level, levels)
     # Match training: resize the clean image and mask before adding independent
     # noise at each resolution. Draw once; later steps evolve each scale's state.
@@ -58,7 +84,7 @@ def denoise(
         )
         predictions = []
         for index, (x, level, guide) in enumerate(
-            zip(reversed(images), reversed(noise_levels), reversed(clean_scales), strict=True)
+            zip(reversed(images), reversed(noise_levels), reversed(guides), strict=True)
         ):
             extra = {} if pyramid_conditioning == "none" else dict(pyramid_level=levels - 1 - index)
             arguments = (

@@ -68,6 +68,7 @@ class LocalCNN(nnx.Module):
         self.residual_base = config.residual_base
         self.feature_input = config.feature_input
         self.source_cue = config.source_cue
+        self.source_preprocess = config.source_preprocess
         self.pyramid_conditioning = config.pyramid_conditioning
         self.local_dilations = config.local_dilations or (1,) * config.local_blocks
         width = config.channels[0]
