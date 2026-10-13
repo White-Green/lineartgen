@@ -59,7 +59,7 @@ def family_topology(prediction, data):
     errors = np.trapezoid(abs(data["profiles"] - observed[None]), offsets[None], axis=-1)
     variant = int(np.argmin((errors / np.maximum(mass, 0.25)).mean(-1)))
     queries = data["connections"].copy()
-    offset, _ = CHOICES[variant]
+    offset, _ = data.get("choices", CHOICES)[variant]
     queries[:, :2] += offset * data["direction"]
     queries[:, 2:4] += offset * data["direction"]
     cuts, bridges, cut_total, bridge_total, valid = 0, 0, 0, 0, 0
