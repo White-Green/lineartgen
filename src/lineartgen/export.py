@@ -12,6 +12,8 @@ from lineartgen.training import checkpoints
 
 
 def export_model(model, config, destination, *, dynamic=True, provenance=None):
+    if config.model.source_cue != "raw":
+        raise ValueError("Local contrast research cues have not been validated for ONNX export")
     if config.model.pyramid_conditioning != "none":
         raise ValueError("Pyramid-conditioned research models need an explicit ONNX level input")
     import onnx

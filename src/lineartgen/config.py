@@ -28,6 +28,8 @@ class ModelConfig(Settings):
     # Experimental output anchor; the network still receives the sampled image.
     residual_base: Literal["noisy", "source"] = "noisy"
     feature_input: Literal["noisy", "source"] = "noisy"
+    # Experimental shape cue; the second feature and residual anchor stay raw.
+    source_cue: Literal["raw", "local_peak"] = "raw"
     # Source-only restoration does not consume intermediate diffusion states.
     sampling_mode: Literal["diffusion", "one_pass"] = "diffusion"
     source_conditioning: bool = False
@@ -46,6 +48,12 @@ class ModelConfig(Settings):
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.source_cue != "raw" and not (
+            self.architecture == "local"
+            and self.feature_input == "source"
+            and self.sampling_mode == "one_pass"
+        ):
+            raise ValueError("Local contrast cues require a source-only local CNN")
         if self.pyramid_conditioning != "none" and not (
             self.architecture == "local" and self.sampling_mode == "one_pass"
         ):

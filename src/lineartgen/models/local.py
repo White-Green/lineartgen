@@ -4,12 +4,20 @@ Only the external image pyramid resizes images. This stage never pools or
 strides its feature maps. Width nesting is not implemented by this architecture.
 """
 
+import jax
 import jax.numpy as jnp
 from flax import nnx
 
 from .output import denoised_output
 from .unet import progress_basis
 from .upsample import nearest_double
+
+
+def local_contrast_cue(guide):
+    """A bounded local shape cue, without changing the original guide or anchor."""
+    ink = jnp.clip((1 - guide) / 2, 0, 1)
+    peak = jax.lax.reduce_window(ink, -jnp.inf, jax.lax.max, (1, 33, 33, 1), (1, 1, 1, 1), "SAME")
+    return 1 - 0.8 * ink / jnp.maximum(peak, 0.02)
 
 
 class LocalBlock(nnx.Module):
@@ -55,6 +63,7 @@ class LocalCNN(nnx.Module):
         self.sampling_mode = config.sampling_mode
         self.residual_base = config.residual_base
         self.feature_input = config.feature_input
+        self.source_cue = config.source_cue
         self.pyramid_conditioning = config.pyramid_conditioning
         width = config.channels[0]
         self.stem = nnx.Conv(4, width, (3, 3), padding="SAME", rngs=rngs)
@@ -122,6 +131,8 @@ class LocalCNN(nnx.Module):
             value = 1 + pyramid_level / 5 if self.pyramid_conditioning == "level" else 1
             pyramid_code = jnp.full_like(image, value)
         signal = guide if self.feature_input == "source" else image
+        if self.source_cue == "local_peak":
+            signal = local_contrast_cue(guide)
         features = jnp.concatenate((signal - 1, guide - 1, noise_level, up - 1), axis=-1)
         modulation = self.stem_modulation(basis)
         if pyramid_code is not None:
