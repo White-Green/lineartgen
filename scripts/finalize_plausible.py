@@ -22,7 +22,16 @@ def finalize(root):
     assert read(root / "initial-audit.json")["six_depth_outputs_exact"]
     assert read(root / "backend.json")["flags"] == ""
     prefix = read(root / "prefix-audit.json")
-    assert prefix["full_state_exact"] and prefix["metrics_exact"]
+    assert prefix["passed"] and prefix["metrics_checked"]
+    assert len(prefix["metrics"]) == 6
+    for audit in [prefix["states"], *prefix["metrics"]]:
+        assert set(audit) == set(METHODS)
+        for name, values in audit.items():
+            assert values["passed"]
+            assert values["atol"] == (1e-7 if name == "prior" else 0.0)
+            assert values["rtol"] == (1e-5 if name == "prior" else 0.0)
+            if name != "prior":
+                assert values["exact"]
     for step in SAVED[1:]:
         assert read(root / f"training/restore-{step}.json")["full_state_exact"]
     snapshots = read(root / "snapshot-audit.json")
@@ -62,7 +71,8 @@ def finalize(root):
         model_rows=3072,
         reference_rows=1920,
         native_images_reviewed=12,
-        full_state_exact=True,
+        checkpoint_restore_exact=True,
+        gpu_replay_within_declared_tolerance=True,
         raw_ema_exports_exact=True,
         evidence={
             n: sha(root / n)

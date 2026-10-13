@@ -32,7 +32,7 @@ SAVED = (0, 6, 1000, STEPS)
 SEED = 2026101302
 NOISE_SEED = 2026101304
 EVAL_SEED = 2026101305
-DOCUMENT = Path("docs/plausible-lineart-plan-20261013.md")
+DOCUMENT = Path("docs/plausible-lineart-replay-plan-20261013.md")
 
 
 def digest(tree):
@@ -124,6 +124,32 @@ def update(arm, name, p, coords, step):
 
 def exact(a, b):
     jax.tree.map(np.testing.assert_array_equal, a, b)
+
+
+def replay_comparison(actual, expected, name):
+    """GPU replay permits tiny floating variation only for the GAN arm."""
+    aa, structure = jax.tree.flatten(actual)
+    bb, other = jax.tree.flatten(expected)
+    assert structure == other
+    atol, rtol = (1e-7, 1e-5) if name == "prior" else (0.0, 0.0)
+    count, maximum = 0, 0.0
+    for a, b in zip(aa, bb, strict=True):
+        a, b = np.asarray(a), np.asarray(b)
+        assert a.shape == b.shape and a.dtype == b.dtype
+        if np.issubdtype(a.dtype, np.inexact):
+            np.testing.assert_allclose(a, b, atol=atol, rtol=rtol, equal_nan=False)
+            maximum = max(maximum, float(np.max(np.abs(a - b), initial=0)))
+        else:
+            np.testing.assert_array_equal(a, b)
+        count += int(not np.array_equal(a, b))
+    return dict(
+        passed=True,
+        exact=count == 0,
+        differing_leaves=count,
+        max_abs_difference=maximum,
+        atol=atol,
+        rtol=rtol,
+    )
 
 
 def prepare(root):
@@ -288,15 +314,27 @@ def train(root):
                 print(progress, flush=True)
             if step + 1 == 6:
                 replay = make_arms(root)
+                metric_audits = []
                 for k in range(6):
                     q, c = batch(data, k)
                     actual = {m: update(replay[m], m, q, c, k) for m in METHODS}
                     if start == 0:
-                        assert actual == prefix[k]
-                exact(lineart_state.payload(arms, 6), lineart_state.payload(replay, 6))
+                        metric_audits.append(
+                            {m: replay_comparison(actual[m], prefix[k][m], m) for m in METHODS}
+                        )
+                expected_state = lineart_state.payload(arms, 6)["arms"]
+                actual_state = lineart_state.payload(replay, 6)["arms"]
+                state_audits = {
+                    m: replay_comparison(actual_state[m], expected_state[m], m) for m in METHODS
+                }
                 write(
                     root / "prefix-audit.json",
-                    dict(full_state_exact=True, metrics_exact=start == 0),
+                    dict(
+                        passed=True,
+                        metrics_checked=start == 0,
+                        metrics=metric_audits,
+                        states=state_audits,
+                    ),
                 )
             if step + 1 in SAVED:
                 lineart_state.save(saved, arms, step + 1)
