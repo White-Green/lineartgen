@@ -64,7 +64,7 @@ class LineartModel:
             raise ValueError("One-pass restoration requires format version 2")
         if self.sampling_mode == "one_pass" and (
             not self.source_conditioning
-            or self.progress_conditioning
+            or (self.progress_conditioning and model_config.get("architecture") != "local")
             or not self._preserve_zero_noise
             or model_config.get("feature_input") != "source"
             or model_config.get("residual_base") != "source"

@@ -40,9 +40,9 @@ class LocalCNN(nnx.Module):
         self.progress_modulation = "fourier_film"
         self.output_mode = "residual"
         self.output_clip_gradient = "hard"
-        self.sampling_mode = "diffusion"
-        self.residual_base = "noisy"
-        self.feature_input = "noisy"
+        self.sampling_mode = config.sampling_mode
+        self.residual_base = config.residual_base
+        self.feature_input = config.feature_input
         width = config.channels[0]
         self.stem = nnx.Conv(4, width, (3, 3), padding="SAME", rngs=rngs)
         self.stem_modulation = nnx.Conv(
@@ -87,7 +87,8 @@ class LocalCNN(nnx.Module):
             raise ValueError("LocalCNN requires even image dimensions")
         up = nearest_double(insert)
         basis = progress_basis(progress)
-        features = jnp.concatenate((image - 1, guide - 1, noise_level, up - 1), axis=-1)
+        signal = guide if self.feature_input == "source" else image
+        features = jnp.concatenate((signal - 1, guide - 1, noise_level, up - 1), axis=-1)
         gain, shift = jnp.split(self.stem_modulation(basis), 2, axis=-1)
         x = nnx.silu(self.stem(features) * (1 + gain) + shift)
         for block in self.blocks:
@@ -97,6 +98,9 @@ class LocalCNN(nnx.Module):
             if return_preclip:
                 raise ValueError("Raw output and preclip modes are mutually exclusive")
             return output
+        anchor = (
+            jnp.where(noise_level > 0, guide, image) if self.residual_base == "source" else image
+        )
         return denoised_output(
-            output, image, noise_level, "residual", "hard", return_preclip=return_preclip
+            output, anchor, noise_level, "residual", "hard", return_preclip=return_preclip
         )

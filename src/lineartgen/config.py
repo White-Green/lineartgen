@@ -53,16 +53,16 @@ class ModelConfig(Settings):
                 and self.progress_conditioning
                 and self.progress_modulation == "fourier_film"
                 and self.output_mode == "residual"
-                and self.residual_base == "noisy"
-                and self.feature_input == "noisy"
-                and self.sampling_mode == "diffusion"
+                and (self.residual_base, self.feature_input, self.sampling_mode)
+                in (("noisy", "noisy", "diffusion"), ("source", "source", "one_pass"))
                 and self.guide_encoding == "raw"
                 and self.skip_mode == "post_pool"
                 and self.bottleneck_dilation == 1
             ):
                 raise ValueError(
                     "Local CNN requires one width, two 3x3 convolutions per block, "
-                    "raw-source/noisy residual features and Fourier progress conditioning"
+                    "matched noisy/diffusion or source/one_pass features "
+                    "and Fourier progress conditioning"
                 )
         elif self.local_blocks != 3:
             raise ValueError("local_blocks applies only to the local architecture")
@@ -76,11 +76,15 @@ class ModelConfig(Settings):
             raise ValueError("One-pass restoration requires source feature input")
         if self.feature_input == "source" and self.residual_base != "source":
             raise ValueError("Source feature input requires the source residual base")
-        if self.residual_base == "source" and (
-            self.architecture != "unet"
-            or self.output_mode != "residual"
-            or not self.source_conditioning
-            or self.progress_conditioning
+        if (
+            self.residual_base == "source"
+            and self.architecture != "local"
+            and (
+                self.architecture != "unet"
+                or self.output_mode != "residual"
+                or not self.source_conditioning
+                or self.progress_conditioning
+            )
         ):
             raise ValueError(
                 "Source residual base requires a guided residual UNet without progress"

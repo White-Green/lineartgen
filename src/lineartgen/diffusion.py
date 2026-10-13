@@ -254,7 +254,17 @@ def sample_prepared(model, images, noise_levels, *, steps, guides=None):
             raise ValueError("steps must be positive")
         # The request's strength remains intact. Source-only features would
         # otherwise turn N iterations into one prediction at strength/N.
-        return recursive_forward(model, images, noise_levels, guides=guides)[0]
+        return recursive_forward(
+            model,
+            images,
+            noise_levels,
+            guides=guides,
+            progress=(
+                tuple(jnp.ones_like(x) for x in images)
+                if getattr(model, "progress_conditioning", False)
+                else None
+            ),
+        )[0]
     for step in range(steps):
         current, following = (steps - step) / steps, (steps - step - 1) / steps
         predictions = recursive_forward(
