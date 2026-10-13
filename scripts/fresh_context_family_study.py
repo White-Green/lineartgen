@@ -159,6 +159,8 @@ def prepare(root):
     write(
         root / "plan.json",
         dict(
+            initial=str(root / "initials/plain"),
+            initial_files={p.name: sha(p) for p in (root / "initials/plain").iterdir()},
             initials={m: str(root / f"initials/{m}") for m in METHODS},
             reference=str(root / "reference"),
             data={},
