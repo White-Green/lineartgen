@@ -21,9 +21,13 @@ def local_contrast_cue(guide):
 
 
 class LocalBlock(nnx.Module):
-    def __init__(self, width, *, rngs, pyramid_conditioning=False):
-        self.first = nnx.Conv(width, width, (3, 3), padding="SAME", rngs=rngs)
-        self.second = nnx.Conv(width, width, (3, 3), padding="SAME", rngs=rngs)
+    def __init__(self, width, *, rngs, pyramid_conditioning=False, dilation=1):
+        self.first = nnx.Conv(
+            width, width, (3, 3), padding="SAME", kernel_dilation=dilation, rngs=rngs
+        )
+        self.second = nnx.Conv(
+            width, width, (3, 3), padding="SAME", kernel_dilation=dilation, rngs=rngs
+        )
         self.modulation = nnx.Conv(
             9,
             2 * width,
@@ -65,6 +69,7 @@ class LocalCNN(nnx.Module):
         self.feature_input = config.feature_input
         self.source_cue = config.source_cue
         self.pyramid_conditioning = config.pyramid_conditioning
+        self.local_dilations = config.local_dilations or (1,) * config.local_blocks
         width = config.channels[0]
         self.stem = nnx.Conv(4, width, (3, 3), padding="SAME", rngs=rngs)
         self.stem_modulation = nnx.Conv(
@@ -87,9 +92,12 @@ class LocalCNN(nnx.Module):
         self.blocks = nnx.List(
             [
                 LocalBlock(
-                    width, rngs=rngs, pyramid_conditioning=self.pyramid_conditioning != "none"
+                    width,
+                    rngs=rngs,
+                    pyramid_conditioning=self.pyramid_conditioning != "none",
+                    dilation=dilation,
                 )
-                for _ in range(config.local_blocks)
+                for dilation in self.local_dilations
             ]
         )
         self.head = nnx.Conv(

@@ -43,11 +43,18 @@ class ModelConfig(Settings):
     skip_mode: Literal["post_pool", "pre_pool"] = "post_pool"
     bottleneck_dilation: int = Field(default=1, ge=1, le=4)
     local_blocks: int = Field(default=3, ge=1)
+    local_dilations: tuple[int, ...] = ()
     # Experimental physical pyramid level; independent of denoising progress.
     pyramid_conditioning: Literal["none", "constant", "level"] = "none"
 
     @model_validator(mode="after")
     def validate_architecture(self):
+        if self.local_dilations and (
+            self.architecture != "local"
+            or len(self.local_dilations) != self.local_blocks
+            or any(d < 1 or d > 4 for d in self.local_dilations)
+        ):
+            raise ValueError("local_dilations requires one dilation in 1..4 per local block")
         if self.source_cue != "raw" and not (
             self.architecture == "local"
             and self.feature_input == "source"
