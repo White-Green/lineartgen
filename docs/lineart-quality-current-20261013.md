@@ -1,3 +1,7 @@
+# Latest update: DP completed, 2026-10-14
+
+[DP coherent-profile results](coherent-path-results-20261014.md): two matched 6,000-update arms, 9,408 outputs and 28 native comparison pages reviewed. Gray secondary bands, crossing cuts, wide partial-mask erasure and damaged fill corners remain. No adoption; fresh confirmation untouched. Direct pixel optimization can yield clean opaque solutions, but the trained CNN does not reproduce this improvement. Next: oracle and gradient validation of opaque geometry rendering before training a geometric predictor.
+
 # 線画品質の現在地（DO完了）
 
 複数の許容清書から一つを選ぶlossで、灰色の平均を出す傾向は減った。
