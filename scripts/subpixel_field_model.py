@@ -86,6 +86,8 @@ def save_field(model, config, destination, *, provenance):
         distance_range=DISTANCE_RANGE,
         production_runtime_supported=False,
     )
+    if getattr(model, "research_model", None) == "d4_group_local":
+        metadata.update(research_model="d4_group_local", group_order=8)
     p.write_text(json.dumps(metadata, indent=2) + "\n")
     return dest
 
@@ -98,7 +100,14 @@ def load_field(source):
     )
     assert metadata["subpixels"] == SUBPIXELS and metadata["distance_range"] == DISTANCE_RANGE
     cfg = load_config(source / "config.json")
-    model = create_field_model(cfg)
+    if metadata.get("research_model") == "d4_group_local":
+        from group_field_model import GroupFieldCNN
+
+        assert metadata["group_order"] == 8
+        model = GroupFieldCNN(cfg.model, rngs=nnx.Rngs(0))
+    else:
+        assert "research_model" not in metadata
+        model = create_field_model(cfg)
     state = nnx.state(model, nnx.Param)
     template = nnx.to_pure_dict(state)
     with np.load(source / "weights.npz", allow_pickle=False) as z:
