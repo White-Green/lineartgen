@@ -1,3 +1,7 @@
+# Latest update: DS completed, 2026-10-14
+
+[DS results](contour-coverage-results-20261014.md):24 known-geometry cases pass the renderer prerequisite.384 learned-field outputs and16 native learned pages show persistent line erasure; contour rendering alone cannot recover missing geometry. Next: explicit balanced inside/outside geometry supervision versus matched continued-training control. No adoption or reserved fresh evaluation.
+
 # Latest update: DR completed, 2026-10-14
 
 [DR results](subpixel-field-results-20261014.md): two geometry-field models trained6,000 updates each;9,408 outputs and28 native pages reviewed. Major line erasure and fill holes in both. No adoption; fresh confirmation untouched. DS compares rendering of the same fields before changing supervision.
