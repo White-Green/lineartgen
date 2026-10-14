@@ -1,3 +1,7 @@
+# Latest update: DR completed, 2026-10-14
+
+[DR results](subpixel-field-results-20261014.md): two geometry-field models trained6,000 updates each;9,408 outputs and28 native pages reviewed. Major line erasure and fill holes in both. No adoption; fresh confirmation untouched. DS compares rendering of the same fields before changing supervision.
+
 # Latest update: DQ rendering oracle completed, 2026-10-14
 
 [DQ results](opaque-geometry-results-20261014.md): known geometry renders cleanly across24 cases and six scales;8 native pages plus one enlarged coarse display inspected. This is a rendering prerequisite, not a learned predictor. DP learned models remain rejected. Next bounded direction: learn a subpixel geometry field with distance/gradient supervision while preserving the recursive training conventions.
