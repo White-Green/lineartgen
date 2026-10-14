@@ -1,3 +1,7 @@
+# Latest update: DT completed, 2026-10-14
+
+[DT results](field-sign-balance-results-20261014.md): matched6,000-update continuations show that balanced inside/outside supervision substantially reduces line erasure and fill holes.9,408 outputs and28 native pages reviewed. Wide rough strokes still produce black bars/fragments, and some junctions/parallel curves break. Partial progress, not product adoption. Next: measure the remaining field errors and regional gradient weights before choosing the next loss change. Reserved fresh confirmation untouched.
+
 # Latest update: DS completed, 2026-10-14
 
 [DS results](contour-coverage-results-20261014.md):24 known-geometry cases pass the renderer prerequisite.384 learned-field outputs and16 native learned pages show persistent line erasure; contour rendering alone cannot recover missing geometry. Next: explicit balanced inside/outside geometry supervision versus matched continued-training control. No adoption or reserved fresh evaluation.
