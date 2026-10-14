@@ -1,4 +1,4 @@
-"""Equivalent dense convolutions on residue classes for large spatial dilations."""
+"""Equivalent dense convolutions on residue classes for spatial dilations."""
 
 import jax
 import jax.numpy as jnp
@@ -32,11 +32,11 @@ def dilated_same(inputs, kernel, dilation, *, precision=None, preferred_element_
 
 
 def local_convolution(layer, inputs):
-    """Keep existing small dilations exact; specialize only supported large local kernels."""
+    """Keep undilated kernels exact; specialize supported dilated local kernels."""
     ds = layer.kernel_dilation
     ds = (ds, ds) if isinstance(ds, int) else tuple(ds)
     if (
-        ds[0] <= 4
+        ds[0] == 1
         or ds[0] != ds[1]
         or inputs.ndim != 4
         or layer.kernel_size != (3, 3)

@@ -184,6 +184,15 @@ def prepare(root):
     for path in (SLOW / "snapshots/step-6").rglob("*"):
         if path.is_file():
             bindings[str(path.resolve())] = sha(path)
+    second = Path("../jax-wide-style-context-replay-20261014/runs/wide-style-context-20261014")
+    for name in (
+        "attempt-status.json",
+        "implementation-audit.json",
+        "source.json",
+        "diagnostics/dilation4-benchmark/results.json",
+        "diagnostics/dilation4-benchmark/study.py",
+    ):
+        bindings[str((second / name).resolve())] = sha(second / name)
     write(
         root / "plan.json",
         dict(

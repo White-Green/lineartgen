@@ -8,7 +8,7 @@ from lineartgen.models.dilated import dilated_same, local_convolution
 
 
 @pytest.mark.parametrize("size", [(4, 6), (18, 22), (32, 32)])
-@pytest.mark.parametrize("dilation", [8, 16])
+@pytest.mark.parametrize("dilation", [2, 3, 4, 8, 16])
 def test_outputs_and_both_gradients_match_direct_conv(size, dilation):
     x = jax.random.normal(jax.random.PRNGKey(1), (2, *size, 3))
     kernel = jax.random.normal(jax.random.PRNGKey(2), (3, 3, 3, 4)) * 0.1
@@ -35,13 +35,13 @@ def test_outputs_and_both_gradients_match_direct_conv(size, dilation):
     jax.tree.map(lambda x, y: np.testing.assert_allclose(x, y, atol=3e-6, rtol=3e-6), a, b)
 
 
-@pytest.mark.parametrize("dilation", [1, 4, 16])
-def test_layer_adapter_keeps_bias_and_small_dilations(dilation):
+@pytest.mark.parametrize("dilation", [1, 2, 3, 4, 16])
+def test_layer_adapter_keeps_bias_and_undilated_values(dilation):
     layer = nnx.Conv(3, 4, (3, 3), padding="SAME", kernel_dilation=dilation, rngs=nnx.Rngs(3))
     layer.bias[...] = jnp.full_like(layer.bias[...], 0.07)
     x = jax.random.normal(jax.random.PRNGKey(4), (2, 18, 22, 3))
     actual, expected = local_convolution(layer, x), layer(x)
-    if dilation <= 4:
+    if dilation == 1:
         np.testing.assert_array_equal(actual, expected)
     else:
         np.testing.assert_allclose(actual, expected, atol=3e-6, rtol=3e-6)
