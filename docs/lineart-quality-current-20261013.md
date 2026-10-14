@@ -1,3 +1,7 @@
+# Latest update: DY completed, 2026-10-14
+
+[DY results](region-sign-geometry-results-20261014.md): separate near/far sign normalization substantially reduces fill-corner holes while preserving the main strokes in the16-shape diagnosis. On fill15's conservative interior ROI, missing-black area falls83–86% versus matched continuation; this is one known training shape, not generalization. Rough-line gaps and endpoint debris remain.384 outputs and16 native pages reviewed. Next: evaluate these fixed checkpoints on the established development probes/scenes before choosing broader training. No reserved fresh confirmation or product adoption.
+
 # Latest update: DX completed, 2026-10-14
 
 [DX results](tail-sign-geometry-results-20261014.md): matched6,000-update augmented fits compare mean versus RMS sign violations. RMS nearly removes a long duplicate wide-stroke edge but leaves endpoint debris, rough-input gaps and fill-corner holes.384 outputs and16 native pages reviewed. A field diagnostic finds most false-white fill subpixels deep inside the fill, where inherited spatial weights strongly attenuate supervision. Next: separate near/far sign constraints rather than letting distant opacity errors share a downweighted denominator. No adoption or fresh confirmation.
