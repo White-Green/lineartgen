@@ -24,20 +24,20 @@ from rough_family_data import BASE, augmentation, rough_source
 from scale_style_balance_study import update
 from subpixel_field_data import PAD, geometry_field
 from subpixel_field_model import SUBPIXELS, infer, load_field, save_field
-from subpixel_field_objective import field_gradient
+from supported_field_objective import supported_gradient
 
 from lineartgen.config import load_config, save_config
 from lineartgen.training import checkpoints, lineart_state
 
-METHODS = ("control", "balanced")
+METHODS = ("control", "supported")
 STEPS = 6000
 SAVED = (0, 6, 2000, STEPS)
-SEED = 2026101411
+SEED = 2026101413
 MODEL_SEED = 2026101408
-EVAL_SEED = 2026101412
-PARENT = Path("../jax-subpixel-field-20261014/runs/subpixel-field-20261014")
+EVAL_SEED = 2026101414
+PARENT = Path("../jax-field-sign-balance-20261014/runs/field-sign-balance-20261014")
 ORACLE = Path("../jax-contour-coverage-20261014/runs/contour-coverage-20261014")
-DOCUMENT = Path("docs/field-sign-balance-plan-20261014.md")
+DOCUMENT = Path("docs/field-source-support-plan-20261014.md")
 
 
 def select(step):
@@ -87,7 +87,9 @@ def arms_from_root(root):
         model, cfg = load_field(root / f"initials/{method}")
         assert cfg == load_config(root / f"configs/{method}.json")
         arms[method] = make_arm(cfg, model)
-        arms[method]["gradient"] = field_gradient() if method == "control" else balanced_gradient()
+        arms[method]["gradient"] = (
+            balanced_gradient() if method == "control" else supported_gradient()
+        )
     return arms
 
 
@@ -106,11 +108,11 @@ def snapshot(root, arms, step):
 
 
 def prepare(root):
-    assert read(PARENT / "completion.json")["stage"] == "complete_subpixel_field"
+    assert read(PARENT / "completion.json")["stage"] == "complete_field_sign_balance"
     assert read(ORACLE / "completion.json")["stage"] == "complete_contour_coverage"
     root.mkdir(parents=True, exist_ok=False)
     (root / "configs").mkdir()
-    old, cfg = load_field(PARENT / "snapshots/step-6000/warm/raw")
+    old, cfg = load_field(PARENT / "snapshots/step-6000/balanced/raw")
     cfg = cfg.model_copy(
         update=dict(
             train=cfg.train.model_copy(
@@ -127,7 +129,7 @@ def prepare(root):
             model,
             cfg,
             root / f"initials/{method}",
-            provenance=f"{method}: unchanged DR warm raw6000 initialization",
+            provenance=f"{method}: unchanged DT balanced raw6000 initialization",
         )
         save_config(cfg, root / f"configs/{method}.json")
     for method in METHODS:
@@ -158,7 +160,8 @@ def prepare(root):
             methods=METHODS,
             representation="subpixel_geometry_field",
             gradient_weight=0.1,
-            sign_weight={"control": 0.0, "balanced": 0.25},
+            sign_weight={"control": 0.25, "supported": 0.25},
+            exterior_support={"control": "target_band", "supported": "target_band_or_input"},
             margin_cap=0.25,
             subpixels=4,
             distance_range=8,
@@ -254,7 +257,7 @@ def train(root):
     for k in range(6):
         prepared, _, _ = batch(data, k, "control")
         a = np.asarray(infer(arms["control"]["model"], prepared))
-        b = np.asarray(infer(arms["balanced"]["model"], prepared))
+        b = np.asarray(infer(arms["supported"]["model"], prepared))
         np.testing.assert_array_equal(a, b)
         initial_predictions[str(k + 1)] = digest(a)
     write(

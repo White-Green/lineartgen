@@ -164,7 +164,7 @@ def render(root):
                 "all strokes 2px",
                 "DN both initial",
                 "geometry field control",
-                "geometry field balanced",
+                "geometry field supported",
             )
         ):
             pen.text((col * SIZE + 8, 8), label, fill="black")
@@ -182,7 +182,7 @@ def render(root):
                     np.where(t > 0, options[CENTER], source),
                     pred["initial"],
                     pred["control"],
-                    pred["balanced"],
+                    pred["supported"],
                 )
                 for col, value in enumerate(values):
                     gray = np.rint(np.clip((value[..., 0] + 1) / 2, 0, 1) * 255).astype(np.uint8)

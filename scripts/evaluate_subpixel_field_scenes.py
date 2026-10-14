@@ -20,7 +20,7 @@ def evaluate():
 
     check(ROOT)
     plan = read(OUT / "plan.json")
-    paths = {m: ROOT / f"snapshots/step-6000/{m}/raw" for m in ("control", "balanced")} | dict(
+    paths = {m: ROOT / f"snapshots/step-6000/{m}/raw" for m in ("control", "supported")} | dict(
         initial=ROOT / "reference"
     )
     models = {
@@ -99,8 +99,8 @@ def render():
                 "uint8 rough source",
                 "DN both initial uint8",
                 "geometry field control uint8",
-                "geometry field balanced uint8",
-                "geometry field balanced float",
+                "geometry field supported uint8",
+                "geometry field supported float",
             )
         ):
             pen.text((col * SIZE + 8, 8), label, fill="black")
@@ -114,8 +114,8 @@ def render():
                         inp["quantized"],
                         pred["initial_uint8"],
                         pred["control_uint8"],
-                        pred["balanced_uint8"],
-                        pred["balanced_float"],
+                        pred["supported_uint8"],
+                        pred["supported_float"],
                     )
                 ):
                     gray = np.rint(np.clip((value[..., 0] + 1) / 2, 0, 1) * 255).astype(np.uint8)
