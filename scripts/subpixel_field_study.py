@@ -11,6 +11,7 @@ from pathlib import Path
 import jax
 import jax.numpy as jnp
 import numpy as np
+from balanced_field_objective import balanced_gradient
 from campaign_protocol import read, sha, write
 from cue_capacity import make_arm, prepare_inputs
 from cue_preserving_data import MODES, strength_map
@@ -22,22 +23,21 @@ from plausible_study import digest, exact
 from rough_family_data import BASE, augmentation, rough_source
 from scale_style_balance_study import update
 from subpixel_field_data import PAD, geometry_field
-from subpixel_field_model import SUBPIXELS, create_field_model, load_field, save_field
+from subpixel_field_model import SUBPIXELS, infer, load_field, save_field
 from subpixel_field_objective import field_gradient
 
 from lineartgen.config import load_config, save_config
-from lineartgen.models.serialization import load_inference
 from lineartgen.training import checkpoints, lineart_state
 
-METHODS = ("warm", "fresh")
+METHODS = ("control", "balanced")
 STEPS = 6000
 SAVED = (0, 6, 2000, STEPS)
-SEED = 2026101407
+SEED = 2026101411
 MODEL_SEED = 2026101408
-EVAL_SEED = 2026101409
-PARENT = Path("../jax-coherent-path-20261014/runs/coherent-path-20261014")
-ORACLE = Path("../jax-opaque-geometry-20261014/runs/opaque-geometry-20261014")
-DOCUMENT = Path("docs/subpixel-field-plan-20261014.md")
+EVAL_SEED = 2026101412
+PARENT = Path("../jax-subpixel-field-20261014/runs/subpixel-field-20261014")
+ORACLE = Path("../jax-contour-coverage-20261014/runs/contour-coverage-20261014")
+DOCUMENT = Path("docs/field-sign-balance-plan-20261014.md")
 
 
 def select(step):
@@ -87,7 +87,7 @@ def arms_from_root(root):
         model, cfg = load_field(root / f"initials/{method}")
         assert cfg == load_config(root / f"configs/{method}.json")
         arms[method] = make_arm(cfg, model)
-        arms[method]["gradient"] = field_gradient()
+        arms[method]["gradient"] = field_gradient() if method == "control" else balanced_gradient()
     return arms
 
 
@@ -106,11 +106,11 @@ def snapshot(root, arms, step):
 
 
 def prepare(root):
-    assert read(PARENT / "completion.json")["stage"] == "complete_coherent_path"
-    assert read(ORACLE / "completion.json")["stage"] == "complete_opaque_geometry_oracle"
+    assert read(PARENT / "completion.json")["stage"] == "complete_subpixel_field"
+    assert read(ORACLE / "completion.json")["stage"] == "complete_contour_coverage"
     root.mkdir(parents=True, exist_ok=False)
     (root / "configs").mkdir()
-    old, cfg = load_inference(PARENT / "initial")
+    old, cfg = load_field(PARENT / "snapshots/step-6000/warm/raw")
     cfg = cfg.model_copy(
         update=dict(
             train=cfg.train.model_copy(
@@ -122,16 +122,26 @@ def prepare(root):
     )
     assert cfg.train.peak_learning_rate == 1e-4
     for method in METHODS:
-        model = create_field_model(cfg, seed=MODEL_SEED, initial=old if method == "warm" else None)
+        model = nnx.clone(old)
         save_field(
             model,
             cfg,
             root / f"initials/{method}",
-            provenance=f"{method} body and fresh geometry head",
+            provenance=f"{method}: unchanged DR warm raw6000 initialization",
         )
         save_config(cfg, root / f"configs/{method}.json")
-    shutil.copytree(PARENT / "initial", root / "reference")
-    for name in ("train.npz", "data.json", "stress-plan.json"):
+    for method in METHODS:
+        loaded, _ = load_field(root / f"initials/{method}")
+        exact(nnx.state(old, nnx.Param), nnx.state(loaded, nnx.Param))
+    shutil.copytree(PARENT / "reference", root / "reference")
+    for name in (
+        "train.npz",
+        "data.json",
+        "stress-plan.json",
+        "fields.npy",
+        "directions.npy",
+        "cache-audit.json",
+    ):
         shutil.copy2(PARENT / name, root / name)
     for name in ("data", "stress-data"):
         shutil.copytree(PARENT / name, root / name)
@@ -148,6 +158,8 @@ def prepare(root):
             methods=METHODS,
             representation="subpixel_geometry_field",
             gradient_weight=0.1,
+            sign_weight={"control": 0.0, "balanced": 0.25},
+            margin_cap=0.25,
             subpixels=4,
             distance_range=8,
         ),
@@ -160,10 +172,10 @@ def prepare(root):
     for p in (
         PARENT / "completion.json",
         ORACLE / "completion.json",
-        ORACLE / "visual-review.json",
+        ORACLE / "learned/visual-review.json",
     ):
         bound[str(p.resolve())] = sha(p)
-    initial = root / "initials/warm"
+    initial = root / "initials/control"
     write(
         root / "plan.json",
         dict(
@@ -176,7 +188,7 @@ def prepare(root):
             saved=SAVED,
             plan_document_sha256=sha(DOCUMENT),
             adoption=False,
-            cache_complete=False,
+            cache_complete=True,
         ),
     )
 
@@ -238,6 +250,17 @@ def train(root):
     assert os.environ.get("XLA_FLAGS", "") == "" and jax.devices()[0].platform != "cpu"
     assert read(root / "test-results.json")["passed"]
     data, arms = load_data(root), arms_from_root(root)
+    initial_predictions = {}
+    for k in range(6):
+        prepared, _, _ = batch(data, k, "control")
+        a = np.asarray(infer(arms["control"]["model"], prepared))
+        b = np.asarray(infer(arms["balanced"]["model"], prepared))
+        np.testing.assert_array_equal(a, b)
+        initial_predictions[str(k + 1)] = digest(a)
+    write(
+        root / "initial-audit.json",
+        dict(six_depth_functions_exact=True, prediction_sha256=initial_predictions),
+    )
     for arm in arms.values():
         assert sum(x.size for x in jax.tree.leaves(nnx.state(arm["model"], nnx.Param))) == 16064
     write(

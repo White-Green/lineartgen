@@ -163,8 +163,8 @@ def render(root):
                 "rough source",
                 "all strokes 2px",
                 "DN both initial",
-                "geometry field warm",
-                "geometry field fresh",
+                "geometry field control",
+                "geometry field balanced",
             )
         ):
             pen.text((col * SIZE + 8, 8), label, fill="black")
@@ -181,8 +181,8 @@ def render(root):
                     source,
                     np.where(t > 0, options[CENTER], source),
                     pred["initial"],
-                    pred["warm"],
-                    pred["fresh"],
+                    pred["control"],
+                    pred["balanced"],
                 )
                 for col, value in enumerate(values):
                     gray = np.rint(np.clip((value[..., 0] + 1) / 2, 0, 1) * 255).astype(np.uint8)
