@@ -1,3 +1,5 @@
+[EA results](broad-regional-geometry-results-20261014.md): full512 training,18k updates per arm,9,408 outputs and28 native pages complete. Regional geometry improves known-fill holes and several512scene curves/crossings while retaining basic lines; wide inputs still produce bars/frames/fragments, sometimes worse, and blurred close curves break. No adoption. Next: fixed-checkpoint D4 orientation diagnostic before more training. Fresh confirmation untouched.
+
 [DZ results](geometry-transfer-results-20261014.md): 576 fixed-checkpoint outputs and32 native pages show that focused16-shape gains do not transfer reliably. Both focused fits erase established curves/crossings and leave new wide-input fragments; depth6 does not repair this. Regional sign still reduces known-rectangle holes. Next: full512 matched balanced versus combined regional objective,18k updates each from DU control. No fresh confirmation or adoption.
 
 # Latest update: DY completed, 2026-10-14
