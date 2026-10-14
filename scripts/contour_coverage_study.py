@@ -10,6 +10,7 @@ import numpy as np
 from campaign_protocol import read, sha, write
 from contour_coverage import contour_image
 from flax import nnx
+from opaque_geometry import render as render_geometry
 from opaque_geometry_study import paste
 from PIL import Image, ImageDraw
 from subpixel_field_data import central_field, geometry_field
@@ -91,8 +92,16 @@ def oracle(root):
         )[..., None]
         fixed = np.asarray(coverage(field))[0]
         contour = np.asarray(contour_image(field))[0]
+        same_backend = np.asarray(
+            render_geometry(
+                *(jnp.asarray(data[k]) for k in ("segments", "widths", "rectangles")),
+                size=r["size"],
+                supersampling=4,
+            )
+        )
+        np.testing.assert_allclose(fixed, same_backend, atol=2e-6)
         with np.load(DQ / "outputs" / f"{r['name']}.npz") as z:
-            np.testing.assert_allclose(fixed, z["fine"], atol=2e-6)
+            dq_cross_backend_max_abs = float(abs(fixed - z["fine"]).max())
         assert np.isfinite(contour).all() and contour.min() >= -1 and contour.max() <= 1
         scales = [np.asarray(x)[0] for x in pyramid(jnp.asarray(contour)[None], 6)]
         masses = [float(((1 - x) / 2).sum()) * 4**i for i, x in enumerate(scales)]
@@ -108,6 +117,7 @@ def oracle(root):
                 name=r["name"],
                 mass_by_level=masses,
                 coverage_mae=float(abs(a - b).mean()),
+                dq_cross_backend_max_abs=dq_cross_backend_max_abs,
                 ink_relative_change=float((b.sum() - a.sum()) / max(float(a.sum()), 1)),
                 sha256=sha(p),
                 protected_exact=True,
