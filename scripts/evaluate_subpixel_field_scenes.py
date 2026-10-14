@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 from campaign_protocol import read, sha, write
-from subpixel_field_study import check
+from subpixel_field_study import METHODS, STEPS, check
 
 SIZE = 512
 SEED = 2026101319
@@ -20,7 +20,7 @@ def evaluate():
 
     check(ROOT)
     plan = read(OUT / "plan.json")
-    paths = {m: ROOT / f"snapshots/step-6000/{m}/raw" for m in ("control", "supported")} | dict(
+    paths = {m: ROOT / f"snapshots/step-{STEPS}/{m}/raw" for m in METHODS} | dict(
         initial=ROOT / "reference"
     )
     models = {
@@ -98,9 +98,9 @@ def render():
             (
                 "uint8 rough source",
                 "DN both initial uint8",
-                "geometry field control uint8",
-                "geometry field supported uint8",
-                "geometry field supported float",
+                "balanced control uint8",
+                "censored regional RMS uint8",
+                "censored regional RMS float",
             )
         ):
             pen.text((col * SIZE + 8, 8), label, fill="black")
@@ -114,8 +114,8 @@ def render():
                         inp["quantized"],
                         pred["initial_uint8"],
                         pred["control_uint8"],
-                        pred["supported_uint8"],
-                        pred["supported_float"],
+                        pred["regions_uint8"],
+                        pred["regions_float"],
                     )
                 ):
                     gray = np.rint(np.clip((value[..., 0] + 1) / 2, 0, 1) * 255).astype(np.uint8)
