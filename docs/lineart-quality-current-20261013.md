@@ -1,3 +1,5 @@
+[DZ results](geometry-transfer-results-20261014.md): 576 fixed-checkpoint outputs and32 native pages show that focused16-shape gains do not transfer reliably. Both focused fits erase established curves/crossings and leave new wide-input fragments; depth6 does not repair this. Regional sign still reduces known-rectangle holes. Next: full512 matched balanced versus combined regional objective,18k updates each from DU control. No fresh confirmation or adoption.
+
 # Latest update: DY completed, 2026-10-14
 
 [DY results](region-sign-geometry-results-20261014.md): separate near/far sign normalization substantially reduces fill-corner holes while preserving the main strokes in the16-shape diagnosis. On fill15's conservative interior ROI, missing-black area falls83–86% versus matched continuation; this is one known training shape, not generalization. Rough-line gaps and endpoint debris remain.384 outputs and16 native pages reviewed. Next: evaluate these fixed checkpoints on the established development probes/scenes before choosing broader training. No reserved fresh confirmation or product adoption.
