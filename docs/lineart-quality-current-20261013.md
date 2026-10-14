@@ -1,3 +1,7 @@
+# Latest update: DU completed, 2026-10-14
+
+[DU results](field-source-support-results-20261014.md): extending exterior sign supervision over rough input changes the intended gradients but yields no clear visual gain over matched continuation. Two6,000-update arms,9,408 outputs,28 native pages reviewed. Shared continuation improves some thin curves/junctions; wide bars/fragments and blurred parallel breaks remain. Next: focused16-example learnability test for the geometry head, fixed versus augmented input. No product adoption or reserved fresh evaluation.
+
 # Latest update: DT completed, 2026-10-14
 
 [DT results](field-sign-balance-results-20261014.md): matched6,000-update continuations show that balanced inside/outside supervision substantially reduces line erasure and fill holes.9,408 outputs and28 native pages reviewed. Wide rough strokes still produce black bars/fragments, and some junctions/parallel curves break. Partial progress, not product adoption. Next: measure the remaining field errors and regional gradient weights before choosing the next loss change. Reserved fresh confirmation untouched.
