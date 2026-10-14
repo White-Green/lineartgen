@@ -75,13 +75,16 @@ def test_initial_capacity_functions_and_nonzero_head_opacity_invariance():
     jax.tree.map(lambda x, y: np.testing.assert_allclose(x, y, atol=1e-6), *predictions)
 
 
-@pytest.mark.parametrize("dilations", [(), (1, 4, 16)])
-def test_real_update_restore_export_and_protected_sampler(tmp_path, dilations):
+@pytest.mark.parametrize(
+    "dilations,conditioning", [((), "none"), ((1, 4, 16), "none"), ((1, 4, 16), "fourier")]
+)
+def test_real_update_restore_export_and_protected_sampler(tmp_path, dilations, conditioning):
     c, p = config()
     c = c.model_copy(
         update={
             "model": ModelConfig.model_validate(
-                c.model.model_dump() | dict(local_dilations=dilations)
+                c.model.model_dump()
+                | dict(local_dilations=dilations, pyramid_conditioning=conditioning)
             )
         }
     )
@@ -119,8 +122,13 @@ def test_real_update_restore_export_and_protected_sampler(tmp_path, dilations):
     expected = forward(loaded, prepared)[0][0]
     np.testing.assert_array_equal(expected[t == 0], p.guides[0][t == 0])
 
-    def stage(image, strength, insert, guide, progress):
-        return np.asarray(loaded(*map(jnp.asarray, (image, strength, insert, guide, progress))))
+    def stage(image, strength, insert, guide, progress, *, pyramid_level=0):
+        return np.asarray(
+            loaded(
+                *map(jnp.asarray, (image, strength, insert, guide, progress)),
+                pyramid_level=pyramid_level,
+            )
+        )
 
     actual = denoise(
         stage,
@@ -134,6 +142,7 @@ def test_real_update_restore_export_and_protected_sampler(tmp_path, dilations):
         preserve_zero_noise=True,
         sampling_mode="one_pass",
         source_preprocess="local_peak_full",
+        pyramid_conditioning=conditioning,
     )
     np.testing.assert_allclose(actual, expected, atol=3e-7)
     np.testing.assert_array_equal(actual[t == 0], np.asarray(p.guides[0])[t == 0])

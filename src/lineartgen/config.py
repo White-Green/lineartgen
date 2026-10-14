@@ -47,7 +47,7 @@ class ModelConfig(Settings):
     local_blocks: int = Field(default=3, ge=1)
     local_dilations: tuple[int, ...] = ()
     # Experimental physical pyramid level; independent of denoising progress.
-    pyramid_conditioning: Literal["none", "constant", "level"] = "none"
+    pyramid_conditioning: Literal["none", "constant", "level", "fourier"] = "none"
 
     @model_validator(mode="after")
     def validate_architecture(self):

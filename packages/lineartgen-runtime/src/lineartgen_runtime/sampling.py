@@ -48,7 +48,7 @@ def denoise(
         raise ValueError("Unsupported source preprocessing")
     if source_preprocess != "raw" and not (source_conditioning and sampling_mode == "one_pass"):
         raise ValueError("Full source normalization requires one-pass source conditioning")
-    if pyramid_conditioning not in ("none", "constant", "level"):
+    if pyramid_conditioning not in ("none", "constant", "level", "fourier"):
         raise ValueError("Unsupported pyramid conditioning")
     if pyramid_conditioning != "none" and not (source_conditioning and sampling_mode == "one_pass"):
         raise ValueError("Pyramid conditioning requires one-pass source conditioning")

@@ -82,7 +82,7 @@ class LocalCNN(nnx.Module):
             bias_init=nnx.initializers.zeros_init(),
             rngs=rngs,
         )
-        if self.pyramid_conditioning != "none":
+        if self.pyramid_conditioning in ("constant", "level"):
             self.stem_pyramid_modulation = nnx.Conv(
                 1,
                 2 * width,
@@ -96,7 +96,7 @@ class LocalCNN(nnx.Module):
                 LocalBlock(
                     width,
                     rngs=rngs,
-                    pyramid_conditioning=self.pyramid_conditioning != "none",
+                    pyramid_conditioning=self.pyramid_conditioning in ("constant", "level"),
                     dilation=dilation,
                 )
                 for dilation in self.local_dilations
@@ -135,9 +135,15 @@ class LocalCNN(nnx.Module):
         if image.shape[1] % 2 or image.shape[2] % 2:
             raise ValueError("LocalCNN requires even image dimensions")
         up = nearest_double(insert)
-        basis = progress_basis(progress)
+        # One-pass progress is constant. Reuse its nine existing FiLM features
+        # for physical pyramid level, without adding learned parameters.
+        basis = progress_basis(
+            jnp.full_like(progress, pyramid_level / 5)
+            if self.pyramid_conditioning == "fourier"
+            else progress
+        )
         pyramid_code = None
-        if self.pyramid_conditioning != "none":
+        if self.pyramid_conditioning in ("constant", "level"):
             value = 1 + pyramid_level / 5 if self.pyramid_conditioning == "level" else 1
             pyramid_code = jnp.full_like(image, value)
         signal = guide if self.feature_input == "source" else image
