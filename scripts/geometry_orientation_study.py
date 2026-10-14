@@ -16,10 +16,10 @@ from plausible_study import digest
 from subpixel_field_model import infer, load_field
 from wide_style_data import allstroke_candidates
 
-EA = Path("../jax-broad-regional-geometry-20261014/runs/broad-regional-geometry-20261014").resolve()
-PATHS = {m: EA / f"snapshots/step-18000/{m}/raw" for m in ("control", "regions")}
+EA = Path("../jax-d4-geometry-20261014/runs/d4-geometry-20261014").resolve()
+PATHS = {m: EA / f"snapshots/step-12000/{m}/raw" for m in ("control", "d4")}
 INDICES = (36, 37, 56, 58, 59, 61, 62, 63)
-DOC = Path("docs/geometry-orientation-plan-20261014.md")
+DOC = Path("docs/d4-orientation-recheck-plan-20261014.md")
 SEED = 2026101427
 
 
@@ -35,7 +35,7 @@ def transform(x, turns, mirror, *, inverse=False):
 
 def prepare(root):
     assert not subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()
-    assert read(EA / "completion.json")["stage"] == "complete_broad_regional_geometry"
+    assert read(EA / "completion.json")["stage"] == "complete_d4_geometry"
     root.mkdir(parents=True, exist_ok=False)
     records = [
         r
@@ -214,7 +214,7 @@ def finalize(root):
     write(
         root / "completion.json",
         dict(
-            stage="complete_geometry_orientation",
+            stage="complete_d4_orientation_recheck",
             outputs=128,
             native_pages_reviewed=16,
             training=False,
