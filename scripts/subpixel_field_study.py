@@ -11,10 +11,10 @@ from pathlib import Path
 import jax
 import jax.numpy as jnp
 import numpy as np
-from balanced_field_objective import balanced_gradient
 from campaign_protocol import read, sha, write
 from cue_capacity import make_arm, prepare_inputs
 from cue_preserving_data import MODES, strength_map
+from d4_geometry_data import transform_directions, transform_numpy_batch, transform_prepared
 from diagnose_learnability import freeze, verify
 from flax import nnx
 from focused_fit_study import replay_state
@@ -29,16 +29,15 @@ from subpixel_field_model import SUBPIXELS, infer, load_field, save_field
 from lineartgen.config import load_config, save_config
 from lineartgen.training import checkpoints, lineart_state
 
-METHODS = ("control", "regions")
-STEPS = 18000
+METHODS = ("control", "d4")
+STEPS = 12000
 SAVED = (0, 6, 6000, STEPS)
-SEED = 2026101425
+SEED = 2026101429
 MODEL_SEED = 2026101408
-EVAL_SEED = 2026101426
-PARENT = Path("../jax-field-source-support-20261014/runs/field-source-support-20261014")
-TRANSFER = Path("../jax-geometry-transfer-20261014/runs/geometry-transfer-20261014")
-REGIONAL = Path("../jax-region-sign-geometry-20261014/runs/region-sign-geometry-20261014")
-DOCUMENT = Path("docs/broad-regional-geometry-plan-20261014.md")
+EVAL_SEED = 2026101430
+PARENT = Path("../jax-broad-regional-geometry-20261014/runs/broad-regional-geometry-20261014")
+ORIENTATION = Path("../jax-geometry-orientation-20261014/runs/geometry-orientation-20261014")
+DOCUMENT = Path("docs/d4-geometry-plan-20261014.md")
 
 
 def select(step):
@@ -48,6 +47,7 @@ def select(step):
         modes=rng.integers(len(MODES), size=4).tolist(),
         depth=step % 6 + 1,
         augmentation=[augmentation(SEED, step, i) for i in range(4)],
+        transforms=np.random.default_rng([SEED, step, 0x4434]).integers(8, size=4).tolist(),
     )
 
 
@@ -71,7 +71,22 @@ def batch(data, step, method):
         jax.random.fold_in(jax.random.PRNGKey(SEED), step),
         s["depth"],
     )
-    return p, jnp.asarray(data["fields"][ii]), jnp.asarray(data["directions"][ii])
+    codes = np.asarray(s["transforms"] if method == "d4" else [0] * 4, np.int32)
+    fields = data["fields"][ii]
+    directions = transform_directions(data["directions"][ii], codes)
+    if method == "d4":
+        p = transform_prepared(p, jnp.asarray(codes))
+        fields = transform_numpy_batch(fields[..., None], codes)[..., 0]
+    return p, jnp.asarray(fields), jnp.asarray(directions)
+
+
+def canonical_batch(p, fields, directions, step, method):
+    codes = np.asarray(select(step)["transforms"] if method == "d4" else [0] * 4, np.int32)
+    directions = transform_directions(np.asarray(directions), codes, inverse=True)
+    if method == "d4":
+        p = transform_prepared(p, jnp.asarray(codes), inverse=True)
+        fields = transform_numpy_batch(np.asarray(fields)[..., None], codes, inverse=True)[..., 0]
+    return p, fields, directions
 
 
 def load_data(root):
@@ -88,9 +103,7 @@ def arms_from_root(root):
         model, cfg = load_field(root / f"initials/{method}")
         assert cfg == load_config(root / f"configs/{method}.json")
         arms[method] = make_arm(cfg, model)
-        arms[method]["gradient"] = (
-            balanced_gradient() if method == "control" else regional_gradient()
-        )
+        arms[method]["gradient"] = regional_gradient()
     return arms
 
 
@@ -109,12 +122,11 @@ def snapshot(root, arms, step):
 
 
 def prepare(root):
-    assert read(PARENT / "completion.json")["stage"] == "complete_field_source_support"
-    assert read(TRANSFER / "completion.json")["stage"] == "complete_geometry_transfer"
-    assert read(REGIONAL / "completion.json")["stage"] == "complete_region_sign_geometry"
+    assert read(PARENT / "completion.json")["stage"] == "complete_broad_regional_geometry"
+    assert read(ORIENTATION / "completion.json")["stage"] == "complete_geometry_orientation"
     root.mkdir(parents=True, exist_ok=False)
     (root / "configs").mkdir()
-    old, cfg = load_field(PARENT / "snapshots/step-6000/control/raw")
+    old, cfg = load_field(PARENT / "snapshots/step-18000/regions/raw")
     cfg = cfg.model_copy(
         update=dict(
             train=cfg.train.model_copy(
@@ -131,7 +143,7 @@ def prepare(root):
             model,
             cfg,
             root / f"initials/{method}",
-            provenance=f"{method}: unchanged DU control raw6000 initialization",
+            provenance=f"{method}: unchanged EA regions raw18000 initialization",
         )
         save_config(cfg, root / f"configs/{method}.json")
     for method in METHODS:
@@ -162,11 +174,12 @@ def prepare(root):
             methods=METHODS,
             representation="subpixel_geometry_field",
             gradient_weight=0.1,
-            sign_weight={"control": 0.25, "regions": 0.25},
+            sign_weight={"control": 0.25, "d4": 0.25},
             objective={
-                "control": "DT balanced",
-                "regions": "DW censored + DX RMS + DY near/far sign",
+                "control": "DW censored + DX RMS + DY near/far sign",
+                "d4": "DW censored + DX RMS + DY near/far sign",
             },
+            spatial_augmentation={"control": "none", "d4": "uniform exact D4 per item"},
             censored_band=1.0,
             rms_epsilon=0.01,
             region_sign_reduction="sum independent near/far requirements",
@@ -182,10 +195,8 @@ def prepare(root):
     bound = {str(p): sha(p) for p in root.rglob("*") if p.is_file()}
     for p in (
         PARENT / "completion.json",
-        TRANSFER / "completion.json",
-        TRANSFER / "evaluation/visual-review.json",
-        REGIONAL / "completion.json",
-        REGIONAL / "evaluation/visual-review.json",
+        ORIENTATION / "completion.json",
+        ORIENTATION / "evaluation/visual-review.json",
     ):
         bound[str(p.resolve())] = sha(p)
     initial = root / "initials/control"
@@ -267,7 +278,7 @@ def train(root):
     for k in range(6):
         prepared, _, _ = batch(data, k, "control")
         a = np.asarray(infer(arms["control"]["model"], prepared))
-        b = np.asarray(infer(arms["regions"]["model"], prepared))
+        b = np.asarray(infer(arms["d4"]["model"], prepared))
         np.testing.assert_array_equal(a, b)
         initial_predictions[str(k + 1)] = digest(a)
     write(
@@ -299,21 +310,24 @@ def train(root):
             snapshot(root, arms, 0)
         prefix = []
         for step in range(start, STEPS):
-            stats, inputs, elapsed, shared = {}, {}, {}, {}
+            stats, inputs, elapsed, shared, canonical = {}, {}, {}, {}, {}
             for method in METHODS[:: 1 if step % 2 == 0 else -1]:
                 p, c, a = batch(data, step, method)
                 inputs[method] = digest((p, c, a))
-                shared[method] = digest((c, a, p.noise_levels))
+                cp, cc, ca = canonical_batch(p, c, a, step, method)
+                shared[method] = digest((cc, ca, cp.noise_levels))
+                canonical[method] = digest((cp, cc, ca))
                 tick = time.perf_counter()
                 stats[method] = update(arms[method], p, c, a)
                 elapsed[method] = time.perf_counter() - tick
             assert len(set(shared.values())) == 1
-            assert len(set(inputs.values())) == 1
+            assert len(set(canonical.values())) == 1
             row = dict(
                 step=step + 1,
                 **select(step),
                 metrics=stats,
                 input_sha256=inputs,
+                canonical_input_sha256=canonical,
                 shared_target_sha256=shared,
                 seconds=elapsed,
             )

@@ -34,7 +34,11 @@ def test_full_distribution_batch_matches_across_objectives(monkeypatch):
             study,
             "select",
             lambda step, depth=depth: dict(
-                indices=[0] * 4, modes=[0, 1, 2, 0], depth=depth, augmentation=options
+                indices=[0] * 4,
+                modes=[0, 1, 2, 0],
+                depth=depth,
+                augmentation=options,
+                transforms=[0] * 4,
             ),
         )
         a, b = (study.batch(arrays, depth, m) for m in study.METHODS)

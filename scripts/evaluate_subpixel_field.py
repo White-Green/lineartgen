@@ -202,8 +202,8 @@ def render(root):
                     "source",
                     "all strokes 2px",
                     "DN both initial",
-                    "balanced control",
-                    "censored regional RMS",
+                    "regional control",
+                    "regional + D4",
                 )
             ):
                 pen.text((col * SIZE + 8, 8), label, fill="black")
@@ -220,7 +220,7 @@ def render(root):
                         np.where(t > 0, options[CENTER], data["source"]),
                         pred["initial"],
                         pred["control"],
-                        pred["regions"],
+                        pred["d4"],
                     )
                     for col, value in enumerate(values):
                         gray = np.rint(np.clip((value[..., 0] + 1) / 2, 0, 1) * 255).astype(

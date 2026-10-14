@@ -98,9 +98,9 @@ def render():
             (
                 "uint8 rough source",
                 "DN both initial uint8",
-                "balanced control uint8",
-                "censored regional RMS uint8",
-                "censored regional RMS float",
+                "regional control uint8",
+                "regional + D4 uint8",
+                "regional + D4 float",
             )
         ):
             pen.text((col * SIZE + 8, 8), label, fill="black")
@@ -114,8 +114,8 @@ def render():
                         inp["quantized"],
                         pred["initial_uint8"],
                         pred["control_uint8"],
-                        pred["regions_uint8"],
-                        pred["regions_float"],
+                        pred["d4_uint8"],
+                        pred["d4_float"],
                     )
                 ):
                     gray = np.rint(np.clip((value[..., 0] + 1) / 2, 0, 1) * 255).astype(np.uint8)
