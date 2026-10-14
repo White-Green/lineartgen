@@ -2,7 +2,7 @@
 
 EHでは16形状の最適化改善が広い入力へ十分転移しなかった。モデルを大きくする前に、同じ改善条件を既存512形状とwhole01/whole05/partial05へ適用する。通常16ch（16,064重み）、D4 group2（2,022）、D4 group6（16,402）を新規初期化し、各18,000更新する。これらは独立した比較モデルで、入れ子学習の比較ではない。
 
-EGと同じmodel seed2026101432、head kernel0 / bias.125（physical field+1）、全段白画像を初期値とする。全群でregional censored distance + boundary gradient.1 + near/far RMS sign.25、同一データ・Gaussian・マスク・拡張、batch4、再帰1–6循環、全段lossの重み.5^levelを維持。base LR5e-4×sqrt4=peak1e-3、50 warmup、cosine minimum1e-4、Adam/clip1/EMA.999。seed2026101440。容量・対称性・特徴数・計算量は同一ではなく、この比較だけで対称性の因果効果や最小容量を断定しない。
+EGと同じmodel seed2026101432、head kernel0 / bias.125（physical field+1）、全段白画像を初期値とする。全群でregional censored distance + boundary gradient.1 + near/far RMS sign.25、同一データ・Gaussian・マスク・拡張、batch4、再帰1–6循環、全段lossの重み.5^levelを維持。base LR5e-4×sqrt4=peak1e-3、warmupなし（EGと同じ）、cosine minimum1e-4、Adam/clip1/EMA.999。seed2026101440。容量・対称性・特徴数・計算量は同一ではなく、この比較だけで対称性の因果効果や最小容量を断定しない。
 
 学習はECの既存512形状・geometry cacheをハッシュ固定して読み取り専用再利用する。25%既定source、75%opacity.2–.8 / blur.6–2.4 / warp0–1.5のrough拡張、全群同じ一様D4を使用。geometryと法線、Gaussian、全段入力・マスクも同じ変換にする。形状×段数・方向・マスクの提示を検証する。別のfresh形状は生成しない。
 
