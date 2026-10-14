@@ -1,0 +1,11 @@
+# DZ: established development transfer assessment
+
+DY improves opaque-fill preservation on its16 focused training shapes. Before choosing broader training, assess the fixed checkpoints on the24 already established DQ development cases:16 diverse256px probes and8 multi-shape512px scenes. These are familiar development inputs, not the reserved fresh confirmation set. No training or model changes occur here.
+
+Compare DU control raw6000 (before the focused fits), DY control raw3000 and DY regions raw3000. Bind all weights/configuration/metadata and input/oracle-output hashes before inference. Reuse the DQ source arrays and opaque known-geometry renders without regenerating shapes. Whole/partial strength.5, depths3/6, float and uint8-roundtripped inputs, seed2026101423; the same Gaussian key for all methods/encodings on a case. Some512px sources were already quantized: report that fact, and do not treat their zero roundtrip differences as new evidence of quantization robustness.
+
+Generate576 model outputs. Render32 predetermined native pages: both depths and both mask modes,256px probes grouped four per page and512px scenes grouped two. Columns are quantized source, one permissible opaque geometry for context, DU baseline, DY control, DY regions. Inspect every page. Finite/range checks, exact protected values, unchanged model states and rechecked weight/source hashes are required. Record quantization sensitivity descriptively; no teacher-raster MSE selection.
+
+Judge continuity, clean darkness/antialiasing, smoothness, plausible width and absence of extra debris or interior holes. Clean fusion/joined ends are allowed; teacher topology alone is not a pass/fail criterion. Existing scene1's large diagonal gap and scene7's large vertical/upper-left gaps are intentional; new local cuts count as defects. A relative training-shape improvement is not enough for adoption. If transfer fails, use the observed failure distribution to choose broader training or another targeted change. Keep the reserved fresh16 shapes untouched and leave Krita unchanged.
+
+This read-only runner reuses the tested geometry inference and preparation functions. Runtime assertions check all outputs and artifact integrity; Ruff checks the new orchestration code. There is no new numerical training implementation to test in this experiment.
