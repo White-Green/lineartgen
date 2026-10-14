@@ -1,3 +1,7 @@
+# Latest update: DQ rendering oracle completed, 2026-10-14
+
+[DQ results](opaque-geometry-results-20261014.md): known geometry renders cleanly across24 cases and six scales;8 native pages plus one enlarged coarse display inspected. This is a rendering prerequisite, not a learned predictor. DP learned models remain rejected. Next bounded direction: learn a subpixel geometry field with distance/gradient supervision while preserving the recursive training conventions.
+
 # Latest update: DP completed, 2026-10-14
 
 [DP coherent-profile results](coherent-path-results-20261014.md): two matched 6,000-update arms, 9,408 outputs and 28 native comparison pages reviewed. Gray secondary bands, crossing cuts, wide partial-mask erasure and damaged fill corners remain. No adoption; fresh confirmation untouched. Direct pixel optimization can yield clean opaque solutions, but the trained CNN does not reproduce this improvement. Next: oracle and gradient validation of opaque geometry rendering before training a geometric predictor.

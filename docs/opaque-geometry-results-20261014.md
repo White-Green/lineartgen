@@ -1,0 +1,13 @@
+# DQ: opaque geometry oracle passed; geometry prediction remains untested
+
+Source `2ac07f4`, run `runs/opaque-geometry-20261014`. All24 known-geometry cases completed:16 probe shapes and8 established512 scenes. Eight native pages and the labeled six-scale display were actually inspected. No learned model was used and no candidate was adopted.
+
+Given correct paths, the capsule-union renderer produces continuous dark strokes, intact crossings/junctions, separated close curves, intended gaps, taper, and an intact black rectangle. The gray secondary bands and broken fill corners seen in DP's CNN outputs are absent from these oracle renders. This is evidence about representability, not inference accuracy: paths, stroke count and connectivity were supplied from synthetic metadata.
+
+Coarse images are box reductions of fine coverage. Ink mass is preserved over all six scales, and protected source pixels are exactly retained. Maximum4x versus8x supersampling relative ink difference is0.8738%; maximum image-average opacity difference is2.81e-5. Both satisfy the declared rendering check. The subpixel transition and rounded caps are approximations; a black rectangle guard is not a general filled-shape implementation.
+
+Five CPU tests passed, including connected crossings, separate gaps/parallels, opaque interiors, repeated-stroke union, taper, protected gradients, mass and finite-difference geometry gradients. Ruff passed. The first gradient test crossed coverage kinks at float32 step1e-3; the final float64 shrinking-step check verifies local derivative convergence. An intermediate test used a removed JAX experimental API; it was corrected to the installed public `jax.enable_x64` context. Both failed logs and the final passing log are retained.
+
+Some512 strokes remain partly gray at native pixels because peak width2px is shared across a scene and relative widths are preserved: some physical widths are subpixel. This is legitimate coverage, unlike a broad learned gray band. No claim of universally black pixels is made.
+
+A practical next learned experiment must infer geometry from the rough source, not rely on oracle paths. A spatial signed geometry field with subpixel samples is a bounded option compatible with the existing recursive CNN: supervise distances and their spatial variation, then derive coverage through the validated rendering rule. Arbitrary predicted fields can still have gray plateaus, so this option requires explicit geometry-field tests and actual learned-output evaluation; changing a head's name alone is not sufficient. Keep the1–6 recursive stages, losses at every stage, sqrt(batch) learning-rate scaling, synthetic-only data and final image/protection interface.
