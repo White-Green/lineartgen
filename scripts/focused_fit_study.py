@@ -35,6 +35,29 @@ PARENT = Path("../jax-scale-style-balance-20261014/runs/scale-style-balance-2026
 DOCUMENT = Path("docs/focused-fit-plan-20261014.md")
 
 
+def replay_state(actual, expected):
+    """Warm ROCm replay envelope established before this fresh diagnostic run."""
+    aa, sa = jax.tree.flatten(actual)
+    bb, sb = jax.tree.flatten(expected)
+    assert sa == sb
+    maximum = 0.0
+    for a, b in zip(aa, bb, strict=True):
+        a, b = np.asarray(a), np.asarray(b)
+        assert a.dtype == b.dtype and a.shape == b.shape
+        if np.issubdtype(a.dtype, np.inexact):
+            np.testing.assert_allclose(a, b, atol=5e-6, rtol=1e-4, equal_nan=False)
+            maximum = max(maximum, float(np.max(abs(a - b), initial=0)))
+        else:
+            np.testing.assert_array_equal(a, b)
+    return dict(
+        passed=True,
+        max_abs_difference=maximum,
+        atol=5e-6,
+        rtol=1e-4,
+        exact=all(np.array_equal(a, b) for a, b in zip(aa, bb, strict=True)),
+    )
+
+
 def select(step):
     rng = np.random.default_rng([SEED, step])
     return dict(
@@ -247,9 +270,7 @@ def train(root):
                     dict(
                         passed=True,
                         metrics=audits,
-                        states={
-                            m: replay_comparison(actual[m], expected[m], "prior") for m in METHODS
-                        },
+                        states={m: replay_state(actual[m], expected[m]) for m in METHODS},
                     ),
                 )
             if step + 1 in SAVED:

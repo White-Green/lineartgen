@@ -1,6 +1,7 @@
 import focused_fit_study as study
 import jax
 import numpy as np
+import pytest
 from rough_family_data import BASE, rough_source
 from test_path_profile import annotation
 
@@ -54,3 +55,15 @@ def test_all_cases_receive_all_depths_without_source_condition_selection_bias():
             counts[i, s["depth"] - 1] += 1
     assert counts.min() > 70
     assert counts.sum() == 12000
+
+
+def test_replay_envelope_rejects_large_change_nonfinite_and_wrong_optimizer_step():
+    base = dict(weight=np.array([0.1], np.float32), step=np.int32(6))
+    assert study.replay_state(base | dict(weight=base["weight"] + 2e-6), base)["passed"]
+    for changed in (
+        base | dict(weight=base["weight"] + 0.001),
+        base | dict(weight=np.array([np.nan], np.float32)),
+        base | dict(step=np.int32(7)),
+    ):
+        with pytest.raises(AssertionError):
+            study.replay_state(changed, base)
