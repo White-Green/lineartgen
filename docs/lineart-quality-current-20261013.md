@@ -1,3 +1,7 @@
+# Latest update: DV completed, 2026-10-14
+
+[DV results](focused-geometry-results-20261014.md): fixed/augmented16-example fits each ran3,000 updates;384 outputs and16 native pages reviewed. Same-size geometry model learns narrow centers from wide input, but endpoint/parallel defects remain and fills worsen. Augmentation preserves some rough-input lines better. A local gradient audit finds wide-stroke versus fill conflict, while gradients across recursion depths align in this diagnostic. This supports investigating competing supervision before increasing capacity; it is not an adoption or generalization result. Reserved fresh data untouched.
+
 # Latest update: DU completed, 2026-10-14
 
 [DU results](field-source-support-results-20261014.md): extending exterior sign supervision over rough input changes the intended gradients but yields no clear visual gain over matched continuation. Two6,000-update arms,9,408 outputs,28 native pages reviewed. Shared continuation improves some thin curves/junctions; wide bars/fragments and blurred parallel breaks remain. Next: focused16-example learnability test for the geometry head, fixed versus augmented input. No product adoption or reserved fresh evaluation.
