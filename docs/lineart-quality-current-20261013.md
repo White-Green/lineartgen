@@ -1,3 +1,7 @@
+# Latest update: DX completed, 2026-10-14
+
+[DX results](tail-sign-geometry-results-20261014.md): matched6,000-update augmented fits compare mean versus RMS sign violations. RMS nearly removes a long duplicate wide-stroke edge but leaves endpoint debris, rough-input gaps and fill-corner holes.384 outputs and16 native pages reviewed. A field diagnostic finds most false-white fill subpixels deep inside the fill, where inherited spatial weights strongly attenuate supervision. Next: separate near/far sign constraints rather than letting distant opacity errors share a downweighted denominator. No adoption or fresh confirmation.
+
 # Latest update: DW completed, 2026-10-14
 
 [DW results](censored-geometry-results-20261014.md): boundary-censored distance supervision improves some close-curve continuity in a matched16-shape fit, but creates duplicate edges on a wide stroke and leaves fill-corner holes. Both arms ran3,000 updates;384 outputs and16 native pages reviewed. It nearly removes the blank-region gradient, but local wide/fill gradient alignment is checkpoint-dependent and is not a quality gate. No adoption. Next: test whether averaging sparse sign errors over large correct regions hides the remaining defects, with the same capacity and rough augmentation in both arms. Reserved fresh inputs untouched.
