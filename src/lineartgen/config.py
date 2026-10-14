@@ -63,9 +63,9 @@ class ModelConfig(Settings):
         if self.local_dilations and (
             self.architecture != "local"
             or len(self.local_dilations) != self.local_blocks
-            or any(d < 1 or d > 4 for d in self.local_dilations)
+            or any(d < 1 or d > 16 for d in self.local_dilations)
         ):
-            raise ValueError("local_dilations requires one dilation in 1..4 per local block")
+            raise ValueError("local_dilations requires one dilation in 1..16 per local block")
         if self.source_cue != "raw" and not (
             self.architecture == "local"
             and self.feature_input == "source"

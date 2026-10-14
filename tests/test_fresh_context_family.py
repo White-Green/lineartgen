@@ -135,7 +135,7 @@ def test_dilated_update_restore_serialization_and_sampler(tmp_path):
 
 def test_invalid_options_and_unvalidated_export(tmp_path):
     cs, _ = configs()
-    for ds in ((1, 2), (0, 1, 1), (1, 2, 5)):
+    for ds in ((1, 2), (0, 1, 1), (1, 2, 17)):
         with pytest.raises(ValueError, match="local_dilations"):
             ModelConfig.model_validate(cs[0].model.model_dump() | dict(local_dilations=ds))
     with pytest.raises(ValueError, match="local_dilations"):

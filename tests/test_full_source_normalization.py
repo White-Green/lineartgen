@@ -75,8 +75,16 @@ def test_initial_capacity_functions_and_nonzero_head_opacity_invariance():
     jax.tree.map(lambda x, y: np.testing.assert_allclose(x, y, atol=1e-6), *predictions)
 
 
-def test_real_update_restore_export_and_protected_sampler(tmp_path):
+@pytest.mark.parametrize("dilations", [(), (1, 4, 16)])
+def test_real_update_restore_export_and_protected_sampler(tmp_path, dilations):
     c, p = config()
+    c = c.model_copy(
+        update={
+            "model": ModelConfig.model_validate(
+                c.model.model_dump() | dict(local_dilations=dilations)
+            )
+        }
+    )
     initial = create_model(c.model, rngs=nnx.Rngs(8))
     arm = make_arm(c, initial)
     arm["gradient"] = style_gradient()
