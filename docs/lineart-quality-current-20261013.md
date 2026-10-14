@@ -1,3 +1,7 @@
+# Latest update: DW completed, 2026-10-14
+
+[DW results](censored-geometry-results-20261014.md): boundary-censored distance supervision improves some close-curve continuity in a matched16-shape fit, but creates duplicate edges on a wide stroke and leaves fill-corner holes. Both arms ran3,000 updates;384 outputs and16 native pages reviewed. It nearly removes the blank-region gradient, but local wide/fill gradient alignment is checkpoint-dependent and is not a quality gate. No adoption. Next: test whether averaging sparse sign errors over large correct regions hides the remaining defects, with the same capacity and rough augmentation in both arms. Reserved fresh inputs untouched.
+
 # Latest update: DV completed, 2026-10-14
 
 [DV results](focused-geometry-results-20261014.md): fixed/augmented16-example fits each ran3,000 updates;384 outputs and16 native pages reviewed. Same-size geometry model learns narrow centers from wide input, but endpoint/parallel defects remain and fills worsen. Augmentation preserves some rough-input lines better. A local gradient audit finds wide-stroke versus fill conflict, while gradients across recursion depths align in this diagnostic. This supports investigating competing supervision before increasing capacity; it is not an adoption or generalization result. Reserved fresh data untouched.
