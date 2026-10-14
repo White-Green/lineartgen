@@ -260,6 +260,9 @@ def finalize(root):
         (len(set(x["per_arm_input_sha256"].values())) == 2) == (x["wide_items"] > 0) for x in rows
     )
     assert sum(x["wide_items"] for x in rows) > 0
+    implementation = read(root / "implementation-audit.json")
+    assert implementation["passed"] and len(implementation["comparisons"]) == 4
+    assert implementation["atol"] == 1e-6 and implementation["rtol"] == 1e-4
     reused = read(root / "control-replay.json")
     assert reused["passed"] and len(reused["metrics"]) == 6
     assert all(x["passed"] for x in reused["metrics"])

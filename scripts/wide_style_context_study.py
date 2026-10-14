@@ -36,6 +36,7 @@ PARENT = Path("../jax-full-source-normalization-20261013/runs/full-source-normal
 SEED = 2026101334
 EVAL_SEED = 2026101335
 MODEL_SEED = 2026101336
+SLOW = Path("../jax-wide-style-context-20261014/runs/wide-style-context-20261014")
 
 
 def make_arms(root):
@@ -172,6 +173,17 @@ def prepare(root):
         for path in folder.rglob("*"):
             if path.is_file():
                 bindings[str(path)] = sha(path)
+    for name in (
+        "attempt-status.json",
+        "prefix-audit.json",
+        "source.json",
+        "diagnostics/dilation-benchmark/results.json",
+        "diagnostics/dilation-benchmark/study.py",
+    ):
+        bindings[str((SLOW / name).resolve())] = sha(SLOW / name)
+    for path in (SLOW / "snapshots/step-6").rglob("*"):
+        if path.is_file():
+            bindings[str(path.resolve())] = sha(path)
     write(
         root / "plan.json",
         dict(
@@ -325,6 +337,26 @@ def train(root):
                             m: replay_comparison(actual[m], expected[m], "prior") for m in METHODS
                         },
                     ),
+                )
+            if step == 5:
+                audits = {}
+                for method, arm in arms.items():
+                    for mode in ("raw", "ema"):
+                        previous, _ = load_inference(SLOW / f"snapshots/step-6/{method}/{mode}")
+                        before = nnx.state(previous, nnx.Param)
+                        after = nnx.state(arm["model"], nnx.Param) if mode == "raw" else arm["ema"]
+                        max_diff = 0.0
+                        for x, y in zip(
+                            jax.tree.leaves(before), jax.tree.leaves(after), strict=True
+                        ):
+                            np.testing.assert_allclose(x, y, atol=1e-6, rtol=1e-4)
+                            max_diff = max(
+                                max_diff, float(np.max(abs(np.asarray(x) - np.asarray(y))))
+                            )
+                        audits[f"{method}/{mode}"] = dict(passed=True, max_abs_difference=max_diff)
+                write(
+                    root / "implementation-audit.json",
+                    dict(passed=True, atol=1e-6, rtol=1e-4, comparisons=audits),
                 )
             if step + 1 in SAVED:
                 lineart_state.save(saved, arms, step + 1)

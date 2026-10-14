@@ -8,6 +8,7 @@ import jax
 import jax.numpy as jnp
 from flax import nnx
 
+from .dilated import local_convolution
 from .output import denoised_output
 from .unet import progress_basis
 from .upsample import nearest_double
@@ -51,8 +52,8 @@ class LocalBlock(nnx.Module):
         if pyramid_code is not None:
             modulation = modulation + self.pyramid_modulation(pyramid_code)
         gain, shift = jnp.split(modulation, 2, axis=-1)
-        h = nnx.silu(self.first(x) * (1 + gain) + shift)
-        return nnx.silu(x + self.second(h))
+        h = nnx.silu(local_convolution(self.first, x) * (1 + gain) + shift)
+        return nnx.silu(x + local_convolution(self.second, h))
 
 
 class LocalCNN(nnx.Module):
