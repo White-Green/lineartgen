@@ -1,3 +1,5 @@
+[EM results](width-coverage-results-20261015.md): 6k continuous-width augmentation repairs gray wide58 and several intermediate-width frames, but enlarges an interruption in the close left pair of scene1. 9,516 outputs,34 fixed pages plus2 native follow-ups reviewed. No adoption/fresh confirmation. Next: source-eligible merged geometry alternatives, preserving matched inputs.
+
 [EL results](width-response-results-20261015.md): width-only perturbations of6 known shapes produce36 outputs/6 native pages. Intermediate8–15px inputs often create frames or gray collapse while20–30px centers are clean. Next: continuous source-width augmentation, compared with the already fixed EK control. EK composition training is still running. No adoption/fresh confirmation.
 
 [EJ results](final-ema-results-20261015.md): fixed final group6 raw/EMA comparison completed384 outputs and32 native pages. Neither EMA nor depth6 repairs gray wide58, mottled close curves, or scene7 lower-intersection erasure. Next: audit training geometry coverage before another change. No adoption/fresh confirmation.
