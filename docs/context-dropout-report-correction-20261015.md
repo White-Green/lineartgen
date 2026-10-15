@@ -1,0 +1,7 @@
+# ETの表示ラベル・参照モデルの修正
+
+6,000更新×2条件は終了0で完了した。standard評価は全4,608予測と数値集計を保存した後、renderに残っていた旧キーmerge/mixedでKeyErrorになり終了1だった。モデル名はcontrol/dropoutなので、表示関数のキーと列名だけを別adapterで直す。元のdriver-evaluation.json/logは失敗記録として残し、描画のみの成功はdriver-evaluation-render.jsonへ記録する。保存済み1,536予測ファイルのhashを前後で確認する。
+
+同じ旧ラベルがstress/sceneの描画にも残っているため、実行前に同じadapterでrender関数のみを置き換える。数値評価・推論・学習コードは凍結時のまま。width sweepの参照一致assertにもEI時代の参照が残っていた。こちらは元の入力を変えず、EQ mixed raw18kの保存済み予測との完全一致へ差し替える独立スクリプトを使う。教師や画質判定を変更するものではない。
+
+元のコード・source.json/source.tar.gz・設定を変更しない。追加adapterと修正版finalizerのhashは生成前にdiagnostics/report-correction-plan.jsonへ保存する。学習再実行・モデル選別・新しい入力追加はしない。
