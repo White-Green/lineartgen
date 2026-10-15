@@ -1,3 +1,7 @@
+[EX results](physical-dilation-results-20261015.md): trained physical dilation removes wide61 long side rails without increasing parameters and preserves the main line/scene1 branch. Probe37 fragments, scene7 cuts and minor cap debris remain; oversized inputs still fail. 6,000 matched updates,9,516 outputs,34 native pages plus2 detail crops completed. No adoption or fresh confirmation. Next: test sparse signed-error emphasis with the physical architecture fixed.
+
+[EV results](support-geometry-results-20261015.md): removing the absolute merge-separation cap did not repair the defects; both interrupted attempts and exact replay of their logged metrics are retained.
+
 [EW results](scale-dilation-results-20261015.md): physical dilation at coarse recursion levels partially suppresses wide61 side rails with fixed ET dropout weights. Probe37 fragments and scene7 cuts remain. 72 outputs and16 native pages reviewed. No adoption. Next: matched physical-dilation training against ET dropout.
 
 [ET results](context-dropout-results-20261015.md): matched warm6000 control/context dropout complete, 9516 outputs/34 native pages reviewed. Dropout partly fades wide side rails/debris; curve37 fragments and scene7 crossing gaps persist. Scene1 fusion/branch retained. No adoption/fresh confirmation. Next: audit stroke-width supervision and continuity. Report-name failure repaired separately with predictions unchanged.
