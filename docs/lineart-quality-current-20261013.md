@@ -1,3 +1,5 @@
+[EW results](scale-dilation-results-20261015.md): physical dilation at coarse recursion levels partially suppresses wide61 side rails with fixed ET dropout weights. Probe37 fragments and scene7 cuts remain. 72 outputs and16 native pages reviewed. No adoption. Next: matched physical-dilation training against ET dropout.
+
 [ET results](context-dropout-results-20261015.md): matched warm6000 control/context dropout complete, 9516 outputs/34 native pages reviewed. Dropout partly fades wide side rails/debris; curve37 fragments and scene7 crossing gaps persist. Scene1 fusion/branch retained. No adoption/fresh confirmation. Next: audit stroke-width supervision and continuity. Report-name failure repaired separately with predictions unchanged.
 
 [ES results](field-transfer-results-20261015.md): 180 fixed-weight outputs/20 native pages. Subpixel-aligned context does not remove wide side rails; gain2 worsens mixed rails into frames. Zero removes rails but leaves bumps, curve fragments and crossing gaps. Next: matched recursive-context dropout warm training. No adoption/fresh confirmation.
