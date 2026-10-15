@@ -181,10 +181,13 @@ def prepare(root):
         ),
     )
     bound.update({str(p): sha(p) for p in root.rglob("*") if p.is_file()})
-    for folder in (PARENT, CONTROL, SUPPORT, FIT):
+    for folder in (PARENT, CONTROL, SUPPORT):
         for name in ("plan.json", "source.json", "completion.json"):
             p = folder / name
             bound[str(p.resolve())] = sha(p)
+    for name in ("plan.json", "source.tar.gz", "completion.json"):
+        p = FIT / name
+        bound[str(p.resolve())] = sha(p)
     for p in (CONTROL / "training/checkpoints/6").rglob("*"):
         if p.is_file():
             bound[str(p.resolve())] = sha(p)
