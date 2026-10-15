@@ -76,7 +76,7 @@ def check(root):
     return plan
 
 
-def inputs(plan, case):
+def inputs(plan, case, *, depth_override=None):
     name, mode = case.split("-")
     if name == "scene7":
         r, size, depth = plan["scene"], 512, 6
@@ -109,6 +109,7 @@ def inputs(plan, case):
     base = geometry_field(*args, size=size)[None]
     oracle = coverage(central_field(base)[..., None])[0]
     np.testing.assert_allclose(oracle, render(*args, size=size), atol=1e-6, rtol=1e-6)
+    depth = depth if depth_override is None else depth_override
     prepared = prepare_inputs(
         clean[None], source[None], strength[None], jax.random.PRNGKey(2026101517), depth=depth
     )
