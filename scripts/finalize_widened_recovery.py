@@ -1,4 +1,4 @@
-"""Add the interrupted preflight evidence to the unchanged numerical finalizer."""
+"""Add interrupted audit/training evidence to the unchanged numerical finalizer."""
 
 import argparse
 import json
@@ -20,32 +20,38 @@ assert a["exec_returncode"] == 143 and a["training_started"] is False
 assert b["child_returncode"] == 0
 for f, h in a["evidence"].items():
     assert sha(r / f) == h
-interruption = read(r / "diagnostics/training-interruption-1.json")
-assert interruption["parent_exec_returncode"] == 143 and interruption["child_returncode"] is None
-assert interruption["last_saved_step"] == 1000 and interruption["last_logged_step"] == 1042
-for f, h in interruption["evidence"].items():
-    assert sha(r / f) == h
-old_rows = [
-    json.loads(x)
-    for x in (r / "diagnostics/training-interruption-1/training--sampling.jsonl")
-    .read_text()
-    .splitlines()
-]
 new_rows = [json.loads(x) for x in (r / "training/sampling.jsonl").read_text().splitlines()]
+interruptions = []
 replays = []
-for old, new in zip(old_rows[1000:], new_rows[1000:1042], strict=True):
-    for key in old:
-        if key not in ("seconds", "metrics"):
-            assert old[key] == new[key]
-    replays.append(replay_state(new["metrics"], old["metrics"]))
-replay = dict(
-    journaled_updates=42,
-    inputs_targets_masks_exact=True,
-    max_metric_difference=max(x["max_abs_difference"] for x in replays),
-    metrics_exact=all(x["exact"] for x in replays),
-    unsaved_parameter_states_compared=False,
-)
-write(r / "diagnostics/interrupted-prefix-replay.json", replay)
+for path in plan["training_interruptions"]:
+    interruption = read(r / path)
+    assert (
+        interruption["parent_exec_returncode"] == 143 and interruption["child_returncode"] is None
+    )
+    for f, h in interruption["evidence"].items():
+        assert sha(r / f) == h
+    journal = next(f for f in interruption["evidence"] if f.endswith("training--sampling.jsonl"))
+    old_rows = [json.loads(x) for x in (r / journal).read_text().splitlines()]
+    start, end = interruption["last_saved_step"], interruption["last_logged_step"]
+    assert len(old_rows) == end and end >= start
+    checks = []
+    for old, new in zip(old_rows[start:], new_rows[start:end], strict=True):
+        for key in old:
+            if key not in ("seconds", "metrics"):
+                assert old[key] == new[key]
+        checks.append(replay_state(new["metrics"], old["metrics"]))
+    replays.append(
+        dict(
+            interruption=path,
+            journaled_updates=end - start,
+            inputs_targets_masks_exact=True,
+            max_metric_difference=max((x["max_abs_difference"] for x in checks), default=0),
+            metrics_exact=all(x["exact"] for x in checks),
+            unsaved_parameter_states_compared=False,
+        )
+    )
+    interruptions.append(interruption)
+write(r / "diagnostics/interrupted-prefix-replay.json", replays)
 subprocess.run(
     [sys.executable, "scripts/finalize_widened_geometry.py", "--root", str(r)], check=True
 )
@@ -53,28 +59,24 @@ c = read(r / "completion.json")
 write(r / "diagnostics/completion-before-recovery-binding.json", c)
 c["preflight_interruptions"] = [a]
 c["preflight_retry"] = b
-c["training_interruptions"] = [interruption]
-c["interrupted_prefix_replay"] = replay
-c["evidence"].update(
-    {
-        f: sha(r / f)
-        for f in [
-            "diagnostics/training-interruption-1.json",
-            "diagnostics/interrupted-prefix-replay.json",
-            "diagnostics/preflight-attempt1.json",
-            "diagnostics/preflight-attempt2.json",
-            "diagnostics/preflight-attempt2.log",
-            "diagnostics/recovery-plan.json",
-            "diagnostics/completion-before-recovery-binding.json",
-        ]
-    }
-)
+c["training_interruptions"] = interruptions
+c["interrupted_prefix_replay"] = replays
+files = [
+    "diagnostics/preflight-attempt1.json",
+    "diagnostics/preflight-attempt2.json",
+    "diagnostics/preflight-attempt2.log",
+    "diagnostics/recovery-plan.json",
+    "diagnostics/interrupted-prefix-replay.json",
+    "diagnostics/completion-before-recovery-binding.json",
+]
+files += plan["training_interruptions"]
+c["evidence"].update({f: sha(r / f) for f in files})
 write(r / "completion.json", c)
 print(
     dict(
         complete=True,
         preflight_interruptions=1,
-        training_interruptions=1,
+        training_interruptions=len(interruptions),
         numerical_code_unchanged=True,
     ),
     flush=True,
