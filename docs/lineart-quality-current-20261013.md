@@ -1,3 +1,5 @@
+[EN results](merge-geometry-results-20261015.md): 6k matched merged-family training selects278/1,244 eligible examples,improves close-pair interpretation while retaining EM wide-line gains. Scene1 remains sensitive to8bit encoding;scene7 crossing erasure persists. 9,516 outputs,34 fixed plus2 follow-up pages reviewed. Next: matched input-precision augmentation. No adoption/fresh confirmation.
+
 [EM results](width-coverage-results-20261015.md): 6k continuous-width augmentation repairs gray wide58 and several intermediate-width frames, but enlarges an interruption in the close left pair of scene1. 9,516 outputs,34 fixed pages plus2 native follow-ups reviewed. No adoption/fresh confirmation. Next: source-eligible merged geometry alternatives, preserving matched inputs.
 
 [EL results](width-response-results-20261015.md): width-only perturbations of6 known shapes produce36 outputs/6 native pages. Intermediate8–15px inputs often create frames or gray collapse while20–30px centers are clean. Next: continuous source-width augmentation, compared with the already fixed EK control. EK composition training is still running. No adoption/fresh confirmation.
