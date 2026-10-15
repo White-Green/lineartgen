@@ -1,0 +1,11 @@
+# EU: 線の融合を許す教師の境界を監査する
+
+ET後の読み取り監査で、学習512例の全strokeのpeak幅は同一画像内で2pxになっており、重ね合わせとのpeak幅不整合は見つからなかった。8つの複合評価sceneでは画像全体の最大幅で正規化するため相対幅が残り、scene7の細いgap strokeは.4525pxとなる。これは既知oracleのstyleであり、モデルに余計な切れがあることとは区別する。
+
+別にprobe37のmedian separationが8.053524pxで、従来の固定上限8pxから外れていることが分かった。上限を外して同じ入力support検査を行うと許可される。probe36/38/39はいずれも従来から許可。この事前観察を契機とした探索であり、未使用確認セットではない。
+
+学習48 parallelを既定6粗化条件base/faint/dark/sharp/soft/rough（rough phaseはstress_options(name, training index)）で計288条件監査する。従来cap8と、上限を外してsupport条件だけを使う案を比較する。他の条件（17断面、中央幅の最小濃度/peak>=.6がvalid断面の75%以上、peak>=.02、valid>=8）は同じ。非parallel・shape不一致・離れた2本は引き続き対象外またはsupportで拒否する。全512と8sceneの教師peak幅も集計する。
+
+既知new_probe36–41のbase入力について、source/不透明な元の2本/中心を平均した不透明1本/EQ mixed raw18k/ET dropout raw6kの5列等倍ページを各1枚、計6枚作る。モデル予測は保存済みfloat depth3 whole.5をそのまま使用する。1本oracleは教師候補の表現可能性を示すだけで推論結果ではない。加えて新gateだけが許可した学習形状から間隔が大きい順に最大6形状を選び、最初に許可した既定corruptionのsource/元oracle/merged oracleを3行ずつ最大2枚で確認する。固定した選択規則を使う。
+
+CPUテストで8px以下の既存geometry完全一致、8px超のfilled band許可と別々の線/局所bridge拒否、opacity変化を確認。code/input/model hash、保存予測不変、oracle有限値・範囲を検証する。学習・採用・fresh確認はしない。監査後、固定capの除去によるmatched学習を行う価値があるか判断する。scene7やwide副線もこれで解消すると主張しない。
