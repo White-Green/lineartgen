@@ -1,3 +1,5 @@
+**EZ 完了:** 入力支持による結合教師の強制選択＋8px上限除去で近接曲線の断片が減り、太線周辺の点除去も維持。交差部の切れ目は残る。2条件各6,000更新、12,688出力、34等倍ページと3切り出しを確認。次は同じ総24,000更新で初めから新設定を学習する。[結果](forced-geometry-results-20261015.md)。
+
 **EY 完了:** L4符号制約で太線周辺の孤立点が減り、EXの副線除去を保持した。近接曲線の断片化・交差部の切れ目は残る。6,000更新、9,516出力、34等倍ページと2切り出しを確認。本番採用・新規確認はまだ行わない。[結果](quartic-sign-results-20261015.md)。
 
 [EX results](physical-dilation-results-20261015.md): trained physical dilation removes wide61 long side rails without increasing parameters and preserves the main line/scene1 branch. Probe37 fragments, scene7 cuts and minor cap debris remain; oversized inputs still fail. 6,000 matched updates,9,516 outputs,34 native pages plus2 detail crops completed. No adoption or fresh confirmation. Next: test sparse signed-error emphasis with the physical architecture fixed.
