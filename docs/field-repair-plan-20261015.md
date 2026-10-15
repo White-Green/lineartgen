@@ -6,8 +6,10 @@ EZ supported24kの既知の失敗例だけを使い、CNNの出力した各再�
 - scene7の教師は既存の不透明幾何oracle（全体peak2px、相対線幅を保持）。probe37はsource支持のある2本の中心線を平均した1本の2px曲線。これは検証例を使った教師付き診断であり、改善した画像をモデル推論や未知例への成功として扱わない。
 - 9通りの全体平行移動、全段0.5^level、現在のcensored distance + 0.1 geometry gradient + 0.25 regional L4 sign lossをそのまま使う。変数は全段field、再帰間結合は外す。context dropoutは使わず、実際の推論fieldを初期値にする。
 - Adam、一定LR0.02、global gradient clip1、weight decayなし、500更新。保存表示点0/1/25/100/500を固定。途中の良い点を選んで採用しない。各条件の最初の6更新を再現し、最終fieldとoptimizerを保存・復元照合する。
-- 初期renderはEZの保存推論と完全一致、教師のrenderは既存の不透明幾何renderと照合。保護領域は全保存点で入力と完全一致。CPUではinside/outsideの符号勾配・保護領域・全段への勾配を確認。
+- 通常のfused inferはEZの保存推論と完全一致。fieldを取り出して別グラフでrenderするとROCmの浮動小数点差が生じるため、従来の再現許容値atol5e-6/rtol1e-4で照合し実差を記録する。教師のrenderは既存の不透明幾何renderと照合。保護領域は全保存点で入力と完全一致。CPUではinside/outsideの符号勾配・保護領域・全段への勾配を確認。
 - 全体原寸画像4枚と欠陥周辺の原寸切り出し4枚を実際に見る。期待する観察はscene7の交差直前直後の途切れとprobe37の余分な短線が直るか、保護領域や意図された隙間を変えないか。
 - 修復できれば、少なくともこの教師条件ではlossの改善方向は存在する。学習データの相対線幅・接続事例の不足とCNNによる最適化を次に調べる。修復できなければlossと幾何表現を先に調べる。既知例2つから一般的な十分性は結論しない。
 
 モデル採用、Krita変更、export、未使用16例は対象外。Gaussian drawを変える検証ではない（現モデルはnoisy引数を使用しない）。
+
+初回 `daa2dd2` は最適化開始前のsplit graph renderの完全一致assertで終了コード1となった（最大差1.9669533e-6、更新0）。`runs/field-repair-20261015` に失敗記録と固定ソースを保持する。上記の通常inferの完全一致確認を加え、split graphだけ既存の再現許容値を使う。loss・入力・optimizer・更新数は変更せず、`runs/field-repair-20261015-retry1` で再実行する。
