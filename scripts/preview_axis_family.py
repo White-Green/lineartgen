@@ -6,9 +6,13 @@ from pathlib import Path
 
 import jax.numpy as jnp
 import numpy as np
+from aligned_geometry_data import component_field
 from axis_family_data import MINIMUM_WIDTH_LENGTH_RATIO, axis_payload, axis_spec
 from campaign_protocol import read, sha, write
-from choice_readout_study import batch, check, load_data
+from choice_readout_study import check, load_data
+from continuous_width_data import width_source
+from cue_preserving_data import MODES, strength_map
+from d4_geometry_data import transform_directions, transform_numpy_batch
 from PIL import Image, ImageDraw
 from subpixel_field_data import candidate_fields
 from subpixel_field_model import coverage
@@ -79,15 +83,32 @@ for depth in range(1, 7):
     row = selected[depth]
     step = row["step"]
     item = row["item"]
-    prepared, bases, directions = batch(data, step, "choice")
-    axis, audit = axis_payload(data, plan[step], widths[step]["records"], bases, directions)
-    assert audit[item]["allowed"]
+    selection = plan[step]
+    index = selection["indices"][item]
+    options = selection["augmentation"][item]
+    code = selection["transforms"][item]
+    source = width_source(
+        data,
+        data["records"][index],
+        index,
+        widths[step]["records"][item]["primary"]["new"],
+        options,
+    )
+    source = transform_numpy_batch(source[None], [code])[0]
+    mask = transform_numpy_batch(strength_map(MODES[selection["modes"][item]])[None], [code])[0]
+    base = component_field(data, index, options)
+    base = jnp.asarray(transform_numpy_batch(base[None, ..., None], [code])[..., 0])
+    directions = transform_directions(
+        jnp.asarray(data["directions"][index : index + 1]), jnp.asarray([code])
+    )
+    bases = (base, base, jnp.asarray([False]))
+    one = {k: [selection[k][item]] for k in ("indices", "augmentation", "overlays", "transforms")}
+    axis, audit = axis_payload(data, one, [widths[step]["records"][item]], bases, directions)
+    assert audit[0]["allowed"]
     original = candidate_fields(bases[0], directions, depth)[0]
     alternative = candidate_fields(axis[0], axis[1], depth)[0]
-    target = np.asarray(coverage(original[:, 4]))[item]
-    other = np.asarray(coverage(alternative[:, 4]))[item]
-    source = np.asarray(prepared.guides[0])[item]
-    mask = np.asarray(prepared.noise_levels[0])[item]
+    target = np.asarray(coverage(original[:, 4]))[0]
+    other = np.asarray(coverage(alternative[:, 4]))[0]
     assert np.isfinite(other).all() and not np.array_equal(other, target)
     path = r / f"depth-{depth}.npz"
     np.savez_compressed(
@@ -96,8 +117,8 @@ for depth in range(1, 7):
         original=target,
         alternative=other,
         mask=mask,
-        original_field=np.asarray(original[item, 4]),
-        alternative_field=np.asarray(alternative[item, 4]),
+        original_field=np.asarray(original[0, 4]),
+        alternative_field=np.asarray(alternative[0, 4]),
     )
     bindings[str(path)] = sha(path)
     images.append((row, [source, target, other, 1 - 2 * (mask > 0).astype(np.float32)]))
