@@ -1,0 +1,16 @@
+# FW: mixed spatial reach retains local gains but fails the broad visual gate
+
+Completed frozen `6f15993`: one 21718-parameter mixed-branch model, compared with the bound FV local control. The new branch uses dilation1 then32 (normalized finest-guide receptive field153, versus local91). Its initial parameters/function equal FV local exactly. Both use the same FO initialization and FT6000-batch schedule. Loss, six recursive depths/all-stage weights and sqrt(batch) learning-rate scaling are unchanged.
+
+Actually reviewed34 native pages, five fixed crops and three FU constructed-pair pages. Long wide59/61/63 at2x remain dark and complete, but the mixed model makes some caps and lines thicker/bumpier. It reduces some59 side flecks but adds perpendicular flecks on60 at2x;62 still becomes an unwanted broken cross. Ordinary thin lines, branches/crossings, separated pairs, gaps and protected pixels remain stable. FN's scene2/old36 gray cleanup and the cleaner probe37 cap survive; scene7's upper crossing tip remains uneven/gray. Rough whole/partial fill still has pale corner holes.
+
+On FU's bar/fill pair the mixed model leaves three black rails in the bar at depths1/3/6, with edge-point predictions[-1,-1], just like local. Increasing formal receptive-field reach did not make it use the distant cue effectively here. This is a constructed counterexample, not an estimate of deployment prevalence. Central-path alpha>=.5 coverage on59/61/63 at2x is1.0 for both models, but a filled bar can also score1.0; it is only descriptive.
+
+CPU tests3passed in9.87s and Ruff passed. Preflight132.191s verified initial fields/pixels exactly equal FO across six depths, gradient access to both new convolutions, and exact replay of FT's first six base updates/full state. The mixed prefix/full state, all checkpoint restores and16 raw/EMA exports pass exactly. All6000 source batches match FT/FV local:6485/24000 widened examples,23716/32747 warped components,985 merged examples,30339/60000 dropped edges. All FN and FV local standard/stress/scene/sweep/ambiguity predictions exactly match their bound references.9516 main outputs plus12 constructed-pair outputs.
+
+All12 driver phases exited0 without interruption. Training17:55:32–19:09:35UTC: six segments748.243,788.788,723.633,724.836,728.495,728.845s. Standard/stress/scene/sweep/ambiguity evaluation190.144/129.565/18.614/8.621/10.193s, ending19:15:32UTC. Last600 mean update time0.358761s;20/6000 gradient clips, maximum norm2.95133, mean0.289630. Quantization RMS mean0.00136615/max0.00304070. Timing and RMS are diagnostics, not quality selection criteria.
+
+No adoption or fresh16 confirmation. Finalizer passed; evidence and actual observations are bound in `completion.json` and `diagnostics/supplemental-binding.json`. Synthetic only; no production, Krita, deployment exports or remote changes.
+
+Next bounded diagnostic tests a possible source-construction shortcut: training broad strokes average two displaced rasters, while fills and FU's bar use a single edge. Compare single versus paired-offset edge profiles for the same bar/fill geometry and fixed checkpoints before changing training. This is a hypothesis, not an established cause.
+
