@@ -33,7 +33,10 @@ from lineartgen.training import checkpoints, lineart_state
 class ManualFirst(GroupHead):
     def __call__(self, x):
         b, h, w, c = x.shape
-        return self.linear(x.reshape(b, h, w, 8, c // 8)[..., 0, :])
+        # Keep the full projection layout before selecting orientation0.
+        # Selecting the feature first changes GEMM shape/rounding on ROCm.
+        projected = self.linear(x.reshape(b, h, w, 8, c // 8))
+        return projected[..., 0, :]
 
 
 p = argparse.ArgumentParser()
