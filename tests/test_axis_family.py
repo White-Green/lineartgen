@@ -23,13 +23,14 @@ def record():
 def test_only_short_isolated_wide_gets_perpendicular_interpretation():
     r = record()
     original = copy.deepcopy(r)
-    assert not axis_spec(r, 44.9)["allowed"]
-    s = axis_spec(r, 45.0)
+    assert not axis_spec(r, 64.0, whole=False)["allowed"]
+    assert not axis_spec(r, 44.9, whole=True)["allowed"]
+    s = axis_spec(r, 45.0, whole=True)
     assert s["allowed"] and s["ratio"] == 0.75
-    assert not axis_spec(r, 64.0, overlay=True)["allowed"]
+    assert not axis_spec(r, 64.0, overlay=True, whole=True)["allowed"]
     thin = copy.deepcopy(r)
     thin["kind"] = "straight"
-    assert not axis_spec(thin, 64.0)["allowed"]
+    assert not axis_spec(thin, 64.0, whole=True)["allowed"]
     points = np.asarray(s["points"])
     np.testing.assert_allclose(points[[0, -1]], [[50.0, 27.5], [50.0, 72.5]])
     np.testing.assert_allclose(s["direction"], [-1.0, 0.0])
@@ -76,3 +77,23 @@ def test_disabled_exact_and_whole_alternative_has_finite_gradient():
         assert np.isfinite(np.asarray(grad)).all()
     protected = tuple(jnp.zeros_like(x) for x in strengths)
     assert float(axis_parts((pred,), (h,), (h,), (v,), protected, eligible, both)["loss"]) == 0
+
+
+def test_partial_mask_defense_even_if_caller_allows_alternative():
+    h, v, strengths = candidates()
+    eligible = jnp.array([False, False])
+    partial = (strengths[0].at[0, :, :8].set(0),)
+    pred = v[:, 0]
+    both = jnp.array([True, True])
+    only_whole = jnp.array([False, True])
+    a = axis_parts((pred,), (h,), (h,), (v,), partial, eligible, both)
+    b = axis_parts((pred,), (h,), (h,), (v,), partial, eligible, only_whole)
+    exact(a, b)
+    assert float(a["axis_eligible_fraction"]) == 0.5
+    all_partial = (partial[0].at[1, :, :8].set(0),)
+    baseline = family_parts((pred,), (h,), (h,), all_partial, eligible)
+    prior = opening_consistency(pred, h, all_partial[0])
+    baseline |= dict(opening_consistency=prior, loss=baseline["loss"] + 0.1 * prior)
+    actual = axis_parts((pred,), (h,), (h,), (v,), all_partial, eligible, both)
+    assert float(actual.pop("axis_eligible_fraction")) == 0
+    exact(actual, baseline)

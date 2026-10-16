@@ -11,6 +11,7 @@ from subpixel_field_data import candidate_fields
 
 
 def axis_parts(fields, original, merged, axis, strengths, eligible, allowed):
+    allowed = allowed & jnp.all(strengths[0] > 0, axis=(1, 2, 3))
     teacher = tuple(
         jnp.where(eligible[:, None, None, None, None], b, a)
         for a, b in zip(original, merged, strict=True)

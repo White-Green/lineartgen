@@ -5,6 +5,7 @@ import copy
 import jax.numpy as jnp
 import numpy as np
 from aligned_geometry_data import warped_metadata
+from cue_preserving_data import MODES, strength_map
 from d4_geometry_data import transform_directions, transform_numpy_batch
 from opaque_geometry import geometry
 from subpixel_field_data import geometry_field
@@ -12,7 +13,9 @@ from subpixel_field_data import geometry_field
 MINIMUM_WIDTH_LENGTH_RATIO = 0.75
 
 
-def axis_spec(record, width, *, overlay=False):
+def axis_spec(record, width, *, overlay=False, whole=False):
+    if not whole:
+        return dict(allowed=False, reason="partial application retains original teachers")
     if record["kind"] != "wide" or overlay:
         return dict(allowed=False, reason="not isolated wide")
     paths = record["metadata"]["path_geometry"]
@@ -61,7 +64,12 @@ def axis_payload(data, selection, width_rows, original, directions):
         )
     ):
         record = data["records"][index]
-        spec = axis_spec(record, width_rows[item]["primary"]["new"], overlay=overlay["enabled"])
+        spec = axis_spec(
+            record,
+            width_rows[item]["primary"]["new"],
+            overlay=overlay["enabled"],
+            whole=bool(np.all(strength_map(MODES[selection["modes"][item]]) > 0)),
+        )
         if spec["allowed"]:
             assert not bool(np.asarray(original[2])[item])
             metadata = axis_metadata(record, spec, options)

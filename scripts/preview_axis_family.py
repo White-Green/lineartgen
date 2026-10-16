@@ -18,7 +18,7 @@ from subpixel_field_data import candidate_fields
 from subpixel_field_model import coverage
 
 ROOT = Path("../jax-choice-readout-20261016/runs/choice-readout-20261016-retry2").resolve()
-DOC = Path("docs/axis-family-preview-plan-20261016.md")
+DOC = Path("docs/whole-axis-family-preview-plan-20261016.md")
 p = argparse.ArgumentParser()
 p.add_argument("--root", type=Path, required=True)
 r = p.parse_args().root.resolve()
@@ -36,6 +36,7 @@ for step, (selection, wr) in enumerate(zip(plan, widths, strict=True)):
             data["records"][index],
             wr["records"][item]["primary"]["new"],
             overlay=selection["overlays"][item]["enabled"],
+            whole=bool(np.all(strength_map(MODES[selection["modes"][item]]) > 0)),
         )
         if spec["allowed"]:
             row = dict(
@@ -49,7 +50,8 @@ for step, (selection, wr) in enumerate(zip(plan, widths, strict=True)):
             )
             rows.append(row)
             selected.setdefault(selection["depth"], row)
-assert len(rows) == 243 and len(selected) == 6
+assert len(selected) == 6
+assert all(plan[row["step"]]["modes"][row["item"]] != 2 for row in rows)
 write(
     r / "eligibility.json",
     dict(
@@ -61,6 +63,8 @@ files = [Path(f).resolve() for f in tracked if f.endswith((".py", ".toml")) or f
 files += [DOC.resolve(), ROOT / "plan.json", ROOT / "source.json", r / "eligibility.json"]
 prior = Path("../jax-axis-supervision-20261016/runs/axis-supervision-20261016-retry1")
 files += [prior / "completion.json", prior / "decision.json", prior / "observations.json"]
+rejected = Path("../jax-axis-family-20261016/runs/axis-family-preview-20261016-retry1")
+files += [rejected / n for n in ("completion.json", "decision.json", "active-support.json")]
 commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
 subprocess.run(
     ["git", "archive", "--format=tar.gz", "-o", str(r / "source.tar.gz"), commit], check=True
@@ -102,14 +106,18 @@ for depth in range(1, 7):
         jnp.asarray(data["directions"][index : index + 1]), jnp.asarray([code])
     )
     bases = (base, base, jnp.asarray([False]))
-    one = {k: [selection[k][item]] for k in ("indices", "augmentation", "overlays", "transforms")}
+    one = {
+        k: [selection[k][item]]
+        for k in ("indices", "augmentation", "overlays", "transforms", "modes")
+    }
     axis, audit = axis_payload(data, one, [widths[step]["records"][item]], bases, directions)
-    assert audit[0]["allowed"]
+    assert audit[0]["allowed"] and np.all(mask > 0)
     original = candidate_fields(bases[0], directions, depth)[0]
     alternative = candidate_fields(axis[0], axis[1], depth)[0]
     target = np.asarray(coverage(original[:, 4]))[0]
     other = np.asarray(coverage(alternative[:, 4]))[0]
     assert np.isfinite(other).all() and not np.array_equal(other, target)
+    assert np.sum((1 - target) / 2) > 0 and np.sum((1 - other) / 2) > 0
     path = r / f"depth-{depth}.npz"
     np.savez_compressed(
         path,
@@ -144,4 +152,4 @@ for start in (0, 2, 4):
 write(
     r / "manifest.json", dict(records=pages, native_scale=True, arrays=bindings, teacher_only=True)
 )
-print(dict(eligible=243, selected=list(selected.values()), pages=3), flush=True)
+print(dict(eligible=len(rows), selected=list(selected.values()), pages=3), flush=True)
