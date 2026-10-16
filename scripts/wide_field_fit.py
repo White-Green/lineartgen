@@ -134,7 +134,10 @@ def data(root):
         with np.load(PARENT / f"width-sweep/wide-{i}-factor-2.0.npz") as z:
             np.testing.assert_array_equal(source, z["source"])
             expected = z["expanded"]
-        args = tuple(jnp.asarray(x) for x in geometry(r["metadata"], kind=r["kind"], size=256))
+        teacher_metadata = copy.deepcopy(r["metadata"])
+        for path in teacher_metadata["path_geometry"]:
+            path["widths"] = [2.0] * len(path["widths"])
+        args = tuple(jnp.asarray(x) for x in geometry(teacher_metadata, kind=r["kind"], size=256))
         assert np.all(np.asarray(args[1]) == 2)
         base = geometry_field(*args, size=256)[None]
         oracle = np.asarray(coverage(central_field(base)[..., None]))[0]
