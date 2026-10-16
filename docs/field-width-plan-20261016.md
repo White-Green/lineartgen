@@ -1,0 +1,7 @@
+# FM: width and slope of residual contours
+
+FL's auxiliary raw cue did not repair residual contours. Diagnose fixed FH fields before choosing a minimum-width or distance-gradient prior. Reuse FI's five known cases, depth6, both float/uint8 encodings; no new data, learning, checkpoint selection or fresh confirmation.
+
+On the five predefined native crops, render the current field, its bilinearly interpolated zero contour at16 samples/pixel, and that binary contour after disk openings with diameters0.5/1/1.5 pixels. Opening is a diagnostic of local geometric thickness, not a proposed inference filter. It may erase legitimate thin branches/tapered ends and must be inspected alongside scene1/7. Add an8px halo before processing and remove it for measurements. Keep50 crop arrays and inspect10 native pages. Measure removed ink area and field-gradient norms near actual zero crossings. Values are descriptive, not a quality score.
+
+Audit the normalized widths of all512 training metadata records, weighted both by path samples and segment length. Report the share below the diagnostic widths, including taper endpoints; do not infer inference limits from this alone. Synthetic analytic checks cover area sampling, constant-sign cases, disk opening subset/idempotence and thick/thin straight bands. Freeze source/input hashes before evaluation, bind predictions and review afterward. No model/renderer changes or production adoption.
