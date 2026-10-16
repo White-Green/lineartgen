@@ -35,8 +35,8 @@ class ManualFirst(GroupHead):
         b, h, w, c = x.shape
         # Keep the full projection layout before selecting orientation0.
         # Selecting the feature first changes GEMM shape/rounding on ROCm.
-        projected = self.linear(x.reshape(b, h, w, 8, c // 8))
-        return projected[..., 0, :]
+        projected = self.linear(x.reshape(b, h, w, 8, c // 8)).reshape(b, h, w, 8, 4, 4)
+        return projected[..., 0, :, :].reshape(b, h, w, 16)
 
 
 p = argparse.ArgumentParser()

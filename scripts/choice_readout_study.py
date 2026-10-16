@@ -175,8 +175,9 @@ def prepare(root):
                 "Resample FO widened batches with unchanged inputs/teachers at matched depth"
             ),
             only_change=(
-                "dense choice-guide lifting branch60 parameters; reused FW mixed control; "
-                "same existing arrays, source batches and objective"
+                "single component0 readout instead of8-component mean at every level; "
+                "reused FW mixed control; same21718 parameters, initial arrays, "
+                "source batches and objective; different initial function"
             ),
             context_dilations=DILATIONS,
             feature_receptive_fields={"mixed": 153, "choice": 153},
