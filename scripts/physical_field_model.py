@@ -42,9 +42,10 @@ class PhysicalGroupFieldCNN(GroupFieldCNN):
             (guide - 1, guide - 1, noise_level, nearest_double(insert) - 1), -1
         )
         basis = progress_basis(jnp.full_like(progress, pyramid_level / 5))
-        x = nnx.silu(
-            self.stem_modulation(convolve(self.stem, features, pyramid_level, "physical"), basis)
-        )
+        stem = convolve(self.stem, features, pyramid_level, "physical")
+        if getattr(self, "uses_raw_guide", False):
+            stem = stem + self.raw_stem(image - 1)
+        x = nnx.silu(self.stem_modulation(stem, basis))
         for block in self.blocks:
             y = nnx.silu(
                 block.modulation(convolve(block.first, x, pyramid_level, "physical"), basis)
@@ -61,13 +62,17 @@ def convert(model, config):
 
 
 def save_field(model, config, destination, *, provenance):
-    assert model.research_model == TAG
+    assert model.research_model in (TAG, "d4_group_physical_raw_guide")
     dest = save_legacy(model, config, destination, provenance=provenance)
     p = dest / "metadata.json"
     metadata = json.loads(p.read_text())
     metadata.update(
-        research_model=TAG, group_order=8, dilation_rule="max(1, base // 2**pyramid_level)"
+        research_model=model.research_model,
+        group_order=8,
+        dilation_rule="max(1, base // 2**pyramid_level)",
     )
+    if getattr(model, "uses_raw_guide", False):
+        metadata["auxiliary_source_cue"] = "raw_guide_before_gaussian"
     p.write_text(json.dumps(metadata, indent=2) + "\n")
     return dest
 
@@ -75,7 +80,7 @@ def save_field(model, config, destination, *, provenance):
 def load_field(source):
     source = Path(source)
     metadata = json.loads((source / "metadata.json").read_text())
-    if metadata.get("research_model") != TAG:
+    if metadata.get("research_model") not in (TAG, "d4_group_physical_raw_guide"):
         return load_legacy(source)
     assert metadata["format_version"] == 2
     assert metadata["representation"] == "subpixel_geometry_field"
@@ -84,7 +89,13 @@ def load_field(source):
     assert metadata["dilation_rule"] == "max(1, base // 2**pyramid_level)"
     assert metadata["production_runtime_supported"] is False
     cfg = load_config(source / "config.json")
-    model = PhysicalGroupFieldCNN(cfg.model, rngs=nnx.Rngs(0))
+    if metadata["research_model"] == "d4_group_physical_raw_guide":
+        from raw_guide_model import RawGuideFieldCNN
+
+        assert metadata["auxiliary_source_cue"] == "raw_guide_before_gaussian"
+        model = RawGuideFieldCNN(cfg.model, rngs=nnx.Rngs(0))
+    else:
+        model = PhysicalGroupFieldCNN(cfg.model, rngs=nnx.Rngs(0))
     state = nnx.state(model, nnx.Param)
     template = nnx.to_pure_dict(state)
     with np.load(source / "weights.npz", allow_pickle=False) as z:

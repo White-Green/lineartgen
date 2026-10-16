@@ -25,7 +25,9 @@ def dropout_forward(model, prepared, keep):
     outputs = [None] * len(guides)
     for level in reversed(range(len(guides))):
         head = model(
-            prepared.noisy[level],
+            prepared.guides[level]
+            if getattr(model, "uses_raw_guide", False)
+            else prepared.noisy[level],
             prepared.noise_levels[level],
             insert,
             guides[level],

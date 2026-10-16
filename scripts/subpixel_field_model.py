@@ -54,7 +54,9 @@ def field_forward(model, prepared):
     insert = jnp.zeros((g.shape[0], g.shape[1] // 2, g.shape[2] // 2, 1), g.dtype)
     for level in reversed(range(len(guides))):
         head = model(
-            prepared.noisy[level],
+            prepared.guides[level]
+            if getattr(model, "uses_raw_guide", False)
+            else prepared.noisy[level],
             prepared.noise_levels[level],
             insert,
             guides[level],
