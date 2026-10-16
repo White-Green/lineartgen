@@ -172,10 +172,23 @@ def prepare(root):
         p = CONTROL / f
         bound[str(p.resolve())] = sha(p)
     bound.update(read(DIAGNOSTIC / "evaluation/metrics.json")["bindings"])
+    failed = Path("runs/local-sign-20261016")
+    if root.resolve() != failed.resolve() and (failed / "driver-preflight.json").exists():
+        assert read(failed / "driver-preflight.json")["returncode"] == 1
+        for name in (
+            "plan.json",
+            "source.json",
+            "source.tar.gz",
+            "driver-preflight.json",
+            "driver-preflight.log",
+        ):
+            file = (failed / name).resolve()
+            bound[str(file)] = sha(file)
     write(
         root / "plan.json",
         dict(
             initial=str(root / "initials/global"),
+            initial_files={p.name: sha(p) for p in (root / "initials/global").iterdir()},
             data={},
             bound_files=bound,
             methods=METHODS,
@@ -194,6 +207,7 @@ def prepare(root):
 
 def check(root):
     verify(root)
+    assert sha(root / "source.tar.gz") == read(root / "source.json")["archive_sha256"]
     p = read(root / "plan.json")
     assert sha(DOCUMENT) == p["plan_document_sha256"]
     for f, h in p["bound_files"].items():
