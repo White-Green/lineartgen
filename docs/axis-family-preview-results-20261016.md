@@ -1,0 +1,13 @@
+# GE preparation: plausible alternative axes, but partial-mask escape blocks this policy
+
+Frozen1678497, successful CPU preview`runs/axis-family-preview-20261016-retry1`. The proposed rule allows a perpendicular2px candidate only for isolated broad straight sources with width/length>=0.75. The243 eligible examples are fixed from GC's existing24000-example schedule. The first eligible example at each depth was selected before viewing; no model was trained and no GC output was used for selection.
+
+Actually viewed all three native source/original/alternative/mask pages. Both centered thin interpretations fit the six short broad sources geometrically, including their smooth warps. This does not reveal intended semantics; a filled mark is also possible. However, saved-array mask coverage exposes a problem: in the depth1 preview,10.64% of original teacher ink is active while0% of the alternative is active. A model could choose the alternative simply to avoid drawing in the active region. Depth4 has no active ink for either teacher.
+
+Do not advance this initial policy to training. If GC's completed comparison motivates a broader orientation family, first restrict extra interpretations to whole-image training, leaving partial cases on their original teachers. This change would need a new frozen plan and teacher review. It should retain global/regional L4 from GC, all six depths/stage weights and sqrt(batch) scaling, with unchanged model size. GB/GD's local4x4 sign aggregation is a distinct fitting diagnostic.
+
+The descriptive mask audit samples129 warped centerline points per eligible example:211/243 have at least25% active samples on both paths;10 have neither path active. The first six rendered previews use exact alpha-weighted coverage. This audit does not alter the original eligibility list or training data. The two tests passed in19.32s, Ruff passed after the preview revision; they verify geometry/eligibility, exact unchanged objective when disabled, permitted teacher zero cost, finite gradients and protected pixels.
+
+First frozen31eeab3 stopped before saving any preview arrays because the parent prepared-batch function enforces GPU bitwise hashes that failed on CPU. Preserve the failure/root/source archive. The retry directly builds CPU source/teacher images from the same frozen source selection, widths, warp and D4 geometry; eligibility and selected cases are identical. It does not claim CPU/GPU batch replay. Three native pages and six array bundles are hash-bound with actual observations, tests, mask audit and decision in completion.json.
+
+No learned result, adoption, fresh16, production/Krita changes or remote changes. GC continues independently and unchanged.
