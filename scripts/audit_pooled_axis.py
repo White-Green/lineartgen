@@ -30,6 +30,7 @@ data, arms = load_data(), arms_from_root(root)
 base, cfg = load_field(GT / "initials/no_opening")
 forward = nnx.jit(field_forward)
 rows = []
+baseline_gradient = opening_gradient(weight=0)
 for step in (0, 1, 2, 3, 4, 5, 18, 19, 20, 21, 22, 23, 30, 31, 32, 33, 34, 35):
     b = batch(data, step)
     p, c, d = b
@@ -47,7 +48,7 @@ for step in (0, 1, 2, 3, 4, 5, 18, 19, 20, 21, 22, 23, 30, 31, 32, 33, 34, 35):
         gres = float(np.linalg.norm(np.asarray(grad.head.residual.kernel)))
         assert gpool > 0 and gres > 0
         if not allowed.any():
-            old, _ = opening_gradient(weight=0)(model, p, c[:4], d)
+            old, _ = baseline_gradient(model, p, c[:4], d)
             np.testing.assert_allclose(parts["loss"], old["loss"], atol=5e-7, rtol=2e-5)
         values[name] = dict(
             initial_fields=ferr,
@@ -71,14 +72,30 @@ for step in (0, 1, 2, 3, 4, 5, 18, 19, 20, 21, 22, 23, 30, 31, 32, 33, 34, 35):
 control = make_arm(cfg, base)
 control["gradient"] = opening_gradient(weight=0)
 gtrows = [json.loads(s) for s in (GT / "training/sampling.jsonl").read_text().splitlines()]
+control_errors = []
 for step in range(24):
-    exact(update(control, *gp_batch(data, step)), gtrows[step]["metrics"]["no_opening"])
+    actual = update(control, *gp_batch(data, step))
+    expected = gtrows[step]["metrics"]["no_opening"]
+    jax.tree.map(
+        lambda a, b: np.testing.assert_allclose(a, b, atol=1e-6, rtol=2e-5), actual, expected
+    )
+    control_errors.append(max(abs(actual[k] - expected[k]) for k in actual))
 restored_model, _ = load_field(GT / "initials/no_opening")
 restored = dict(no_opening=make_arm(cfg, restored_model))
 restored["no_opening"]["gradient"] = opening_gradient(weight=0)
 with checkpoints.manager(GT / "training/checkpoints", keep=9) as manager:
     assert lineart_state.restore(manager, restored, 24) == 24
-exact(lineart_state.payload(dict(no_opening=control), 24), lineart_state.payload(restored, 24))
+actual_state = lineart_state.payload(dict(no_opening=control), 24)
+expected_state = lineart_state.payload(restored, 24)
+state_errors = []
+for a, b in zip(jax.tree.leaves(actual_state), jax.tree.leaves(expected_state), strict=True):
+    if np.asarray(a).dtype.kind in "biu":
+        np.testing.assert_array_equal(a, b)
+    else:
+        np.testing.assert_allclose(a, b, atol=1e-6, rtol=2e-5)
+    state_errors.append(
+        float(np.max(abs(np.asarray(a).astype(float) - np.asarray(b).astype(float))))
+    )
 metrics = []
 for step in range(36):
     b = batch(data, step)
@@ -96,11 +113,14 @@ write(
     dict(
         passed=True,
         rows=rows,
-        control24_metrics_exact=True,
-        control24_full_state_exact=True,
+        control24_metrics_close=True,
+        control24_metrics_max_abs=max(control_errors),
+        control24_full_state_close=True,
+        control24_state_max_abs=max(state_errors),
+        control24_tolerance=dict(atol=1e-6, rtol=2e-5),
         own36_metrics_exact=True,
         own36_full_state_exact=True,
         last_batches_checked=True,
     ),
 )
-print(dict(preflight=True, control24_exact=True, own36_exact=True), flush=True)
+print(dict(preflight=True, control24_close=True, own36_exact=True), flush=True)

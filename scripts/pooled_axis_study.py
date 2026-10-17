@@ -123,6 +123,15 @@ def prepare(root):
         GT / "training/sampling.jsonl",
         GP / "training/sampling.jsonl",
     ]
+    files += [
+        p
+        for p in Path("runs/pooled-axis-20261017-retry1/diagnostics").rglob("*")
+        if p.is_file() and p.suffix in (".json", ".py", ".log")
+    ]
+    files += [
+        Path("runs/pooled-axis-20261017-retry1/driver-preflight.json"),
+        Path("runs/pooled-axis-20261017-retry1/driver-preflight.log"),
+    ]
     files += list((GP / "initials/pooled").iterdir()) + [GO / "inputs.npz", DOC.resolve()]
     files += [
         Path(f).resolve()
