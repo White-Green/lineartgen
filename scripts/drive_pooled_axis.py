@@ -24,6 +24,7 @@ parser.add_argument(
         "details",
         "orientation",
         "mask",
+        "coherent",
     ),
 )
 parser.add_argument("--root", type=Path, required=True)
@@ -42,6 +43,7 @@ scripts = dict(
     details="evaluate_pooled_axis_details.py",
     orientation="evaluate_pooled_axis_orientation.py",
     mask="evaluate_supported_mask.py",
+    coherent="evaluate_coherent_mask.py",
     **{"width-sweep": "evaluate_pooled_axis_sweep.py"},
 )
 command = [sys.executable, "scripts/" + scripts[args.phase]]

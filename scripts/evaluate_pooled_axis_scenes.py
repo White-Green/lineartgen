@@ -93,9 +93,9 @@ def render():
             (
                 "uint8 rough source",
                 "FW mixed6000 uint8",
-                "GY consistent6000 uint8",
                 "HD supported6000 uint8",
-                "HD supported6000 float",
+                "HH retained6000 uint8",
+                "HH retained6000 float",
             )
         ):
             pen.text((col * SIZE + 8, 8), label, fill="black")

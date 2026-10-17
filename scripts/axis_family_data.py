@@ -52,7 +52,7 @@ def axis_metadata(record, spec, options):
     return warped_metadata(metadata, options)
 
 
-def axis_payload(data, selection, width_rows, original, directions):
+def axis_payload(data, selection, width_rows, original, directions, *, allow_partial=False):
     bases, normals, records = [], [], []
     for item, (index, options, overlay, code) in enumerate(
         zip(
@@ -68,7 +68,7 @@ def axis_payload(data, selection, width_rows, original, directions):
             record,
             width_rows[item]["primary"]["new"],
             overlay=overlay["enabled"],
-            whole=bool(np.all(strength_map(MODES[selection["modes"][item]]) > 0)),
+            whole=allow_partial or bool(np.all(strength_map(MODES[selection["modes"][item]]) > 0)),
         )
         if spec["allowed"]:
             assert not bool(np.asarray(original[2])[item])

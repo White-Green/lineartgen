@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 from campaign_protocol import read, sha, write
-from pooled_axis_study import GP, GW, GY, METHODS, SAVED, STEPS, check
+from pooled_axis_study import GP, GW, HD, METHODS, SAVED, STEPS, check
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--root", type=Path, required=True)
@@ -35,16 +35,17 @@ for k, (a, b) in enumerate(zip(rows, gp, strict=True)):
     assert a["step"] == k + 1
     for key in ("input_sha256", "context_keep", "audit"):
         assert a[key] == gw[k][key]
-    extension = a["support_extension"]
+    extension = a["coherent_extension"]
     assert extension["original_candidate_payload_sha256"] == gw[k]["candidate_payload_sha256"]
     old_allowed = np.asarray(extension["old_allowed"])
     allowed = np.asarray(extension["allowed"])
     assert extension["promoted"] == (~old_allowed & allowed).tolist()
     assert np.all(~old_allowed | allowed)
     promoted += sum(extension["promoted"])
-    if a["audit"]["family"] != "ambiguous":
-        assert not any(extension["promoted"])
+    if not any(extension["promoted"]):
         assert a["candidate_payload_sha256"] == gw[k]["candidate_payload_sha256"]
+    if a["audit"]["family"] == "long_bar_fill":
+        assert not any(extension["promoted"])
     bits = int(a["metrics"]["consistent"]["selected_alternate_bits"])
     assert [(bits >> j) & 1 for j in range(4)] == [int(not v) for v in a["consistent_original"]]
     assert a["audit"]["original_gp_input_sha256"] == b["input_sha256"]
@@ -61,7 +62,11 @@ for k, (a, b) in enumerate(zip(rows, gp, strict=True)):
     for method in METHODS:
         assert all(np.isfinite(v) for v in a["metrics"][method].values())
 assert families == dict(legacy=3750, long_bar_fill=1500, ambiguous=750)
-assert whole == 1966 and promoted > 0
+assert whole == 1966 and promoted == 1114
+assert (
+    sum(sum(a["coherent_extension"]["promoted"]) for a in rows if a["audit"]["family"] == "legacy")
+    == 80
+)
 assert not read(root / "diagnostics/decision.json")["adoption"]
 for name in ("test-results", "preflight", "prefix-audit"):
     assert read(root / f"{name}.json")["passed"]
@@ -84,6 +89,7 @@ phases = [
     "details",
     "orientation",
     "mask",
+    "coherent",
 ]
 for phase in phases:
     assert read(root / f"driver-{phase}.json")["returncode"] == 0
@@ -123,7 +129,7 @@ for group in ("evaluation", "stress"):
         assert sha(root / group / f) == h
     count = 0
     for file in (root / group / "predictions").glob("*.npz"):
-        with np.load(file) as a, np.load(GY / group / "predictions" / file.name) as b:
+        with np.load(file) as a, np.load(HD / group / "predictions" / file.name) as b:
             for method, old_method in (("initial", "initial"), ("winner", "consistent")):
                 reference_compare(a[method], b[old_method])
         count += 1
@@ -137,12 +143,12 @@ for group, key, count in [("scene512", "model_outputs", 192), ("width-sweep", "o
 assert read(root / "scene512/metrics.json")["protected_exact"]
 assert read(root / "width-sweep/metrics.json")["states_unchanged"]
 for file in (root / "scene512").glob("predictions-*.npz"):
-    with np.load(file) as a, np.load(GY / "scene512" / file.name) as b:
+    with np.load(file) as a, np.load(HD / "scene512" / file.name) as b:
         for method, old_method in (("initial", "initial"), ("winner", "consistent")):
             for encoding in ("float", "uint8"):
                 reference_compare(a[method + "_" + encoding], b[old_method + "_" + encoding])
 for file in (root / "width-sweep").glob("wide-*.npz"):
-    with np.load(file) as a, np.load(GY / "width-sweep" / file.name) as b:
+    with np.load(file) as a, np.load(HD / "width-sweep" / file.name) as b:
         for key, old_key in (
             ("source", "source"),
             ("initial", "initial"),
@@ -171,9 +177,10 @@ for group, outputs, pages in [("ambiguity", 12, 3), ("geometry", 144, 9), ("coll
         assert observations[r["file"]] and sha(folder / r["file"]) == r["sha256"]
     if group in ("ambiguity", "geometry", "collision"):
         for file in folder.glob("*.npz"):
-            with np.load(file) as a, np.load(GY / "diagnostics" / group / file.name) as b:
+            with np.load(file) as a, np.load(HD / "diagnostics" / group / file.name) as b:
                 if "initial" in a.files:
                     reference_compare(a["initial"], b["initial"])
+                if "winner" in a.files:
                     reference_compare(a["winner"], b["consistent"])
 details = root / "diagnostics/details"
 records = read(details / "manifest.json")["records"]
@@ -193,7 +200,7 @@ notes = read(orientation / "observations.json")
 assert len(records) == len(notes) == 4
 for r in records:
     assert notes[r["file"]] and sha(orientation / r["file"]) == r["sha256"]
-for folder, count in (("support-preview", 2), ("mask-probes", 6)):
+for folder, count in (("support-preview", 3), ("mask-probes", 6), ("coherent-probes", 12)):
     manifest = read(root / folder / "manifest.json")
     notes = read(root / folder / "observations.json")
     assert len(manifest["records"]) == len(notes) == count
@@ -205,6 +212,13 @@ mask = read(root / "mask-probes/metrics.json")
 assert mask["outputs"] == 36 and mask["states_unchanged"] and mask["protected_exact"]
 for p, h in mask["bindings"].items():
     assert sha(Path(p)) == h
+coherent = read(root / "coherent-probes/metrics.json")
+assert coherent["outputs"] == 96 and coherent["states_unchanged"] and coherent["protected_exact"]
+for p, h in coherent["bindings"].items():
+    assert sha(Path(p)) == h
+for file in (root / "mask-probes").glob("*-depth*.npz"):
+    with np.load(file) as a, np.load(HD / "mask-probes" / file.name) as b:
+        reference_compare(a["winner"], b["consistent"])
 summary = {}
 for method in METHODS:
     norms = [r["metrics"][method]["gradient_norm"] for r in rows]
@@ -248,7 +262,7 @@ files = [
 files += [root / f"driver-{phase}.json" for phase in phases]
 files += [
     p
-    for d in ("support-preview", "mask-probes")
+    for d in ("support-preview", "mask-probes", "coherent-probes")
     for p in (root / d).rglob("*")
     if p.is_file() and p.suffix in (".json", ".png")
 ]
@@ -267,16 +281,16 @@ files += [
 write(
     root / "completion.json",
     dict(
-        stage="complete_supported_axis_broad",
+        stage="complete_coherent_axis_broad",
         steps=6000,
         trained_arms=1,
         reference=(
-            "FW mixed6000; archived GY consistent6000, numeric tolerance declared before training"
+            "FW mixed6000; archived HD supported6000, numeric tolerance declared before training"
         ),
         outputs=9516,
-        additional_outputs=242,
-        native_pages_reviewed=64,
-        teacher_pages_reviewed=2,
+        additional_outputs=338,
+        native_pages_reviewed=76,
+        teacher_pages_reviewed=3,
         adoption=False,
         fresh_confirmation=False,
         evidence={str(p.relative_to(root)): sha(p) for p in set(files)},

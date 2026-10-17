@@ -1,4 +1,4 @@
-"""HD broad support-aware GV axes with frozen GY consistent6000 control."""
+"""HH coherent retained axes, including partial legacy cases; archived HD control."""
 
 import argparse
 import fcntl
@@ -10,8 +10,9 @@ from pathlib import Path
 
 import jax
 import numpy as np
+from axis_family_data import axis_payload
 from campaign_protocol import read, sha, write
-from consistent_axis_objective import preferred_original
+from coherent_broad_objective import axis_gradient, selected_original
 from cue_capacity import make_arm
 from flax import nnx
 from plausible_study import digest, exact
@@ -26,7 +27,6 @@ from procedural_shape_study import GK as GK
 from procedural_shape_study import MODELREF as MODELREF
 from procedural_shape_study import select
 from scale_style_balance_study import update
-from supported_broad_objective import axis_gradient, supported_permission
 
 from lineartgen.config import load_config, save_config
 from lineartgen.training import checkpoints, lineart_state
@@ -38,10 +38,13 @@ GW = Path("../jax-pooled-axis-20261017/runs/pooled-axis-20261017-retry3").resolv
 GX = Path("../jax-consistent-axis-fit-20261017/runs/consistent-axis-fit-20261017").resolve()
 GY = Path("../jax-consistent-axis-broad-20261017/runs/consistent-axis-broad-20261017").resolve()
 HC = Path("../jax-local-axis-support-fit-20261017/runs/local-axis-support-fit-20261017").resolve()
-DOC = Path("docs/supported-axis-broad-plan-20261017.md")
+HD = Path("../jax-supported-axis-broad-20261017/runs/supported-axis-broad-20261017").resolve()
+HF = Path("../jax-coherent-mask-fit-20261017/runs/coherent-mask-fit-20261017").resolve()
+HG = Path("../jax-mask-context-fit-20261017/runs/mask-context-fit-20261017").resolve()
+DOC = Path("docs/coherent-axis-broad-plan-20261017.md")
 METHODS = ("consistent",)
 REPORT_METHODS = ("winner", "consistent")
-LABELS = dict(initial="FW mixed6000", winner="GY baseline6000", consistent="HD supported6000")
+LABELS = dict(initial="FW mixed6000", winner="HD supported6000", consistent="HH retained6000")
 STEPS = 6000
 SAVED = (0, 6, 36, *range(1000, 6001, 1000))
 
@@ -77,18 +80,33 @@ def batch(data, step):
     assert data["last_audit"] == old["audit"]
     old_allowed = np.asarray(c[6]).copy()
     original_sha = digest(c)
-    original_base_sha = digest(c[:6])
-    if data["last_audit"]["family"] == "ambiguous":
-        allowed = supported_permission(c[0], d, c[4], c[5], p.noise_levels[0])
-        assert np.all(~old_allowed | np.asarray(allowed))
-        c = (*c[:6], allowed)
-    assert digest(c[:6]) == original_base_sha
-    data["support_extension"] = dict(
+    old_fields = tuple(np.asarray(v) for v in c[:6])
+    records = None
+    family = data["last_audit"]["family"]
+    if family == "ambiguous":
+        c = (*c[:6], jax.numpy.ones(4, dtype=bool))
+    elif family == "legacy":
+        axis, records = axis_payload(
+            data, select(step), data["axis_widths"][step]["records"], c[:4], d, allow_partial=True
+        )
+        c = (*c[:4], *axis)
+    allowed = np.asarray(c[6])
+    promoted = ~old_allowed & allowed
+    assert np.all(~old_allowed | allowed)
+    for i in range(4):
+        np.testing.assert_array_equal(c[i], old_fields[i])
+    for i in (4, 5):
+        np.testing.assert_array_equal(np.asarray(c[i])[~promoted], old_fields[i][~promoted])
+    data["coherent_extension"] = dict(
         original_candidate_payload_sha256=original_sha,
-        base_payload_sha256=original_base_sha,
+        first_four_payload_sha256=digest(c[:4]),
         old_allowed=old_allowed.tolist(),
-        allowed=np.asarray(c[6]).tolist(),
-        promoted=(~old_allowed & np.asarray(c[6])).tolist(),
+        allowed=allowed.tolist(),
+        promoted=promoted.tolist(),
+        axis_records=records,
+        selected_original=np.asarray(
+            selected_original(c[0], d, c[4], c[5], p.noise_levels[0], c[6])
+        ).tolist(),
     )
     return p, c, d
 
@@ -96,7 +114,8 @@ def batch(data, step):
 def prepare(root):
     assert not subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()
     assert read(GW / "completion.json")["stage"] == "complete_pooled_axis"
-    assert read(HC / "decision.json")["mechanistic_fit_pass"]
+    assert read(HG / "decision.json")["mechanistic_fit_pass"]
+    assert read(HD / "completion.json")["stage"] == "complete_supported_axis_broad"
     assert read(GY / "review-completion.json")["strict_protocol_passed"] is False
     root.mkdir(parents=True, exist_ok=False)
     (root / "diagnostics").mkdir()
@@ -111,7 +130,7 @@ def prepare(root):
         model,
         cfg,
         root / "initials/consistent",
-        provenance="HD untouched GW initial choice; research only",
+        provenance="HH untouched GW initial choice; research only",
     )
     restored, cc = load_field(root / "initials/consistent")
     exact(nnx.state(model, nnx.Param), nnx.state(restored, nnx.Param))
@@ -141,11 +160,14 @@ def prepare(root):
     )
     (root / "snapshots/step-6000").mkdir(parents=True)
     (root / "snapshots/step-6000/winner").symlink_to(
-        (GY / "snapshots/step-6000/consistent").resolve(), target_is_directory=True
+        (HD / "snapshots/step-6000/consistent").resolve(), target_is_directory=True
     )
     (root / "mask-probes").mkdir()
     for split in ("train", "transfer"):
         shutil.copy2(HC / f"{split}.npz", root / f"mask-probes/{split}.npz")
+    (root / "coherent-probes").mkdir()
+    for split in ("train", "transfer"):
+        shutil.copy2(HF / f"{split}.npz", root / f"coherent-probes/{split}.npz")
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     subprocess.run(
         ["git", "archive", "--format=tar.gz", "-o", str(root / "source.tar.gz"), commit], check=True
@@ -165,10 +187,19 @@ def prepare(root):
         HC / "completion.json",
         HC / "decision.json",
         HC / "supplemental-binding.json",
+        HD / "completion.json",
+        HD / "supplemental-binding.json",
+        HD / "training/sampling.jsonl",
+        HF / "completion.json",
+        HF / "supplemental-binding.json",
+        HG / "completion.json",
+        HG / "decision.json",
+        HG / "supplemental-binding.json",
+        HG / "diagnostics/legacy-permission-audit.json",
         DOC.resolve(),
     ]
     files += list((GW / "initials/choice").iterdir()) + list(
-        (GY / "snapshots/step-6000/consistent/raw").iterdir()
+        (HD / "snapshots/step-6000/consistent/raw").iterdir()
     )
     files += [
         Path(f).resolve()
@@ -185,7 +216,7 @@ def prepare(root):
             saved=SAVED,
             parameters=21890,
             trained_arms=1,
-            control="Archived GY consistent raw6000; key winner denotes baseline only",
+            control="Archived HD supported raw6000; key winner denotes baseline only",
             prior_mode="none",
             adoption=False,
             fresh_confirmation=False,
@@ -213,7 +244,7 @@ def snapshot(root, arms, step):
                 model,
                 arm["config"],
                 root / f"snapshots/step-{step}/{name}/{mode}",
-                provenance=f"HD supported axis {name} {step} {mode}; research only",
+                provenance=f"HH retained axis {name} {step} {mode}; research only",
             )
 
 
@@ -258,10 +289,8 @@ def train(root, until):
                 candidate_payload_sha256=digest(c),
                 context_keep=np.asarray(c[3]).tolist(),
                 audit=data["last_audit"],
-                support_extension=data["support_extension"],
-                consistent_original=(
-                    np.asarray(preferred_original(d)) | ~np.asarray(c[6])
-                ).tolist(),
+                coherent_extension=data["coherent_extension"],
+                consistent_original=data["coherent_extension"]["selected_original"],
             )
             rows.append(row)
             with journal.open("a") as f:
