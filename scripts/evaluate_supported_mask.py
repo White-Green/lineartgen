@@ -9,8 +9,8 @@ from campaign_protocol import sha, write
 from consistent_axis_fit import page
 from cue_capacity import prepare_inputs
 from flax import nnx
+from learned_coarse_axis_model import infer, load_field
 from plausible_study import digest
-from pooled_axis_model import infer, load_field
 from pooled_axis_study import check
 
 p = argparse.ArgumentParser()
@@ -61,8 +61,8 @@ for split in ("train", "transfer"):
                     f"{split}{i} d{depth} source",
                     "old permitted",
                     "support permitted",
-                    "HD supported6000",
                     "HH retained6000",
+                    "HI learned coarse6000",
                 ]
                 for i in range(len(data["source"]))
             ],

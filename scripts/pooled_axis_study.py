@@ -1,4 +1,4 @@
-"""HH coherent retained axes, including partial legacy cases; archived HD control."""
+"""HI: learn coarse spatial shape features under the unchanged HH objective."""
 
 import argparse
 import fcntl
@@ -15,10 +15,10 @@ from campaign_protocol import read, sha, write
 from coherent_broad_objective import axis_gradient, selected_original
 from cue_capacity import make_arm
 from flax import nnx
+from learned_coarse_axis_model import add_coarse, load_field, save_field
 from plausible_study import digest, exact
 from pooled_axis_batches import batch as previous_batch
 from pooled_axis_batches import load_data as previous_load_data
-from pooled_axis_model import load_field, save_field
 from pooled_procedural_study import GO as GO
 from procedural_shape_study import AMBIGUITY as AMBIGUITY
 from procedural_shape_study import DIAGNOSTIC as DIAGNOSTIC
@@ -41,10 +41,11 @@ HC = Path("../jax-local-axis-support-fit-20261017/runs/local-axis-support-fit-20
 HD = Path("../jax-supported-axis-broad-20261017/runs/supported-axis-broad-20261017").resolve()
 HF = Path("../jax-coherent-mask-fit-20261017/runs/coherent-mask-fit-20261017").resolve()
 HG = Path("../jax-mask-context-fit-20261017/runs/mask-context-fit-20261017").resolve()
-DOC = Path("docs/coherent-axis-broad-plan-20261017.md")
+HH = Path("../jax-coherent-axis-broad-20261017/runs/coherent-axis-broad-20261017").resolve()
+DOC = Path("docs/learned-coarse-axis-plan-20261017.md")
 METHODS = ("consistent",)
 REPORT_METHODS = ("winner", "consistent")
-LABELS = dict(initial="FW mixed6000", winner="HD supported6000", consistent="HH retained6000")
+LABELS = dict(initial="FW mixed6000", winner="HH retained6000", consistent="HI learned coarse6000")
 STEPS = 6000
 SAVED = (0, 6, 36, *range(1000, 6001, 1000))
 
@@ -67,6 +68,9 @@ def load_data():
     data = previous_load_data()
     data["gw_rows"] = [
         json.loads(s) for s in (GW / "training/sampling.jsonl").read_text().splitlines()
+    ]
+    data["hh_rows"] = [
+        json.loads(s) for s in (HH / "training/sampling.jsonl").read_text().splitlines()
     ]
     return data
 
@@ -108,6 +112,11 @@ def batch(data, step):
             selected_original(c[0], d, c[4], c[5], p.noise_levels[0], c[6])
         ).tolist(),
     )
+    hh = data["hh_rows"][step]
+    assert digest((p, c[0], d)) == hh["input_sha256"]
+    assert digest(c) == hh["candidate_payload_sha256"]
+    assert data["coherent_extension"] == hh["coherent_extension"]
+    assert data["last_audit"] == hh["audit"]
     return p, c, d
 
 
@@ -117,6 +126,9 @@ def prepare(root):
     assert read(HG / "decision.json")["mechanistic_fit_pass"]
     assert read(HD / "completion.json")["stage"] == "complete_supported_axis_broad"
     assert read(GY / "review-completion.json")["strict_protocol_passed"] is False
+    assert read(HH / "completion.json")["stage"] == "complete_coherent_axis_broad"
+    assert read(HH / "diagnostics/decision.json")["adoption"] is False
+    assert read(HH / "diagnostics/decision.json")["broad_quality_pass"] is False
     root.mkdir(parents=True, exist_ok=False)
     (root / "diagnostics").mkdir()
     model, cfg = load_field(GW / "initials/choice")
@@ -126,11 +138,13 @@ def prepare(root):
         and cfg.train.batch_size == 4
     )
     assert sum(v.size for v in jax.tree.leaves(nnx.state(model, nnx.Param))) == 21890
+    model = add_coarse(model, cfg)
+    assert sum(v.size for v in jax.tree.leaves(nnx.state(model, nnx.Param))) == 22508
     save_field(
         model,
         cfg,
         root / "initials/consistent",
-        provenance="HH untouched GW initial choice; research only",
+        provenance="HI untouched GW initial choice plus zero coarse projection; research only",
     )
     restored, cc = load_field(root / "initials/consistent")
     exact(nnx.state(model, nnx.Param), nnx.state(restored, nnx.Param))
@@ -160,7 +174,7 @@ def prepare(root):
     )
     (root / "snapshots/step-6000").mkdir(parents=True)
     (root / "snapshots/step-6000/winner").symlink_to(
-        (HD / "snapshots/step-6000/consistent").resolve(), target_is_directory=True
+        (HH / "snapshots/step-6000/consistent").resolve(), target_is_directory=True
     )
     (root / "mask-probes").mkdir()
     for split in ("train", "transfer"):
@@ -168,6 +182,19 @@ def prepare(root):
     (root / "coherent-probes").mkdir()
     for split in ("train", "transfer"):
         shutil.copy2(HF / f"{split}.npz", root / f"coherent-probes/{split}.npz")
+    shutil.copytree(HH / "support-preview", root / "support-preview")
+    write(
+        root / "teacher-reuse.json",
+        dict(
+            source=str(HH / "support-preview"),
+            pages=3,
+            new_pages_viewed=0,
+            files={str(f): sha(f) for f in (HH / "support-preview").iterdir() if f.is_file()},
+            explanation=(
+                "Same sources, candidate fields, axis choice, and masks as reviewed HH teachers"
+            ),
+        ),
+    )
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     subprocess.run(
         ["git", "archive", "--format=tar.gz", "-o", str(root / "source.tar.gz"), commit], check=True
@@ -196,10 +223,15 @@ def prepare(root):
         HG / "decision.json",
         HG / "supplemental-binding.json",
         HG / "diagnostics/legacy-permission-audit.json",
+        HH / "completion.json",
+        HH / "supplemental-binding.json",
+        HH / "training/sampling.jsonl",
+        HH / "diagnostics/decision.json",
+        HH / "diagnostics/active-ink-audit.json",
         DOC.resolve(),
     ]
     files += list((GW / "initials/choice").iterdir()) + list(
-        (HD / "snapshots/step-6000/consistent/raw").iterdir()
+        (HH / "snapshots/step-6000/consistent/raw").iterdir()
     )
     files += [
         Path(f).resolve()
@@ -214,9 +246,9 @@ def prepare(root):
             archive_sha256=sha(root / "source.tar.gz"),
             steps=STEPS,
             saved=SAVED,
-            parameters=21890,
+            parameters=22508,
             trained_arms=1,
-            control="Archived HD supported raw6000; key winner denotes baseline only",
+            control="Archived HH retained raw6000; key winner denotes baseline only",
             prior_mode="none",
             adoption=False,
             fresh_confirmation=False,
@@ -244,7 +276,7 @@ def snapshot(root, arms, step):
                 model,
                 arm["config"],
                 root / f"snapshots/step-{step}/{name}/{mode}",
-                provenance=f"HH retained axis {name} {step} {mode}; research only",
+                provenance=f"HI learned coarse axis {name} {step} {mode}; research only",
             )
 
 
@@ -301,9 +333,29 @@ def train(root, until):
                     for name in METHODS:
                         exact(update(replay[name], *batch(data, j)), rows[j]["metrics"][name])
                 exact(lineart_state.payload(replay, 36), lineart_state.payload(arms, 36))
+                initial = arms_from_root(root)["consistent"]["model"].coarse_branch
+                learned = arms["consistent"]["model"].coarse_branch
+                hidden_changes = {
+                    name: float(
+                        np.max(
+                            np.abs(
+                                np.asarray(getattr(learned, name).kernel)
+                                - np.asarray(getattr(initial, name).kernel)
+                            )
+                        )
+                    )
+                    for name in ("lift", "first", "second")
+                }
+                assert all(v > 0 and np.isfinite(v) for v in hidden_changes.values())
                 write(
                     root / "prefix-audit.json",
-                    dict(passed=True, metrics_exact=True, full_state_exact=True, steps=36),
+                    dict(
+                        passed=True,
+                        metrics_exact=True,
+                        full_state_exact=True,
+                        steps=36,
+                        hidden_parameter_changes=hidden_changes,
+                    ),
                 )
             if k + 1 in SAVED:
                 lineart_state.save(manager, arms, k + 1)

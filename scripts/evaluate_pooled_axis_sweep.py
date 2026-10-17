@@ -8,9 +8,9 @@ import numpy as np
 from campaign_protocol import sha, write
 from cue_capacity import prepare_inputs
 from flax import nnx
+from learned_coarse_axis_model import infer, load_field
 from PIL import Image, ImageDraw
 from plausible_study import digest
-from pooled_axis_model import infer, load_field
 from pooled_axis_study import DIAGNOSTIC, LABELS, MODELREF, REPORT_METHODS, STEPS, check
 from width_response_study import FACTORS, SEED
 

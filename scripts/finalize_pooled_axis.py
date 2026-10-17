@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 from campaign_protocol import read, sha, write
-from pooled_axis_study import GP, GW, HD, METHODS, SAVED, STEPS, check
+from pooled_axis_study import GP, GW, HH, METHODS, SAVED, STEPS, check
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--root", type=Path, required=True)
@@ -78,7 +78,7 @@ for step in SAVED[1:]:
     assert read(root / f"training/restore-{step}.json")["full_state_exact"]
 phases = [
     "preflight",
-    *[f"train-{s}" for s in SAVED[3:]],
+    "train-6000",
     "evaluation",
     "stress",
     "scene512",
@@ -129,7 +129,7 @@ for group in ("evaluation", "stress"):
         assert sha(root / group / f) == h
     count = 0
     for file in (root / group / "predictions").glob("*.npz"):
-        with np.load(file) as a, np.load(HD / group / "predictions" / file.name) as b:
+        with np.load(file) as a, np.load(HH / group / "predictions" / file.name) as b:
             for method, old_method in (("initial", "initial"), ("winner", "consistent")):
                 reference_compare(a[method], b[old_method])
         count += 1
@@ -143,12 +143,12 @@ for group, key, count in [("scene512", "model_outputs", 192), ("width-sweep", "o
 assert read(root / "scene512/metrics.json")["protected_exact"]
 assert read(root / "width-sweep/metrics.json")["states_unchanged"]
 for file in (root / "scene512").glob("predictions-*.npz"):
-    with np.load(file) as a, np.load(HD / "scene512" / file.name) as b:
+    with np.load(file) as a, np.load(HH / "scene512" / file.name) as b:
         for method, old_method in (("initial", "initial"), ("winner", "consistent")):
             for encoding in ("float", "uint8"):
                 reference_compare(a[method + "_" + encoding], b[old_method + "_" + encoding])
 for file in (root / "width-sweep").glob("wide-*.npz"):
-    with np.load(file) as a, np.load(HD / "width-sweep" / file.name) as b:
+    with np.load(file) as a, np.load(HH / "width-sweep" / file.name) as b:
         for key, old_key in (
             ("source", "source"),
             ("initial", "initial"),
@@ -177,7 +177,7 @@ for group, outputs, pages in [("ambiguity", 12, 3), ("geometry", 144, 9), ("coll
         assert observations[r["file"]] and sha(folder / r["file"]) == r["sha256"]
     if group in ("ambiguity", "geometry", "collision"):
         for file in folder.glob("*.npz"):
-            with np.load(file) as a, np.load(HD / "diagnostics" / group / file.name) as b:
+            with np.load(file) as a, np.load(HH / "diagnostics" / group / file.name) as b:
                 if "initial" in a.files:
                     reference_compare(a["initial"], b["initial"])
                 if "winner" in a.files:
@@ -217,8 +217,23 @@ assert coherent["outputs"] == 96 and coherent["states_unchanged"] and coherent["
 for p, h in coherent["bindings"].items():
     assert sha(Path(p)) == h
 for file in (root / "mask-probes").glob("*-depth*.npz"):
-    with np.load(file) as a, np.load(HD / "mask-probes" / file.name) as b:
+    with np.load(file) as a, np.load(HH / "mask-probes" / file.name) as b:
         reference_compare(a["winner"], b["consistent"])
+for file in (root / "coherent-probes").glob("*-depth*.npz"):
+    with np.load(file) as a, np.load(HH / "coherent-probes" / file.name) as b:
+        reference_compare(a["winner"], b["consistent"])
+assert all(v > 0 for v in read(root / "prefix-audit.json")["hidden_parameter_changes"].values())
+hh_rows = [json.loads(s) for s in (HH / "training/sampling.jsonl").read_text().splitlines()]
+for a, b in zip(rows, hh_rows, strict=True):
+    for key in (
+        "input_sha256",
+        "candidate_payload_sha256",
+        "context_keep",
+        "audit",
+        "coherent_extension",
+        "consistent_original",
+    ):
+        assert a[key] == b[key]
 summary = {}
 for method in METHODS:
     norms = [r["metrics"][method]["gradient_norm"] for r in rows]
@@ -235,7 +250,7 @@ write(
         families=families,
         new_whole_axis_examples=whole,
         newly_allowed_partial_examples=promoted,
-        parameters={m: 21890 for m in METHODS},
+        parameters={m: 22508 for m in METHODS},
         reference_files_compared=counts,
         reference_arrays_compared=len(reference_errors),
         reference_arrays_nonexact=reference_nonexact,
@@ -250,6 +265,7 @@ files = [
     for f in (
         "plan.json",
         "test-results.json",
+        "teacher-reuse.json",
         "preflight.json",
         "prefix-audit.json",
         "snapshot-audit.json",
@@ -281,16 +297,17 @@ files += [
 write(
     root / "completion.json",
     dict(
-        stage="complete_coherent_axis_broad",
+        stage="complete_learned_coarse_axis_broad",
         steps=6000,
         trained_arms=1,
         reference=(
-            "FW mixed6000; archived HD supported6000, numeric tolerance declared before training"
+            "FW mixed6000; archived HH retained6000, numeric tolerance declared before training"
         ),
         outputs=9516,
         additional_outputs=338,
         native_pages_reviewed=76,
-        teacher_pages_reviewed=3,
+        teacher_pages_reviewed=0,
+        teacher_pages_reused=3,
         adoption=False,
         fresh_confirmation=False,
         evidence={str(p.relative_to(root)): sha(p) for p in set(files)},

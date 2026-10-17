@@ -9,10 +9,10 @@ from campaign_protocol import read, sha, write
 from cue_capacity import prepare_inputs
 from cue_preserving_data import MODES, strength_map
 from evaluate_plausible import GROUPS, metrics, summarize
+from learned_coarse_axis_model import infer, load_field
 from path_profile_data import path_probes
 from PIL import Image, ImageDraw
 from plausible_data import CENTER, COUNT, SIZE, profile_samples
-from pooled_axis_model import infer, load_field
 from pooled_axis_study import EVAL_SEED, STEPS, check
 from pooled_axis_study import REPORT_METHODS as METHODS
 from style_family_data import extended_data
@@ -197,8 +197,8 @@ def render(root):
                     "source",
                     "all strokes 2px",
                     "FW mixed6000",
-                    "HD supported6000",
                     "HH retained6000",
+                    "HI learned coarse6000",
                 )
             ):
                 pen.text((col * SIZE + 8, 8), label, fill="black")

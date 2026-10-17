@@ -15,7 +15,7 @@ SEED = 2026101319
 def evaluate():
     import jax
     from cue_capacity import prepare_inputs
-    from pooled_axis_model import infer, load_field
+    from learned_coarse_axis_model import infer, load_field
 
     check(ROOT)
     plan = read(OUT / "plan.json")
@@ -93,9 +93,9 @@ def render():
             (
                 "uint8 rough source",
                 "FW mixed6000 uint8",
-                "HD supported6000 uint8",
                 "HH retained6000 uint8",
-                "HH retained6000 float",
+                "HI learned coarse6000 uint8",
+                "HI learned coarse6000 float",
             )
         ):
             pen.text((col * SIZE + 8, 8), label, fill="black")
