@@ -112,7 +112,9 @@ def prepare(root):
     files = [p for p in root.rglob("*") if p.is_file()]
     files += [Path(f) for f in read(GP / "plan.json")["bindings"]]
     for folder in (GP, GT, GU, GV):
-        files += [folder / "completion.json", folder / "diagnostics/supplemental-binding.json"]
+        files += [folder / "completion.json"]
+        if folder != GV:
+            files += [folder / "diagnostics/supplemental-binding.json"]
     files += [
         GT / "diagnostics/decision.json",
         GU / "decision.json",
