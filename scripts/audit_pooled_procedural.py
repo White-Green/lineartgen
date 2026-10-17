@@ -13,6 +13,7 @@ from opening_prior_objective import opening_gradient
 from plausible_study import exact
 from pooled_context_model import infer, load_field
 from pooled_procedural_study import GM, SAVED, arms_from_root, batch, check, load_data
+from procedural_shape_study import arms_from_root as gm_arms_from_root
 from scale_style_balance_study import update
 from subpixel_field_model import field_forward
 
@@ -46,14 +47,12 @@ for step in range(24):
         )
     exact(update(control, *b), data["gm_rows"][step]["metrics"]["procedural"])
     own.append(update(arms["pooled"], *b))
-restored_model, cc = load_field(GM / "initials/procedural")
-restored = make_arm(cc, restored_model)
-restored["gradient"] = opening_gradient()
+restored = gm_arms_from_root(GM)
 with checkpoints.manager(GM / "training/checkpoints", keep=len(SAVED)) as manager:
-    assert lineart_state.restore(manager, dict(procedural=restored), 24) == 24
+    assert lineart_state.restore(manager, restored, 24) == 24
 exact(
     lineart_state.payload(dict(procedural=control), 24),
-    lineart_state.payload(dict(procedural=restored), 24),
+    lineart_state.payload(dict(procedural=restored["procedural"]), 24),
 )
 replay = arms_from_root(root)
 for step in range(24):
