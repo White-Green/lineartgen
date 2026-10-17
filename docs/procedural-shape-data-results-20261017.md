@@ -1,0 +1,7 @@
+# GL result: varied procedural teachers pass the data-only audit
+
+All24 source/active-target pairs on six native pages were actually reviewed. Bars map to centered continuous2px rectangular lines; fills retain opaque matching shapes. Partial examples retain the protected source, including a mostly protected diagonal bar whose short active tip alone changes. No shape geometry is clipped. This validates these teachers, not model quality.
+
+The frozen6000 recipes contain3000 bars and3000 fills in1500B4 batches,250 batches at every depth1–6. All recipes reproduce exactly, are unique after removing step/item/depth labels, and their oriented bounds fit inside the8px margin. The24 preview arrays rerender exactly. Canonical FU source/clean bar and fill pixels match exactly. There were1938 rejected proposals. Accepted orientation-kind counts are1634 exact-axis,1580 near-axis and2786 arbitrary-angle; rejection changes the proposal proportions. The fixed sigma1.2/opacity0.4 style occurs1508 times. Gaussian blur can extend beyond the geometry bounds; containment concerns the actual rectangle support.
+
+Source54900dd; run `runs/procedural-shape-data-20261017`. Preparation actual session52627 exit0, Ruff passed, numerical audits passed, completion binds all six actual reviews. A future training comparison must specify models, controls and objectives separately. GH remains unchanged. No training, learned predictions, fresh16, production/Krita/export or remote changes.
