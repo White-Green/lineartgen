@@ -72,13 +72,17 @@ def arms_from_root(root):
 
 
 def batch(root, depth=1):
-    with np.load(root / "inputs.npz") as z:
-        source, clean = z["source"], z["clean"]
-        target = candidate_fields(z["base"], z["direction"], 1)[0]
-    p = prepare_inputs(
-        clean, source, np.full_like(source, 0.5), jax.random.PRNGKey(2026101704), depth
-    )
-    return p, target, jnp.zeros(())
+    destination = jax.devices()[0]
+    # Freeze the same CPU-generated batch used by prepare, then transfer unchanged.
+    with jax.default_device(jax.devices("cpu")[0]):
+        with np.load(root / "inputs.npz") as z:
+            source, clean = z["source"], z["clean"]
+            target = candidate_fields(z["base"], z["direction"], 1)[0]
+        p = prepare_inputs(
+            clean, source, np.full_like(source, 0.5), jax.random.PRNGKey(2026101704), depth
+        )
+        result = p, target, jnp.zeros(())
+    return jax.device_put(result, destination)
 
 
 def page(path, rows, labels):
