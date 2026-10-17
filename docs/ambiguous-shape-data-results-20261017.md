@@ -1,0 +1,9 @@
+# GV: ambiguous-axis teacher audit passed; no model trained
+
+All24 source/teacher previews on six native pages were actually inspected. Whole-application examples have two distinct coherent thin strokes through the blurred rectangle, following its two axes. They are separate acceptable outputs, never averaged into a cross. The six partial previews repeat only the original target; protected gray regions remain unchanged, including two sources entirely outside the active region. All18 whole examples have active ink in both alternatives.
+
+All3000 geometry/style recipes reproduce exactly and are unique after excluding step/item/depth identifiers. The750 proposed batches are balanced125 per depth and disjoint from every GL long-bar/fill batch. Width range16.001169–87.994629px; aspect ratio0.750104–1.332527;714 exact-square recipes and737 canonical-style recipes. Accepted orientation-kind counts736/734/787/743. All shapes fit the8px margin. Re-rendered preview arrays and protected pixels match exactly.
+
+Frozen source04cd722, run`runs/ambiguous-shape-data-20261017`. CPU2 tests passed0.42s, CLI75728/Ruff passed, preparation39695 and finalizer9126 exited0. Before freezing, an exact source-rotation test exposed a one-ULP float32 separable-Gaussian difference5.9604645e-8 at8pixels. The source comparison uses absolute1e-7; teacher rotation and repeat rendering remain exact. This is documented numerical behavior, not a changed renderer or relaxed output-quality gate.
+
+This result validates a simple additional synthetic teacher family only. It does not establish learned quality, model capacity or the correct later mixing ratio. Training still requires a separately fixed whole-image family objective and a readout capable of selecting one axis. No new model predictions, fitting-weight reuse, fresh16, production or Krita changes.
