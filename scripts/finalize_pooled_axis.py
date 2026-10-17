@@ -6,19 +6,24 @@ from pathlib import Path
 
 import numpy as np
 from campaign_protocol import read, sha, write
-from pooled_axis_study import GP, GT, METHODS, SAVED, STEPS, check
+from pooled_axis_study import GP, GW, METHODS, SAVED, STEPS, check
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--root", type=Path, required=True)
 root = parser.parse_args().root.resolve()
 check(root)
 rows = [json.loads(s) for s in (root / "training/sampling.jsonl").read_text().splitlines()]
+gw = [json.loads(s) for s in (GW / "training/sampling.jsonl").read_text().splitlines()]
 gp = [json.loads(s) for s in (GP / "training/sampling.jsonl").read_text().splitlines()]
 assert len(rows) == len(gp) == STEPS
 families = {}
 whole = 0
 for k, (a, b) in enumerate(zip(rows, gp, strict=True)):
     assert a["step"] == k + 1
+    for key in ("input_sha256", "candidate_payload_sha256", "context_keep", "audit"):
+        assert a[key] == gw[k][key]
+    bits = int(a["metrics"]["consistent"]["selected_alternate_bits"])
+    assert [(bits >> j) & 1 for j in range(4)] == [int(not v) for v in a["consistent_original"]]
     assert a["audit"]["original_gp_input_sha256"] == b["input_sha256"]
     assert a["audit"]["original_gp_candidate_sha256"] == b["candidate_payload_sha256"]
     assert a["context_keep"] == b["context_keep"]
@@ -37,7 +42,7 @@ assert whole == 1966
 for name in ("test-results", "preflight", "prefix-audit"):
     assert read(root / f"{name}.json")["passed"]
 snap = read(root / "snapshot-audit.json")
-assert snap["raw_ema_exact"] and snap["exports"] == 36
+assert snap["raw_ema_exact"] and snap["exports"] == 18
 for f, h in snap["bindings"].items():
     assert sha(Path(f)) == h
 for step in SAVED[1:]:
@@ -93,8 +98,8 @@ for group in ("evaluation", "stress"):
         assert sha(root / group / f) == h
     count = 0
     for file in (root / group / "predictions").glob("*.npz"):
-        with np.load(file) as a, np.load(GT / group / "predictions" / file.name) as b:
-            for method, old_method in (("initial", "initial"),):
+        with np.load(file) as a, np.load(GW / group / "predictions" / file.name) as b:
+            for method, old_method in (("initial", "initial"), ("winner", "choice")):
                 np.testing.assert_array_equal(a[method], b[old_method])
         count += 1
     assert count == 1536
@@ -107,15 +112,15 @@ for group, key, count in [("scene512", "model_outputs", 192), ("width-sweep", "o
 assert read(root / "scene512/metrics.json")["protected_exact"]
 assert read(root / "width-sweep/metrics.json")["states_unchanged"]
 for file in (root / "scene512").glob("predictions-*.npz"):
-    with np.load(file) as a, np.load(GT / "scene512" / file.name) as b:
-        for method, old_method in (("initial", "initial"),):
+    with np.load(file) as a, np.load(GW / "scene512" / file.name) as b:
+        for method, old_method in (("initial", "initial"), ("winner", "choice")):
             for encoding in ("float", "uint8"):
                 np.testing.assert_array_equal(
                     a[method + "_" + encoding], b[old_method + "_" + encoding]
                 )
 for file in (root / "width-sweep").glob("wide-*.npz"):
-    with np.load(file) as a, np.load(GT / "width-sweep" / file.name) as b:
-        for key, old_key in (("source", "source"), ("initial", "initial")):
+    with np.load(file) as a, np.load(GW / "width-sweep" / file.name) as b:
+        for key, old_key in (("source", "source"), ("initial", "initial"), ("winner", "choice")):
             np.testing.assert_array_equal(a[key], b[old_key])
 for group, outputs, pages in [("ambiguity", 12, 3), ("geometry", 144, 9), ("collision", 18, 3)]:
     folder = root / "diagnostics" / group
@@ -136,9 +141,10 @@ for group, outputs, pages in [("ambiguity", 12, 3), ("geometry", 144, 9), ("coll
         assert observations[r["file"]] and sha(folder / r["file"]) == r["sha256"]
     if group in ("ambiguity", "geometry", "collision"):
         for file in folder.glob("*.npz"):
-            with np.load(file) as a, np.load(GT / "diagnostics" / group / file.name) as b:
+            with np.load(file) as a, np.load(GW / "diagnostics" / group / file.name) as b:
                 if "initial" in a.files:
                     np.testing.assert_array_equal(a["initial"], b["initial"])
+                    np.testing.assert_array_equal(a["winner"], b["choice"])
 details = root / "diagnostics/details"
 records = read(details / "manifest.json")["records"]
 observations = read(details / "observations.json")
@@ -208,10 +214,10 @@ files += [
 write(
     root / "completion.json",
     dict(
-        stage="complete_pooled_axis",
+        stage="complete_consistent_axis_broad",
         steps=6000,
-        trained_arms=2,
-        reference="FW mixed6000; archived GT descriptive comparison",
+        trained_arms=1,
+        reference="FW mixed6000; archived GW choice6000 exact matched control",
         outputs=9516,
         additional_outputs=206,
         native_pages_reviewed=58,

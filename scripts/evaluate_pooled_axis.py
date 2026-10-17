@@ -197,8 +197,8 @@ def render(root):
                     "source",
                     "all strokes 2px",
                     "FW mixed6000",
-                    "GW mean6000",
-                    "GW choice6000",
+                    "GW winner6000",
+                    "GY consistent6000",
                 )
             ):
                 pen.text((col * SIZE + 8, 8), label, fill="black")
@@ -214,8 +214,8 @@ def render(root):
                         data["source"],
                         np.where(t > 0, options[CENTER], data["source"]),
                         pred["initial"],
-                        pred["mean"],
-                        pred["choice"],
+                        pred["winner"],
+                        pred["consistent"],
                     )
                     for col, value in enumerate(values):
                         gray = np.rint(np.clip((value[..., 0] + 1) / 2, 0, 1) * 255).astype(

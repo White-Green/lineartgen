@@ -11,7 +11,8 @@ from flax import nnx
 from PIL import Image, ImageDraw
 from plausible_study import digest
 from pooled_axis_model import infer, load_field
-from pooled_axis_study import GO, METHODS, STEPS, check
+from pooled_axis_study import GO, STEPS, check
+from pooled_axis_study import REPORT_METHODS as METHODS
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--root", type=Path, required=True)

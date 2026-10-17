@@ -93,9 +93,9 @@ def render():
             (
                 "uint8 rough source",
                 "FW mixed6000 uint8",
-                "GW mean6000 uint8",
-                "GW choice6000 uint8",
-                "GW choice6000 float",
+                "GW winner6000 uint8",
+                "GY consistent6000 uint8",
+                "GY consistent6000 float",
             )
         ):
             pen.text((col * SIZE + 8, 8), label, fill="black")
@@ -108,9 +108,9 @@ def render():
                     (
                         inp["quantized"],
                         pred["initial_uint8"],
-                        pred["mean_uint8"],
-                        pred["choice_uint8"],
-                        pred["choice_float"],
+                        pred["winner_uint8"],
+                        pred["consistent_uint8"],
+                        pred["consistent_float"],
                     )
                 ):
                     gray = np.rint(np.clip((value[..., 0] + 1) / 2, 0, 1) * 255).astype(np.uint8)

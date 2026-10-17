@@ -1,4 +1,4 @@
-"""Equal-size pooled residual mean/choice models with frequent permitted axes."""
+"""GY broad consistent-axis training with the frozen GW winner as control."""
 
 import argparse
 import fcntl
@@ -11,13 +11,15 @@ from pathlib import Path
 import jax
 import numpy as np
 from campaign_protocol import read, sha, write
+from consistent_axis_objective import preferred_original
+from consistent_broad_objective import axis_gradient
 from cue_capacity import make_arm
 from flax import nnx
 from plausible_study import digest, exact
-from pooled_axis_batches import GV, batch, load_data
-from pooled_axis_model import add_readout, load_field, save_field
-from pooled_axis_objective import axis_gradient
-from pooled_procedural_study import GM, GO
+from pooled_axis_batches import batch as previous_batch
+from pooled_axis_batches import load_data as previous_load_data
+from pooled_axis_model import load_field, save_field
+from pooled_procedural_study import GO as GO
 from procedural_shape_study import AMBIGUITY as AMBIGUITY
 from procedural_shape_study import DIAGNOSTIC as DIAGNOSTIC
 from procedural_shape_study import EVAL_SEED as EVAL_SEED
@@ -32,8 +34,11 @@ from lineartgen.training import checkpoints, lineart_state
 GP = Path("../jax-pooled-procedural-20261017/runs/pooled-procedural-20261017-retry1").resolve()
 GT = Path("../jax-pooled-noopening-20261017/runs/pooled-noopening-20261017").resolve()
 GU = Path("../jax-one-sided-opening-20261017/runs/one-sided-opening-20261017").resolve()
-DOC = Path("docs/pooled-axis-plan-20261017.md")
-METHODS = REPORT_METHODS = ("mean", "choice")
+GW = Path("../jax-pooled-axis-20261017/runs/pooled-axis-20261017-retry3").resolve()
+GX = Path("../jax-consistent-axis-fit-20261017/runs/consistent-axis-fit-20261017").resolve()
+DOC = Path("docs/consistent-axis-broad-plan-20261017.md")
+METHODS = ("consistent",)
+REPORT_METHODS = ("winner", "consistent")
 STEPS = 6000
 SAVED = (0, 6, 36, *range(1000, 6001, 1000))
 
@@ -42,50 +47,58 @@ def arms_from_root(root):
     arms = {}
     for name in METHODS:
         model, cfg = load_field(root / f"initials/{name}")
-        assert cfg == load_config(root / "config.json") and model.head.mode == name
+        assert (
+            cfg == load_config(root / "config.json")
+            and model.head.mode == "choice"
+            and model.head.component == 0
+        )
         arms[name] = make_arm(cfg, model)
-        arms[name]["gradient"] = axis_gradient(prior_mode="none")
+        arms[name]["gradient"] = axis_gradient()
     return arms
+
+
+def load_data():
+    data = previous_load_data()
+    data["gw_rows"] = [
+        json.loads(s) for s in (GW / "training/sampling.jsonl").read_text().splitlines()
+    ]
+    return data
+
+
+def batch(data, step):
+    p, c, d = previous_batch(data, step)
+    old = data["gw_rows"][step]
+    assert digest((p, c[0], d)) == old["input_sha256"]
+    assert digest(c) == old["candidate_payload_sha256"]
+    assert np.asarray(c[3]).tolist() == old["context_keep"]
+    assert data["last_audit"] == old["audit"]
+    return p, c, d
 
 
 def prepare(root):
     assert not subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()
-    for folder, stage in (
-        (GT, "complete_pooled_noopening"),
-        (GU, "complete_one_sided_opening_fit"),
-        (GV, "complete_ambiguous_shape_data_preview"),
-    ):
-        assert read(folder / "completion.json")["stage"] == stage
+    assert read(GW / "completion.json")["stage"] == "complete_pooled_axis"
+    assert read(GX / "completion.json")["stage"] == "complete_consistent_axis_fit"
     root.mkdir(parents=True, exist_ok=False)
     (root / "diagnostics").mkdir()
-    base, cfg = load_field(GP / "initials/pooled")
+    model, cfg = load_field(GW / "initials/choice")
     assert (
         cfg.train.steps == 6000
         and cfg.train.peak_learning_rate == 2e-4
         and cfg.train.batch_size == 4
     )
-    for name in METHODS:
-        model = add_readout(base, cfg, mode=name)
-        assert sum(v.size for v in jax.tree.leaves(nnx.state(model, nnx.Param))) == 21890
-        state = nnx.to_pure_dict(nnx.state(model, nnx.Param))
-        residual = state["head"].pop("residual")
-        assert all(np.count_nonzero(np.asarray(v)) == 0 for v in jax.tree.leaves(residual))
-        exact(state, nnx.to_pure_dict(nnx.state(base, nnx.Param)))
-        save_field(
-            model,
-            cfg,
-            root / f"initials/{name}",
-            provenance="Untouched FW mixed6000 + zero pooled cue + zero residual; research only",
-        )
-        restored, cc = load_field(root / f"initials/{name}")
-        exact(nnx.state(restored, nnx.Param), nnx.state(model, nnx.Param))
-        assert cc == cfg
-    save_config(cfg, root / "config.json")
-    arms = arms_from_root(root)
-    exact(
-        nnx.state(arms["mean"]["model"], nnx.Param), nnx.state(arms["choice"]["model"], nnx.Param)
+    assert sum(v.size for v in jax.tree.leaves(nnx.state(model, nnx.Param))) == 21890
+    save_field(
+        model,
+        cfg,
+        root / "initials/consistent",
+        provenance="GY untouched GW initial choice; research only",
     )
-    shutil.copytree(GM / "reference", root / "reference")
+    restored, cc = load_field(root / "initials/consistent")
+    exact(nnx.state(model, nnx.Param), nnx.state(restored, nnx.Param))
+    assert cc == cfg
+    save_config(cfg, root / "config.json")
+    shutil.copytree(GW / "reference", root / "reference")
     for name in (
         "train.npz",
         "data.json",
@@ -98,50 +111,42 @@ def prepare(root):
         "width-plan.json",
         "probe.json",
     ):
-        (root / name).symlink_to((GM / name).resolve(), target_is_directory=(GM / name).is_dir())
+        (root / name).symlink_to((GW / name).resolve(), target_is_directory=(GW / name).is_dir())
     (root / "scene512").mkdir()
     for name in ["plan.json"] + [f"input-{i}.npz" for i in range(8)]:
-        shutil.copy2(GM / "scene512" / name, root / "scene512" / name)
+        shutil.copy2(GW / "scene512" / name, root / "scene512" / name)
     (root / "diagnostics/orientation").mkdir()
     shutil.copy2(
-        Path(
-            "../jax-residual-axis-20261016/runs/residual-axis-20261016/diagnostics/orientation/square48-input.npz"
-        ),
+        GW / "diagnostics/orientation/square48-input.npz",
         root / "diagnostics/orientation/square48-input.npz",
     )
+    (root / "snapshots/step-6000").mkdir(parents=True)
+    (root / "snapshots/step-6000/winner").symlink_to(
+        (GW / "snapshots/step-6000/choice").resolve(), target_is_directory=True
+    )
+    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+    subprocess.run(
+        ["git", "archive", "--format=tar.gz", "-o", str(root / "source.tar.gz"), commit], check=True
+    )
     files = [p for p in root.rglob("*") if p.is_file()]
-    files += [Path(f) for f in read(GP / "plan.json")["bindings"]]
-    for folder in (GP, GT, GU, GV):
-        files += [folder / "completion.json"]
-        if folder != GV:
-            files += [folder / "diagnostics/supplemental-binding.json"]
+    files += [Path(f) for f in read(GW / "plan.json")["bindings"]]
     files += [
-        GT / "diagnostics/decision.json",
-        GU / "decision.json",
-        GV / "decision.json",
-        GV / "recipes.json",
-        GT / "training/sampling.jsonl",
-        GP / "training/sampling.jsonl",
+        GW / "completion.json",
+        GW / "diagnostics/supplemental-binding.json",
+        GW / "training/sampling.jsonl",
+        GX / "completion.json",
+        GX / "decision.json",
+        GX / "diagnostics/supplemental-binding.json",
+        DOC.resolve(),
     ]
-    files += [
-        p
-        for p in Path("runs/pooled-axis-20261017-retry1/diagnostics").rglob("*")
-        if p.is_file() and p.suffix in (".json", ".py", ".log")
-    ]
-    files += [
-        Path("runs/pooled-axis-20261017-retry1/driver-preflight.json"),
-        Path("runs/pooled-axis-20261017-retry1/driver-preflight.log"),
-    ]
-    files += list((GP / "initials/pooled").iterdir()) + [GO / "inputs.npz", DOC.resolve()]
+    files += list((GW / "initials/choice").iterdir()) + list(
+        (GW / "snapshots/step-6000/choice/raw").iterdir()
+    )
     files += [
         Path(f).resolve()
         for f in subprocess.check_output(["git", "ls-files"], text=True).splitlines()
         if f.endswith((".py", ".toml")) or f == "uv.lock"
     ]
-    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
-    subprocess.run(
-        ["git", "archive", "--format=tar.gz", "-o", str(root / "source.tar.gz"), commit], check=True
-    )
     write(
         root / "plan.json",
         dict(
@@ -150,8 +155,9 @@ def prepare(root):
             archive_sha256=sha(root / "source.tar.gz"),
             steps=STEPS,
             saved=SAVED,
-            parameters={m: 21890 for m in METHODS},
-            trained_arms=2,
+            parameters=21890,
+            trained_arms=1,
+            control="Archived GW choice raw6000",
             prior_mode="none",
             adoption=False,
             fresh_confirmation=False,
@@ -160,6 +166,10 @@ def prepare(root):
 
 
 def check(root):
+    assert (
+        subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+        == read(root / "plan.json")["commit"]
+    )
     for f, h in read(root / "plan.json")["bindings"].items():
         assert sha(Path(f)) == h, f
     assert sha(root / "source.tar.gz") == read(root / "plan.json")["archive_sha256"]
@@ -175,7 +185,7 @@ def snapshot(root, arms, step):
                 model,
                 arm["config"],
                 root / f"snapshots/step-{step}/{name}/{mode}",
-                provenance=f"GW pooled axis {name} {step} {mode}; research only",
+                provenance=f"GY consistent axis {name} {step} {mode}; research only",
             )
 
 
@@ -217,6 +227,9 @@ def train(root, until):
                 candidate_payload_sha256=digest(c),
                 context_keep=np.asarray(c[3]).tolist(),
                 audit=data["last_audit"],
+                consistent_original=(
+                    np.asarray(preferred_original(d)) | ~np.asarray(c[6])
+                ).tolist(),
             )
             rows.append(row)
             with journal.open("a") as f:
@@ -255,7 +268,7 @@ def train(root, until):
                     assert cfg == arm["config"]
                     exact(expected, nnx.state(model, nnx.Param))
                     bindings.update({str(p): sha(p) for p in folder.iterdir() if p.is_file()})
-        write(root / "snapshot-audit.json", dict(raw_ema_exact=True, exports=36, bindings=bindings))
+        write(root / "snapshot-audit.json", dict(raw_ema_exact=True, exports=18, bindings=bindings))
 
 
 if __name__ == "__main__":

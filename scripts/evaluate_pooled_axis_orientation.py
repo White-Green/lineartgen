@@ -18,7 +18,7 @@ p.add_argument("--root", type=Path, required=True)
 root = p.parse_args().root.resolve()
 check(root)
 out = root / "diagnostics/orientation"
-model, _ = load_field(root / f"snapshots/step-{STEPS}/choice/raw")
+model, _ = load_field(root / f"snapshots/step-{STEPS}/consistent/raw")
 before = digest(nnx.state(model, nnx.Param))
 bindings, cases = {}, []
 with np.load(out / "square48-input.npz") as z:
@@ -47,7 +47,7 @@ for name, source, depth, expected_file in cases:
         predictions.append(pred)
     if expected_file:
         with np.load(root / expected_file) as z:
-            expected = z["choice_uint8"] if name == "scene7uint8" else z["choice"]
+            expected = z["consistent_uint8"] if name == "scene7uint8" else z["consistent"]
             if name == "bar62":
                 expected = expected[0]
             np.testing.assert_array_equal(predictions[0], expected)
