@@ -11,7 +11,7 @@ from flax import nnx
 from PIL import Image, ImageDraw
 from plausible_study import digest
 from pooled_axis_model import infer, load_field
-from pooled_axis_study import GK, MODELREF, STEPS, check
+from pooled_axis_study import GK, LABELS, MODELREF, STEPS, check
 from pooled_axis_study import REPORT_METHODS as METHODS
 
 p = argparse.ArgumentParser()
@@ -70,7 +70,9 @@ for depth in (1, 3, 6):
                 zip(("source", "target", *models), arrays, strict=True)
             ):
                 pen.text(
-                    (col * 256 + 3, row * 292 + 5), f"d{depth} {names[i]} / {label}", fill="black"
+                    (col * 256 + 3, row * 292 + 5),
+                    f"d{depth} {names[i]} / {LABELS.get(label, label)}",
+                    fill="black",
                 )
                 px = np.uint8(np.rint(np.clip((value[..., 0] + 1) * 127.5, 0, 255)))
                 canvas.paste(Image.fromarray(px).convert("RGB"), (col * 256, row * 292 + 36))

@@ -11,7 +11,7 @@ from flax import nnx
 from PIL import Image, ImageDraw
 from plausible_study import digest
 from pooled_axis_model import infer, load_field
-from pooled_axis_study import DIAGNOSTIC, MODELREF, REPORT_METHODS, STEPS, check
+from pooled_axis_study import DIAGNOSTIC, LABELS, MODELREF, REPORT_METHODS, STEPS, check
 from width_response_study import FACTORS, SEED
 
 
@@ -57,7 +57,7 @@ def evaluate(root):
             bindings[str(pp)] = sha(pp)
             pen.text((col * 256 + 4, 5), f"probe{i} x{factor}", fill="black")
             for row, (label, value) in enumerate([("source", source)] + list(predictions.items())):
-                pen.text((col * 256 + 4, 30 + row * 280), label, fill="black")
+                pen.text((col * 256 + 4, 30 + row * 280), LABELS.get(label, label), fill="black")
                 px = np.uint8(np.rint(np.clip((value[..., 0] + 1) * 127.5, 0, 255)))
                 canvas.paste(Image.fromarray(px).convert("RGB"), (col * 256, 50 + row * 280))
         dest = out / f"native-wide-{i}.png"

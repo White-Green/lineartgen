@@ -23,6 +23,7 @@ parser.add_argument(
         "collision",
         "details",
         "orientation",
+        "mask",
     ),
 )
 parser.add_argument("--root", type=Path, required=True)
@@ -40,6 +41,7 @@ scripts = dict(
     collision="evaluate_pooled_axis_collision.py",
     details="evaluate_pooled_axis_details.py",
     orientation="evaluate_pooled_axis_orientation.py",
+    mask="evaluate_supported_mask.py",
     **{"width-sweep": "evaluate_pooled_axis_sweep.py"},
 )
 command = [sys.executable, "scripts/" + scripts[args.phase]]

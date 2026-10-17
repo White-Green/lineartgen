@@ -11,7 +11,7 @@ from flax import nnx
 from PIL import Image, ImageDraw
 from plausible_study import digest
 from pooled_axis_model import infer, load_field
-from pooled_axis_study import GO, STEPS, check
+from pooled_axis_study import GO, LABELS, STEPS, check
 from pooled_axis_study import REPORT_METHODS as METHODS
 
 parser = argparse.ArgumentParser()
@@ -61,7 +61,7 @@ for depth in (1, 3, 6):
         for col, (label, value) in enumerate(values.items()):
             pen.text(
                 (col * 256 + 3, i * 292 + 6),
-                f"d{depth} {'fill' if i else 'bar'} / {label}",
+                f"d{depth} {'fill' if i else 'bar'} / {LABELS.get(label, label)}",
                 fill="black",
             )
             px = np.uint8(np.rint(np.clip((value[..., 0] + 1) * 127.5, 0, 255)))

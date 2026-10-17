@@ -11,7 +11,7 @@ from flax import nnx
 from PIL import Image, ImageDraw
 from plausible_study import digest
 from pooled_axis_model import infer, load_field
-from pooled_axis_study import AMBIGUITY, STEPS, check
+from pooled_axis_study import AMBIGUITY, LABELS, STEPS, check
 from pooled_axis_study import REPORT_METHODS as METHODS
 
 p = argparse.ArgumentParser()
@@ -56,7 +56,7 @@ for depth in (1, 3, 6):
     canvas = Image.new("RGB", (1024, 584), "white")
     pen = ImageDraw.Draw(canvas)
     for col, (label, value) in enumerate(dict(source=source, target=clean, **predictions).items()):
-        pen.text((256 * col + 4, 6), label, fill="black")
+        pen.text((256 * col + 4, 6), LABELS.get(label, label), fill="black")
         for row in range(2):
             pixels = np.uint8(np.rint(np.clip((value[row, ..., 0] + 1) * 127.5, 0, 255)))
             canvas.paste(Image.fromarray(pixels).convert("RGB"), (256 * col, 48 + 280 * row))

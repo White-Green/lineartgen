@@ -40,9 +40,9 @@ for name, box, index in cases:
         labels = [
             "source uint8",
             "FW mixed6k uint8",
-            "GW winner6k",
-            "consistent uint8",
-            "consistent float",
+            "GY baseline6k",
+            "HD supported uint8",
+            "HD supported float",
         ]
     else:
         ip = root / ("data/new_probe/037.npz" if name == "probe37" else "data/expanded/288.npz")
@@ -53,7 +53,7 @@ for name, box, index in cases:
         )
         with np.load(ip) as a, np.load(pp) as b:
             values = [a["source"], b["initial"], b["winner"], b["consistent"]]
-        labels = ["source", "FW mixed6k", "GW winner6k", "consistent +6k"]
+        labels = ["source", "FW mixed6k", "GY baseline6k", "HD supported +6k"]
     w, h = box[2] - box[0], box[3] - box[1]
     stride = max(w, 130)
     canvas = Image.new("RGB", (stride * len(values), h + 28), "white")
