@@ -1,3 +1,5 @@
+import math
+
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -45,3 +47,26 @@ def test_full_tail_matches_current_loss_and_gradient_per_image():
 def test_invalid_fraction():
     with pytest.raises(ValueError):
         hard_negative_bce(jnp.zeros((1, 2)), jnp.zeros((1, 2)), 0)
+
+
+@pytest.mark.parametrize("ties", [False, True])
+def test_sort_has_same_values_and_gradients_as_top_k(ties):
+    x = jnp.linspace(-4, 4, 400).reshape(4, 10, 10)
+    if ties:
+        x = jnp.round(x)
+    y = (jnp.arange(400).reshape(4, 10, 10) % 7 == 0).astype(jnp.float32)
+
+    def old(logits):
+        v = optax.sigmoid_binary_cross_entropy(logits, y).reshape(4, -1)
+        labels = y.reshape(4, -1)
+        positive = (v * labels).sum(-1) / jnp.maximum(labels.sum(-1), 1)
+        negative = labels == 0
+        k = math.ceil(v.shape[-1] * 0.05)
+        top, _ = jax.lax.top_k(jnp.where(negative, v, -jnp.inf), k)
+        count = jnp.maximum(jnp.minimum(negative.sum(-1), k), 1)
+        return (positive + jnp.where(jnp.isfinite(top), top, 0).sum(-1) / count).mean()
+
+    a = jax.value_and_grad(old)(x)
+    b = jax.value_and_grad(lambda z: hard_negative_bce(z, y, 0.05))(x)
+    for aa, bb in zip(a, b, strict=True):
+        np.testing.assert_array_equal(aa, bb)

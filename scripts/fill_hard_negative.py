@@ -23,7 +23,15 @@ def hard_negative_bce(logits, labels, fraction=0.01):
     positive = (loss * labels).sum(-1) / jnp.maximum(labels.sum(-1), 1)
     negative = labels == 0
     k = max(1, math.ceil(loss.shape[-1] * fraction))
-    values, _ = jax.lax.top_k(jnp.where(negative, loss, -jnp.inf), k)
+    # ROCm's large-K top_k exceeds shared-memory limits at 320x320 / K=1024.
+    # Stable descending sort has the same values and tie order as top_k.
+    candidates = jnp.where(negative, loss, -jnp.inf)
+    indices = jnp.broadcast_to(jnp.arange(loss.shape[-1]), loss.shape)
+    _, order = jax.lax.sort_key_val(
+        -jax.lax.stop_gradient(candidates), indices, dimension=-1, is_stable=True
+    )
+    # Differentiate the selected original BCE values, not the sort operation.
+    values = jnp.take_along_axis(candidates, order[:, :k], axis=-1)
     total = jnp.where(jnp.isfinite(values), values, 0).sum(-1)
     denominator = jnp.maximum(jnp.minimum(negative.sum(-1), k), 1)
     return (positive + total / denominator).mean()

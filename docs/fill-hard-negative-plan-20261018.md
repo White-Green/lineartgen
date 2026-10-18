@@ -1,5 +1,7 @@
 # fill陰性上位lossの比較学習（IG）
 
+初回b078889の事前GPU検証はlarge-Kのtop_kで `Failed to set shared memory size: hipError_t(98)` により停止し、学習は開始していない。失敗runを保全した。単純なsortとsort＋barrierもGPU value_and_gradで不一致（loss差3.56/11.07）だった。最終実装はstop_gradientした損失でstable降順sortし、そのインデックスで元のBCEをgatherして微分する。同じ上位K平均とtie順序を保つ。CPUで旧実装との値/勾配が完全一致し、実サイズ320/160/80/40/20/10・B4のGPU比較はloss最大差4.77e-7、勾配最大差9.32e-10で通過。失敗コード/ログと成功検証を保存し、別run retry1で再実行する。目的関数・学習条件・判定基準は変更しない。
+
 IFの重み固定診断で80/87.5pxの枠と62pxの小片は最終fill描画に由来した。無条件のfill除去は正しい塗りを消すため不採用。現行lossの誤陽性勾配は存在するが、陰性上位1%平均で約11.4倍になる例を確認した。次に学習で誤塗りを抑えつつ塗りを保持できるか検証する。
 
 両群の初期重みはIE expanded raw3000、同じ22,725パラメータ。controlは従来の陽性/陰性別平均fill BCE、hardnegativeは陰性上位1%の平均に変更し陽性平均を維持。頂点/辺のcount BCE、位置/幅Huberは完全に同じ。画像MSEは加えない。optimizerとEMAは新規初期化。
