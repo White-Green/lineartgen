@@ -159,9 +159,9 @@ def render(root):
             (
                 "rough source",
                 "all strokes 2px",
-                "HJ coarse18000",
-                "HL control1200",
                 "HL opening1200",
+                "HM control6000",
+                "HM opening6000",
             )
         ):
             pen.text((col * SIZE + 8, 8), label, fill="black")

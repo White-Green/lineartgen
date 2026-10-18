@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 from campaign_protocol import read, sha, write
-from pooled_axis_study import HH, HJ, METHODS, SAVED, STEPS, check
+from pooled_axis_study import HH, HL, METHODS, SAVED, START, STEPS, check
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--root", type=Path, required=True)
@@ -15,6 +15,9 @@ check(root)
 rows = [json.loads(s) for s in (root / "training/sampling.jsonl").read_text().splitlines()]
 old = [json.loads(s) for s in (HH / "training/sampling.jsonl").read_text().splitlines()][:STEPS]
 assert len(rows) == len(old) == STEPS
+inherited = [json.loads(s) for s in (HL / "training/sampling.jsonl").read_text().splitlines()]
+assert len(inherited) == START
+assert rows[:START] == inherited
 families = {}
 whole = promoted = 0
 reference_errors = []
@@ -49,7 +52,7 @@ for k, (a, b) in enumerate(zip(rows, old, strict=True)):
         assert all(np.isfinite(v) for v in a["metrics"][m].values())
         bits = int(a["metrics"][m]["selected_alternate_bits"])
         assert [(bits >> j) & 1 for j in range(4)] == [int(not v) for v in a["consistent_original"]]
-assert families == dict(legacy=750, long_bar_fill=300, ambiguous=150)
+assert families == dict(legacy=3750, long_bar_fill=1500, ambiguous=750)
 expected = read(root / "plan.json")["expected_counts"]
 assert whole == expected["whole"] and promoted == expected["promoted"]
 assert (
@@ -67,7 +70,7 @@ for step in SAVED[1:]:
     assert read(root / f"training/restore-{step}.json")["full_state_exact"]
 phases = [
     "preflight",
-    "train-1200",
+    "train-6000",
     "evaluation",
     "stress",
     "scene512",
@@ -118,7 +121,7 @@ for group in ("evaluation", "stress"):
         assert sha(root / group / f) == h
     count = 0
     for file in (root / group / "predictions").glob("*.npz"):
-        with np.load(file) as a, np.load(HJ / group / "predictions" / file.name) as b:
+        with np.load(file) as a, np.load(HL / group / "predictions" / file.name) as b:
             for method, old_method in (("initial", "consistent"),):
                 reference_compare(a[method], b[old_method])
         count += 1
@@ -132,12 +135,12 @@ for group, key, count in [("scene512", "model_outputs", 192), ("width-sweep", "o
 assert read(root / "scene512/metrics.json")["protected_exact"]
 assert read(root / "width-sweep/metrics.json")["states_unchanged"]
 for file in (root / "scene512").glob("predictions-*.npz"):
-    with np.load(file) as a, np.load(HJ / "scene512" / file.name) as b:
+    with np.load(file) as a, np.load(HL / "scene512" / file.name) as b:
         for method, old_method in (("initial", "consistent"),):
             for encoding in ("float", "uint8"):
                 reference_compare(a[method + "_" + encoding], b[old_method + "_" + encoding])
 for file in (root / "width-sweep").glob("wide-*.npz"):
-    with np.load(file) as a, np.load(HJ / "width-sweep" / file.name) as b:
+    with np.load(file) as a, np.load(HL / "width-sweep" / file.name) as b:
         for key, old_key in (
             ("source", "source"),
             ("initial", "consistent"),
@@ -165,7 +168,7 @@ for group, outputs, pages in [("ambiguity", 12, 3), ("geometry", 144, 9), ("coll
         assert observations[r["file"]] and sha(folder / r["file"]) == r["sha256"]
     if group in ("ambiguity", "geometry", "collision"):
         for file in folder.glob("*.npz"):
-            with np.load(file) as a, np.load(HJ / "diagnostics" / group / file.name) as b:
+            with np.load(file) as a, np.load(HL / "diagnostics" / group / file.name) as b:
                 if "initial" in a.files:
                     reference_compare(a["initial"], b["consistent"])
 details = root / "diagnostics/details"
@@ -205,7 +208,7 @@ for p, h in coherent["bindings"].items():
 assert all(v > 0 for v in read(root / "prefix-audit.json")["hidden_parameter_changes"].values())
 summary = {}
 for method in METHODS:
-    norms = [r["metrics"][method]["gradient_norm"] for r in rows]
+    norms = [r["metrics"][method]["gradient_norm"] for r in rows[START:]]
     summary[method] = dict(
         clipped=sum(v > 1 for v in norms),
         maximum_norm=max(norms),
@@ -215,12 +218,12 @@ for method in METHODS:
 write(
     root / "diagnostics/integrity.json",
     dict(
-        original_hh_batches_verified=1200,
-        new_updates_per_arm=1200,
-        inherited_updates=0,
+        original_hh_batches_verified=STEPS,
+        new_updates_per_arm=STEPS - START,
+        inherited_updates=START,
         families=families,
-        new_whole_axis_examples=whole,
-        newly_allowed_partial_examples=promoted,
+        total_whole_axis_examples=whole,
+        total_allowed_partial_examples=promoted,
         parameters={m: 22508 for m in METHODS},
         reference_files_compared=counts,
         reference_arrays_compared=len(reference_errors),
@@ -268,12 +271,14 @@ files += [
 write(
     root / "completion.json",
     dict(
-        stage="complete_late_opening",
-        steps=1200,
+        stage="complete_late_opening_duration",
+        steps=STEPS,
+        inherited_steps=START,
+        new_updates_per_arm=STEPS - START,
         trained_arms=2,
-        optimizer_reset_both=True,
+        optimizer_reset_both=False,
         reference=(
-            "HJ raw18000; matched control and opening fine-tuning; "
+            "HL per-arm1200 continued with inherited optimizer/EMA to6000; "
             "numeric tolerance declared before training"
         ),
         outputs=9516,

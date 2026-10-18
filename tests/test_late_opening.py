@@ -4,8 +4,8 @@ import numpy as np
 from coherent_broad_base_objective import axis_parts as old_parts
 from coherent_broad_objective import axis_parts
 from cue_capacity import make_arm
+from late_opening_study import HJ, STEPS
 from learned_coarse_axis_model import load_field
-from pooled_axis_study import HJ, STEPS
 from test_consistent_broad import toy
 
 
