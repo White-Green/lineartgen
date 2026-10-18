@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 from centerline_grid import encode, pieces, render, segment_distance
 
@@ -31,6 +33,7 @@ def test_nearby_paths_collide_but_crossing_is_not_false_contact():
     assert fine["stats"]["noncontact_path_collisions"] == 0
     assert coarse["stats"]["components"] == 1
     assert coarse["stats"]["noncontact_path_collisions"] > 0
+    assert json.loads(json.dumps(coarse["stats"])) == coarse["stats"]
     assert (
         segment_distance(np.array([[0.0, 0.0], [2.0, 2.0]]), np.array([[0.0, 2.0], [2.0, 0.0]]))
         == 0

@@ -107,7 +107,9 @@ def encode(segments, widths, cell, path_ids=None):
             for qid in paths[i + 1 :]:
                 distance = min(segment_distance(a, b) for a in groups[pid] for b in groups[qid])
                 if distance > 1e-4:
-                    collisions.append(dict(cell=list(key), paths=[pid, qid], separation=distance))
+                    collisions.append(
+                        dict(cell=[int(v) for v in key], paths=[pid, qid], separation=distance)
+                    )
     edges = set()
     for walk in walks.values():
         for a, b in zip(walk[:-1], walk[1:], strict=True):
