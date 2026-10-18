@@ -65,8 +65,8 @@ for split in ("train", "transfer"):
                     [
                         f"{split}{i} d{depth} source",
                         "retained teacher",
-                        "HM control6000",
-                        "HM opening6000",
+                        "HO control6000",
+                        "HO opening6000",
                     ]
                     for i in ids
                 ],

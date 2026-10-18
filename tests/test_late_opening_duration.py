@@ -3,8 +3,8 @@ import json
 import jax.numpy as jnp
 import numpy as np
 from cue_capacity import make_arm
+from late_opening_duration_study import HH, HL, METHODS, START, STEPS
 from learned_coarse_axis_model import load_field
-from pooled_axis_study import HH, HL, METHODS, START, STEPS
 
 
 def test_inherited_schedule_stays_flat_past_original_endpoint():

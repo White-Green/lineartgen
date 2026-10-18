@@ -28,7 +28,7 @@ parser.add_argument(
     ),
 )
 parser.add_argument("--root", type=Path, required=True)
-parser.add_argument("--until", type=int, choices=(2000, 3000, 4000, 5000, 6000))
+parser.add_argument("--until", type=int, choices=(1000, 2000, 3000, 4000, 5000, 6000))
 args = parser.parse_args()
 root = args.root.resolve()
 scripts = dict(

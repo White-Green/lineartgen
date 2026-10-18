@@ -61,8 +61,8 @@ for split in ("train", "transfer"):
                     f"{split}{i} d{depth} source",
                     "old permitted",
                     "support permitted",
-                    "HM control6000",
-                    "HM opening6000",
+                    "HO control6000",
+                    "HO opening6000",
                 ]
                 for i in range(len(data["source"]))
             ],
