@@ -13,3 +13,5 @@ AdamWは既存設定、base LR1e−4×sqrt(B4)=2e−4から2e−5へ1200更新co
 評価はDQの24既知入力にprobe37を追加した25例。未学習6probe+37と8sceneを転移として明示する。全例depth1/3/6と、24/36/42/48/56/62・scene2/7の部分適用depth3を保存する。主比較はsource/正しい1pxgraph描画/HP d3/HR d3の9原寸ページ、depth比較9ページ、部分適用4ページの全22ページ。正解graphを与えるoracleと実予測を区別する。頂点/edge precision/recall、連結成分/孤立点、正解線の近傍coverage、域外inkを記述的に測る。targetずれを許さないgraph一致だけで画質を判定しない。
 
 CPUで4方向接続・端点・孤立点/空/塗り・確率とopacityの分離・背景と座標の勾配を確認。新しいtarget→logits→renderer変換はHQ同rendererとのatol/rtol各1e−4で照合する。これは過去DQ/JAXとの一致閾値を変更するものではない。入力/教師/初期値/コード/hash/時刻/exit/保存stateを記録し、失敗は消さず別runで修正する。fresh16、Krita、本番、exportは未変更。このpilotだけでは採用しない。
+
+実行前修正：最初のprepareでprobe18の画像外中心線が欠落し、境界2画素に最大.08255の差が出た。32pxの白いsource haloを追加し、pathも同じだけ平行移動、全段graph予測後に元範囲へ切り出す。haloは全6段の整数格子と既存の縮小枝の位相を保つ。graph自身はhaloも教師に含め、保護領域は元範囲で合成する。train入力は320px、sceneは576px、表示は256/512原寸。元DQとの閾値は変更しない。失敗runは保持し、別rootで準備から再開する。

@@ -68,3 +68,17 @@ def test_background_loss_and_parameter_gradients():
     grad = jax.grad(lambda a: balanced_bce(a, blank))(blank)
     assert np.all(grad > 0)
     assert np.all(np.asarray(g[..., 1:4])[np.asarray(truth[..., 0]) == 0] == 0)
+
+
+def test_halo_retains_outside_centerline_capsule():
+    from centerline_grid import encode, render
+    from learned_centerline_study import HALO, crop
+
+    s = np.array([[[9.2, -0.9], [14.3, 10.7]]])
+    w = np.ones((1, 2)) * 2
+    rect = np.empty((0, 4))
+    t, _ = target(s + HALO, w, rect, 32 + 2 * HALO)
+    decoded, _ = decode(as_logits(t))
+    g = encode(s, w, 1)
+    expected = render(g["segments"], g["segment_widths"], rect, 32)
+    np.testing.assert_allclose(crop(decoded), expected, atol=1e-4, rtol=1e-4)

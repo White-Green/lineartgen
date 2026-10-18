@@ -56,6 +56,15 @@ PARTIAL = tuple(f"probe-{i:02d}" for i in (24, 36, 42, 48, 56, 62)) + ("scene-2"
 STEPS = 1200
 SAVED = (0, 6, 400, 800, 1200)
 SEED = 2026101807
+HALO = 32
+
+
+def halo(image, value=1):
+    return np.pad(image, ((HALO, HALO), (HALO, HALO), (0, 0)), constant_values=value)
+
+
+def crop(image):
+    return image[HALO:-HALO, HALO:-HALO]
 
 
 def now():
@@ -143,12 +152,21 @@ def prepare(root):
     for name, data in inputs:
         n = data["source"].shape[0]
         packed = dict(data)
+        packed["graph_source"] = halo(data["source"])
         stages = []
         for level in range(6):
-            t, stats = target(data["segments"], data["widths"], data["rectangles"], n, level)
+            t, stats = target(
+                data["segments"] + HALO,
+                data["widths"],
+                data["rectangles"] + HALO,
+                n + 2 * HALO,
+                level,
+            )
             packed[f"target{level}"] = t
             stages.append(stats)
-        oracle, st = decode(logits_from_target(packed["target0"]))
+        graph_oracle, st = decode(logits_from_target(packed["target0"]))
+        packed["graph_oracle"] = graph_oracle
+        oracle = crop(graph_oracle)
         g = encode(data["segments"], data["widths"], 1)
         reference = render(g["segments"], g["segment_widths"], data["rectangles"], n)
         error = float(np.abs(oracle - reference).max())
@@ -232,13 +250,14 @@ def batch(data, step):
             for k, i in enumerate(indices)
         ]
     ).astype(np.float32)
-    masks = np.stack([strength(256, v) for v in partial])
+    source = np.stack([halo(v) for v in source])
+    masks = np.stack([halo(strength(256, v), 0 if v else 0.5) for v in partial])
     depth = step % 6 + 1
     targets = tuple(
         jnp.asarray(np.stack([data[TRAIN[i]][f"target{level}"] for i in indices]))
         for level in range(depth)
     )
-    clean = np.stack([data[TRAIN[i]]["oracle"] for i in indices])
+    clean = np.stack([data[TRAIN[i]]["graph_oracle"] for i in indices])
     p = prepare_inputs(
         jnp.asarray(clean),
         jnp.asarray(source),
@@ -404,9 +423,17 @@ def evaluate(root):
                 jax.random.PRNGKey(SEED + 1),
                 depth,
             )
-            h = np.asarray(infer_heads(model, p)[0])[0]
+            graph_p = prepare_inputs(
+                jnp.asarray(item["graph_oracle"][None]),
+                jnp.asarray(item["graph_source"][None]),
+                jnp.asarray(halo(mask, 0 if partial else 0.5)[None]),
+                jax.random.PRNGKey(SEED + 1),
+                depth,
+            )
+            h = np.asarray(infer_heads(model, graph_p)[0])[0]
             assert np.isfinite(h).all()
             raw, stats = decode(h)
+            raw = crop(raw)
             result = np.where(mask > 0, raw, item["source"])
             control = np.asarray(field_infer(baseline, p))[0]
             np.testing.assert_array_equal(result[mask == 0], item["source"][mask == 0])
@@ -420,7 +447,7 @@ def evaluate(root):
                     partial=partial,
                     training=r["training"],
                     graph=stats,
-                    metrics=graph_metrics(h, item["target0"], raw, item["oracle"]),
+                    metrics=graph_metrics(crop(h), crop(item["target0"]), raw, item["oracle"]),
                     protected_exact=True,
                 )
             )
