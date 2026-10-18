@@ -5,13 +5,13 @@ from centerline_grid import infer_paths, render
 from learned_centerline_model import CHANNELS, DIRECTIONS
 
 
-def radius(level):
-    return max(0.75, 4.0 / 2**level)
+def radius(level, base_radius=4.0):
+    return max(0.75, base_radius / 2**level)
 
 
-def target(segments, widths, rectangles, size, level=0, path_ids=None):
+def target(segments, widths, rectangles, size, level=0, path_ids=None, *, base_radius=4.0):
     scale = 2**level
-    n, reach = size // scale, radius(level)
+    n, reach = size // scale, radius(level, base_radius)
     s = np.asarray(segments, np.float64).reshape(-1, 2, 2) / scale
     w = np.asarray(widths, np.float64).reshape(-1, 2) / scale
     if len(s) != len(w) or np.any(w < 0):
@@ -70,20 +70,20 @@ def target(segments, widths, rectangles, size, level=0, path_ids=None):
     )
 
 
-def logits_from_target(truth, level=0):
+def logits_from_target(truth, level=0, *, base_radius=4.0):
     h = np.asarray(truth).copy()
     h[..., [0, 4, 5, 6, 7, 8]] = np.where(h[..., [0, 4, 5, 6, 7, 8]] > 0.5, 20.0, -20.0)
-    h[..., 1:3] = np.arctanh(np.clip(h[..., 1:3] / radius(level), -1 + 1e-6, 1 - 1e-6))
+    h[..., 1:3] = np.arctanh(np.clip(h[..., 1:3] / radius(level, base_radius), -1 + 1e-6, 1 - 1e-6))
     return h
 
 
-def decode(head, level=0):
+def decode(head, level=0, *, base_radius=4.0):
     h = np.asarray(head)
     size = h.shape[0]
     assert h.shape == (size, size, CHANNELS)
     occupied = h[..., 0] >= 0
     yy, xx = np.mgrid[:size, :size]
-    xy = np.stack((xx + 0.5, yy + 0.5), -1) + radius(level) * np.tanh(h[..., 1:3])
+    xy = np.stack((xx + 0.5, yy + 0.5), -1) + radius(level, base_radius) * np.tanh(h[..., 1:3])
     widths = np.exp(np.clip(h[..., 3], -8, np.log(8)))
     degree = np.zeros_like(occupied, dtype=int)
     segments, ww, edges = [], [], []

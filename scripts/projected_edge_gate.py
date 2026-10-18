@@ -5,12 +5,12 @@ from attraction_graph import radius
 from learned_centerline_model import DIRECTIONS
 
 
-def gate(head, level=0, maximum=2.0, tolerance=1e-5):
+def gate(head, level=0, maximum=2.0, tolerance=1e-5, *, base_radius=4.0):
     h = np.asarray(head)
     out = h.copy()
     n = h.shape[0]
     yy, xx = np.mgrid[:n, :n]
-    xy = np.stack((xx + 0.5, yy + 0.5), -1) + radius(level) * np.tanh(h[..., 1:3])
+    xy = np.stack((xx + 0.5, yy + 0.5), -1) + radius(level, base_radius) * np.tanh(h[..., 1:3])
     rejected = 0
     for k, (dx, dy) in enumerate(DIRECTIONS):
         y0, y1 = max(0, -dy), min(n, n - dy)

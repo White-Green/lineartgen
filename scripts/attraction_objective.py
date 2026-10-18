@@ -8,10 +8,12 @@ from learned_centerline_model import balanced_bce, forward
 from sparse_graph_objective import count_bce
 
 
-def stage_loss(head, truth, level, *, sparse=False):
+def stage_loss(head, truth, level, *, sparse=False, base_radius=4.0):
     occupied = truth[..., 0]
     count = jnp.maximum(occupied.sum((1, 2)), 1)
-    offset = optax.huber_loss(radius(level) * jnp.tanh(head[..., 1:3]), truth[..., 1:3]).mean(-1)
+    offset = optax.huber_loss(
+        radius(level, base_radius) * jnp.tanh(head[..., 1:3]), truth[..., 1:3]
+    ).mean(-1)
     width = optax.huber_loss(head[..., 3], truth[..., 3])
     bce = count_bce if sparse else balanced_bce
     return dict(
