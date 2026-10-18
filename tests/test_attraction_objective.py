@@ -44,3 +44,26 @@ def test_empty_images_remain_finite_with_background_suppression():
             h
         )
         assert np.isfinite(grad).all() and np.all(grad[..., 0] > 0)
+
+
+def test_nnx_gradient_wrappers_execute_with_auxiliary_metrics():
+    from attraction_objective import balanced_gradient, sparse_gradient
+    from flax import nnx
+
+    from lineartgen.diffusion import ProgressTrainingInputs
+
+    class TinyHead(nnx.Module):
+        def __init__(self):
+            self.bias = nnx.Param(jnp.zeros(9))
+
+        def __call__(self, image, noise, insert, guide, progress, **kwargs):
+            return jnp.broadcast_to(self.bias[...], (*image.shape[:-1], 9))
+
+    images = tuple(jnp.ones((1, n, n, 1)) for n in (16, 8))
+    prepared = ProgressTrainingInputs(images, images, images, images, images)
+    targets = tuple(jnp.zeros((*a.shape[:-1], 9)) for a in images)
+    for gradient in (balanced_gradient, sparse_gradient):
+        parts, grads = gradient(TinyHead(), prepared, targets)
+        assert all(np.isfinite(v) for v in parts.values())
+        assert np.isfinite(grads["bias"][...]).all()
+        assert grads["bias"][0] > 0

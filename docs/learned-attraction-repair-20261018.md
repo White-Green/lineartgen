@@ -1,0 +1,5 @@
+# HU preflight wrapper修正
+
+初回eb77a6eのprepareは終了0（19.311s）、GPU preflightは4.050sで終了1。Flax NNXのvalue_and_gradがkeyword-onlyの既定引数を位置引数に解決できず、最初のbalanced勾配呼び出しでTypeErrorになった。更新0、評価0。元runとログを保全する。
+
+balancedもsparseと同じ3位置引数のclosure経由でobjectiveを呼ぶよう修正した。計算式/教師/初期値/系列/閾値/許容値は変更なし。両NNX gradient wrapperを小さな学習可能headで実行する回帰テストを追加する。新しいretry1 rootでprepareを再実行し、25入力とinitialが旧rootとbyte一致することを確認してから全preflight・学習・評価を行う。

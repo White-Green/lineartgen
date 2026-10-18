@@ -40,7 +40,10 @@ def objective(model, prepared, targets, *, sparse=False):
 
 @nnx.jit
 def balanced_gradient(model, prepared, targets):
-    (_, parts), grads = nnx.value_and_grad(objective, has_aux=True)(model, prepared, targets)
+    def loss(m, p, t):
+        return objective(m, p, t, sparse=False)
+
+    (_, parts), grads = nnx.value_and_grad(loss, has_aux=True)(model, prepared, targets)
     return parts, grads
 
 
