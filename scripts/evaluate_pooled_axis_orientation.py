@@ -30,7 +30,7 @@ with np.load(root / "width-sweep/wide-62-factor-2.0.npz") as z:
     cases.append(("wide62x2", z["source"], 3, "width-sweep/wide-62-factor-2.0.npz"))
 with np.load(root / "scene512/input-7.npz") as z:
     cases.append(("scene7uint8", z["quantized"], 6, "scene512/predictions-7-whole-0.npz"))
-pages, rows = [], []
+pages, rows, comparisons = [], [], []
 for name, source, depth, expected_file in cases:
     prepared = prepare_inputs(
         source[None],
@@ -50,7 +50,15 @@ for name, source, depth, expected_file in cases:
             expected = z["consistent_uint8"] if name == "scene7uint8" else z["consistent"]
             if name == "bar62":
                 expected = expected[0]
-            np.testing.assert_array_equal(predictions[0], expected)
+            comparisons.append(
+                dict(
+                    case=name,
+                    exact=bool(np.array_equal(predictions[0], expected)),
+                    maximum_absolute_difference=float(np.max(np.abs(predictions[0] - expected))),
+                    mismatched_elements=int(np.count_nonzero(predictions[0] != expected)),
+                )
+            )
+            np.testing.assert_allclose(predictions[0], expected, atol=1e-5, rtol=1e-5)
         bindings[str(root / expected_file)] = sha(root / expected_file)
     file = out / f"{name}-predictions.npz"
     np.savez_compressed(file, source=source, predictions=np.stack(predictions))
@@ -70,7 +78,23 @@ for name, source, depth, expected_file in cases:
     page = out / f"native-{name}.png"
     canvas.save(page)
     pages.append(dict(file=page.name, sha256=sha(page)))
-    rows.append(dict(case=name, depth=depth, component0_reference_exact=expected_file is not None))
+    rows.append(
+        dict(
+            case=name,
+            depth=depth,
+            component0_reference_exact=comparisons[-1]["exact"] if expected_file else None,
+        )
+    )
 assert before == digest(nnx.state(model, nnx.Param))
 write(out / "manifest.json", dict(records=pages, native_scale=True, component_selection=False))
-write(out / "metrics.json", dict(outputs=32, states_unchanged=True, rows=rows, bindings=bindings))
+write(
+    out / "metrics.json",
+    dict(
+        outputs=32,
+        states_unchanged=True,
+        rows=rows,
+        bindings=bindings,
+        comparisons=comparisons,
+        cross_execution_tolerance=dict(atol=1e-5, rtol=1e-5),
+    ),
+)

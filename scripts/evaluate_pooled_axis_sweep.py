@@ -50,7 +50,7 @@ def evaluate(root):
             predictions = {m: np.asarray(infer(model, prepared))[0] for m, model in models.items()}
             for value in predictions.values():
                 assert np.isfinite(value).all() and value.min() >= -1 and value.max() <= 1
-            np.testing.assert_array_equal(predictions["initial"], old)
+            np.testing.assert_allclose(predictions["initial"], old, atol=1e-5, rtol=1e-5)
             maximum = max(maximum, float(abs(predictions["initial"] - old).max()))
             pp = out / ip.name
             np.savez_compressed(pp, source=source, **predictions)

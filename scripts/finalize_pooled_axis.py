@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 from campaign_protocol import read, sha, write
-from pooled_axis_study import GP, GW, HH, METHODS, SAVED, STEPS, check
+from pooled_axis_study import GP, GW, HI, METHODS, SAVED, START, STEPS, check
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--root", type=Path, required=True)
@@ -15,7 +15,9 @@ check(root)
 rows = [json.loads(s) for s in (root / "training/sampling.jsonl").read_text().splitlines()]
 gw = [json.loads(s) for s in (GW / "training/sampling.jsonl").read_text().splitlines()]
 gp = [json.loads(s) for s in (GP / "training/sampling.jsonl").read_text().splitlines()]
-assert len(rows) == len(gp) == STEPS
+assert len(rows) == STEPS and len(gp) == START
+inherited = [json.loads(s) for s in (HI / "training/sampling.jsonl").read_text().splitlines()]
+assert rows[:START] == inherited
 families = {}
 whole = 0
 promoted = 0
@@ -31,19 +33,24 @@ def reference_compare(actual, expected):
     np.testing.assert_allclose(actual, expected, atol=1e-5, rtol=1e-5)
 
 
-for k, (a, b) in enumerate(zip(rows, gp, strict=True)):
+for k, a in enumerate(rows):
+    b = gp[k % START]
+    if k >= START:
+        assert a["source_step"] == k % START + 1 and a["cycle"] == k // START
     assert a["step"] == k + 1
     for key in ("input_sha256", "context_keep", "audit"):
-        assert a[key] == gw[k][key]
+        assert a[key] == gw[k % START][key]
     extension = a["coherent_extension"]
-    assert extension["original_candidate_payload_sha256"] == gw[k]["candidate_payload_sha256"]
+    assert (
+        extension["original_candidate_payload_sha256"] == gw[k % START]["candidate_payload_sha256"]
+    )
     old_allowed = np.asarray(extension["old_allowed"])
     allowed = np.asarray(extension["allowed"])
     assert extension["promoted"] == (~old_allowed & allowed).tolist()
     assert np.all(~old_allowed | allowed)
     promoted += sum(extension["promoted"])
     if not any(extension["promoted"]):
-        assert a["candidate_payload_sha256"] == gw[k]["candidate_payload_sha256"]
+        assert a["candidate_payload_sha256"] == gw[k % START]["candidate_payload_sha256"]
     if a["audit"]["family"] == "long_bar_fill":
         assert not any(extension["promoted"])
     bits = int(a["metrics"]["consistent"]["selected_alternate_bits"])
@@ -61,24 +68,24 @@ for k, (a, b) in enumerate(zip(rows, gp, strict=True)):
         assert not any(a["audit"]["alternate_allowed"])
     for method in METHODS:
         assert all(np.isfinite(v) for v in a["metrics"][method].values())
-assert families == dict(legacy=3750, long_bar_fill=1500, ambiguous=750)
-assert whole == 1966 and promoted == 1114
+assert families == dict(legacy=11250, long_bar_fill=4500, ambiguous=2250)
+assert whole == 5898 and promoted == 3342
 assert (
     sum(sum(a["coherent_extension"]["promoted"]) for a in rows if a["audit"]["family"] == "legacy")
-    == 80
+    == 240
 )
 assert not read(root / "diagnostics/decision.json")["adoption"]
 for name in ("test-results", "preflight", "prefix-audit"):
     assert read(root / f"{name}.json")["passed"]
 snap = read(root / "snapshot-audit.json")
-assert snap["raw_ema_exact"] and snap["exports"] == 18
+assert snap["raw_ema_exact"] and snap["exports"] == 2 * len(SAVED)
 for f, h in snap["bindings"].items():
     assert sha(Path(f)) == h
-for step in SAVED[1:]:
+for step in SAVED:
     assert read(root / f"training/restore-{step}.json")["full_state_exact"]
 phases = [
     "preflight",
-    "train-6000",
+    "train-18000",
     "evaluation",
     "stress",
     "scene512",
@@ -129,7 +136,7 @@ for group in ("evaluation", "stress"):
         assert sha(root / group / f) == h
     count = 0
     for file in (root / group / "predictions").glob("*.npz"):
-        with np.load(file) as a, np.load(HH / group / "predictions" / file.name) as b:
+        with np.load(file) as a, np.load(HI / group / "predictions" / file.name) as b:
             for method, old_method in (("initial", "initial"), ("winner", "consistent")):
                 reference_compare(a[method], b[old_method])
         count += 1
@@ -143,12 +150,12 @@ for group, key, count in [("scene512", "model_outputs", 192), ("width-sweep", "o
 assert read(root / "scene512/metrics.json")["protected_exact"]
 assert read(root / "width-sweep/metrics.json")["states_unchanged"]
 for file in (root / "scene512").glob("predictions-*.npz"):
-    with np.load(file) as a, np.load(HH / "scene512" / file.name) as b:
+    with np.load(file) as a, np.load(HI / "scene512" / file.name) as b:
         for method, old_method in (("initial", "initial"), ("winner", "consistent")):
             for encoding in ("float", "uint8"):
                 reference_compare(a[method + "_" + encoding], b[old_method + "_" + encoding])
 for file in (root / "width-sweep").glob("wide-*.npz"):
-    with np.load(file) as a, np.load(HH / "width-sweep" / file.name) as b:
+    with np.load(file) as a, np.load(HI / "width-sweep" / file.name) as b:
         for key, old_key in (
             ("source", "source"),
             ("initial", "initial"),
@@ -177,7 +184,7 @@ for group, outputs, pages in [("ambiguity", 12, 3), ("geometry", 144, 9), ("coll
         assert observations[r["file"]] and sha(folder / r["file"]) == r["sha256"]
     if group in ("ambiguity", "geometry", "collision"):
         for file in folder.glob("*.npz"):
-            with np.load(file) as a, np.load(HH / "diagnostics" / group / file.name) as b:
+            with np.load(file) as a, np.load(HI / "diagnostics" / group / file.name) as b:
                 if "initial" in a.files:
                     reference_compare(a["initial"], b["initial"])
                 if "winner" in a.files:
@@ -217,14 +224,15 @@ assert coherent["outputs"] == 96 and coherent["states_unchanged"] and coherent["
 for p, h in coherent["bindings"].items():
     assert sha(Path(p)) == h
 for file in (root / "mask-probes").glob("*-depth*.npz"):
-    with np.load(file) as a, np.load(HH / "mask-probes" / file.name) as b:
+    with np.load(file) as a, np.load(HI / "mask-probes" / file.name) as b:
         reference_compare(a["winner"], b["consistent"])
 for file in (root / "coherent-probes").glob("*-depth*.npz"):
-    with np.load(file) as a, np.load(HH / "coherent-probes" / file.name) as b:
+    with np.load(file) as a, np.load(HI / "coherent-probes" / file.name) as b:
         reference_compare(a["winner"], b["consistent"])
 assert all(v > 0 for v in read(root / "prefix-audit.json")["hidden_parameter_changes"].values())
-hh_rows = [json.loads(s) for s in (HH / "training/sampling.jsonl").read_text().splitlines()]
-for a, b in zip(rows, hh_rows, strict=True):
+hi_rows = [json.loads(s) for s in (HI / "training/sampling.jsonl").read_text().splitlines()]
+for k, a in enumerate(rows):
+    b = hi_rows[k % START]
     for key in (
         "input_sha256",
         "candidate_payload_sha256",
@@ -236,7 +244,7 @@ for a, b in zip(rows, hh_rows, strict=True):
         assert a[key] == b[key]
 summary = {}
 for method in METHODS:
-    norms = [r["metrics"][method]["gradient_norm"] for r in rows]
+    norms = [r["metrics"][method]["gradient_norm"] for r in rows[START:]]
     summary[method] = dict(
         clipped=sum(v > 1 for v in norms),
         maximum_norm=max(norms),
@@ -246,7 +254,9 @@ for method in METHODS:
 write(
     root / "diagnostics/integrity.json",
     dict(
-        original_gp_batches_verified=6000,
+        original_gp_batches_verified=18000,
+        new_updates=12000,
+        inherited_updates=6000,
         families=families,
         new_whole_axis_examples=whole,
         newly_allowed_partial_examples=promoted,
@@ -297,11 +307,13 @@ files += [
 write(
     root / "completion.json",
     dict(
-        stage="complete_learned_coarse_axis_broad",
-        steps=6000,
+        stage="complete_coarse_duration",
+        steps=18000,
+        additional_steps=12000,
+        inherited_steps=6000,
         trained_arms=1,
         reference=(
-            "FW mixed6000; archived HH retained6000, numeric tolerance declared before training"
+            "FW mixed6000; archived HI coarse6000, numeric tolerance declared before training"
         ),
         outputs=9516,
         additional_outputs=338,

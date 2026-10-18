@@ -197,8 +197,8 @@ def render(root):
                     "source",
                     "all strokes 2px",
                     "FW mixed6000",
-                    "HH retained6000",
-                    "HI learned coarse6000",
+                    "HI coarse6000",
+                    "HJ coarse18000",
                 )
             ):
                 pen.text((col * SIZE + 8, 8), label, fill="black")

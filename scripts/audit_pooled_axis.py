@@ -1,4 +1,4 @@
-"""HI: preserve the HH initialization while activating a learned coarse pathway."""
+"""HJ: verify restoration, unchanged inference and a continuous optimizer schedule."""
 
 import argparse
 from pathlib import Path
@@ -9,7 +9,9 @@ from campaign_protocol import read, sha, write
 from flax import nnx
 from learned_coarse_axis_model import infer, load_field
 from plausible_study import exact
-from pooled_axis_study import GW, arms_from_root, batch, check, load_data
+from pooled_axis_study import HI, START, STEPS, arms_from_root, batch, check, load_data
+
+from lineartgen.training import checkpoints, lineart_state
 
 p = argparse.ArgumentParser()
 p.add_argument("--root", type=Path, required=True)
@@ -17,53 +19,45 @@ root = p.parse_args().root.resolve()
 check(root)
 assert jax.devices()[0].platform != "cpu"
 data, arms = load_data(), arms_from_root(root)
-base, _ = load_field(GW / "initials/choice")
+with checkpoints.manager(root / "training/checkpoints", keep=15) as manager:
+    assert lineart_state.restore(manager, arms, START) == START
+    restored = arms_from_root(root)
+    assert lineart_state.restore(manager, restored, START) == START
+    exact(lineart_state.payload(arms, START), lineart_state.payload(restored, START))
+base, _ = load_field(HI / "snapshots/step-6000/consistent/raw")
+ema, _ = load_field(HI / "snapshots/step-6000/consistent/ema")
 model = arms["consistent"]["model"]
-state = nnx.to_pure_dict(nnx.state(model, nnx.Param))
-extra = state.pop("coarse_branch")
-exact(nnx.to_pure_dict(nnx.state(base, nnx.Param)), state)
-assert all(np.count_nonzero(np.asarray(v)) == 0 for v in jax.tree.leaves(extra["project"]))
+exact(nnx.state(base, nnx.Param), nnx.state(model, nnx.Param))
+exact(nnx.state(ema, nnx.Param), arms["consistent"]["ema"])
+assert int(arms["consistent"]["optimizer"].step) == START
+schedule = arms["consistent"]["schedule"]
+lrs = {step: float(schedule(step)) for step in (5999, 6000, 6001, 12000, 17999, 18000)}
+np.testing.assert_allclose(list(lrs.values()), 2e-5, atol=1e-10, rtol=0)
 rows = []
-for step in (0, 1, 2, 3, 4, 5, 18, 19, 20, 21, 22, 23, 30, 31, 32, 33, 34, 35):
+for index in (0, 1, 2, 3, 4, 5, 18, 19, 20, 21, 22, 23, 30, 31, 32, 33, 34, 35):
+    step = START + index
     b = batch(data, step)
-    prepared, c, d = b
-    np.testing.assert_array_equal(infer(base, prepared), infer(model, prepared))
+    np.testing.assert_array_equal(infer(base, b[0]), infer(model, b[0]))
     parts, grad = arms["consistent"]["gradient"](model, *b)
     assert all(np.isfinite(np.asarray(x)).all() for x in jax.tree.leaves((parts, grad)))
-    assert float(parts["axis_eligible_fraction"]) == float(np.asarray(c[6]).mean())
-    gp = float(np.linalg.norm(np.asarray(grad.pooled_stem.kernel)))
-    gr = float(np.linalg.norm(np.asarray(grad.head.residual.kernel)))
-    gc = float(np.linalg.norm(np.asarray(grad.coarse_branch.project.kernel)))
-    assert gp > 0 and gr > 0 and gc > 0
-    rows.append(
-        dict(
-            step=step,
-            family=data["last_audit"]["family"],
-            extension=data["coherent_extension"],
-            initial_pixels_exact=True,
-            pooled_gradient_norm=gp,
-            residual_gradient_norm=gr,
-            coarse_projection_gradient_norm=gc,
-        )
-    )
-reuse = read(root / "teacher-reuse.json")
-assert reuse["pages"] == 3 and reuse["new_pages_viewed"] == 0
-for f, h in reuse["files"].items():
-    assert sha(Path(f)) == h
-    assert sha(root / "support-preview" / Path(f).name) == h
-for step in (5994, 5999):
+    rows.append(dict(step=step, family=data["last_audit"]["family"], initial_pixels_exact=True))
+for step in (11994, 11999, 12000, 17994, 17999):
     batch(data, step)
+reuse = read(root / "teacher-reuse.json")
+for f, h in reuse["files"].items():
+    assert sha(Path(f)) == h and sha(root / "support-preview" / Path(f).name) == h
 write(
     root / "preflight.json",
     dict(
         passed=True,
         rows=rows,
-        original_parameters_exact=True,
-        new_projection_zero=True,
-        reused_teacher_pages=3,
-        new_teacher_pages=0,
+        full_state_restore_exact=True,
+        raw_ema_exact=True,
+        optimizer_step=START,
+        learning_rates=lrs,
+        ending_step=STEPS,
         own36_exact_required=True,
-        last_batches_checked=True,
+        repeated_input_boundaries_checked=True,
     ),
 )
-print(dict(preflight=True, reused_teacher_pages=3), flush=True)
+print(dict(preflight=True, optimizer_step=START, learning_rates=lrs), flush=True)
