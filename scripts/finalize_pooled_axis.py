@@ -6,21 +6,17 @@ from pathlib import Path
 
 import numpy as np
 from campaign_protocol import read, sha, write
-from pooled_axis_study import GP, GW, HI, METHODS, SAVED, START, STEPS, check
+from pooled_axis_study import HH, HJ, METHODS, SAVED, STEPS, check
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--root", type=Path, required=True)
 root = parser.parse_args().root.resolve()
 check(root)
 rows = [json.loads(s) for s in (root / "training/sampling.jsonl").read_text().splitlines()]
-gw = [json.loads(s) for s in (GW / "training/sampling.jsonl").read_text().splitlines()]
-gp = [json.loads(s) for s in (GP / "training/sampling.jsonl").read_text().splitlines()]
-assert len(rows) == STEPS and len(gp) == START
-inherited = [json.loads(s) for s in (HI / "training/sampling.jsonl").read_text().splitlines()]
-assert rows[:START] == inherited
+old = [json.loads(s) for s in (HH / "training/sampling.jsonl").read_text().splitlines()][:STEPS]
+assert len(rows) == len(old) == STEPS
 families = {}
-whole = 0
-promoted = 0
+whole = promoted = 0
 reference_errors = []
 reference_nonexact = 0
 
@@ -33,59 +29,45 @@ def reference_compare(actual, expected):
     np.testing.assert_allclose(actual, expected, atol=1e-5, rtol=1e-5)
 
 
-for k, a in enumerate(rows):
-    b = gp[k % START]
-    if k >= START:
-        assert a["source_step"] == k % START + 1 and a["cycle"] == k // START
+for k, (a, b) in enumerate(zip(rows, old, strict=True)):
     assert a["step"] == k + 1
-    for key in ("input_sha256", "context_keep", "audit"):
-        assert a[key] == gw[k % START][key]
-    extension = a["coherent_extension"]
-    assert (
-        extension["original_candidate_payload_sha256"] == gw[k % START]["candidate_payload_sha256"]
-    )
-    old_allowed = np.asarray(extension["old_allowed"])
-    allowed = np.asarray(extension["allowed"])
-    assert extension["promoted"] == (~old_allowed & allowed).tolist()
-    assert np.all(~old_allowed | allowed)
-    promoted += sum(extension["promoted"])
-    if not any(extension["promoted"]):
-        assert a["candidate_payload_sha256"] == gw[k % START]["candidate_payload_sha256"]
-    if a["audit"]["family"] == "long_bar_fill":
-        assert not any(extension["promoted"])
-    bits = int(a["metrics"]["consistent"]["selected_alternate_bits"])
-    assert [(bits >> j) & 1 for j in range(4)] == [int(not v) for v in a["consistent_original"]]
-    assert a["audit"]["original_gp_input_sha256"] == b["input_sha256"]
-    assert a["audit"]["original_gp_candidate_sha256"] == b["candidate_payload_sha256"]
-    assert a["context_keep"] == b["context_keep"]
+    for key in (
+        "input_sha256",
+        "candidate_payload_sha256",
+        "context_keep",
+        "audit",
+        "coherent_extension",
+        "consistent_original",
+    ):
+        assert a[key] == b[key], (k, key)
     family = a["audit"]["family"]
     families[family] = families.get(family, 0) + 1
-    if family != "ambiguous":
-        assert a["input_sha256"] == b["input_sha256"]
     if family == "ambiguous":
         whole += sum(a["audit"]["alternate_allowed"])
-    if family == "long_bar_fill":
-        assert not any(a["audit"]["alternate_allowed"])
-    for method in METHODS:
-        assert all(np.isfinite(v) for v in a["metrics"][method].values())
-assert families == dict(legacy=11250, long_bar_fill=4500, ambiguous=2250)
-assert whole == 5898 and promoted == 3342
+    promoted += sum(a["coherent_extension"]["promoted"])
+    for m in METHODS:
+        assert all(np.isfinite(v) for v in a["metrics"][m].values())
+        bits = int(a["metrics"][m]["selected_alternate_bits"])
+        assert [(bits >> j) & 1 for j in range(4)] == [int(not v) for v in a["consistent_original"]]
+assert families == dict(legacy=750, long_bar_fill=300, ambiguous=150)
+expected = read(root / "plan.json")["expected_counts"]
+assert whole == expected["whole"] and promoted == expected["promoted"]
 assert (
     sum(sum(a["coherent_extension"]["promoted"]) for a in rows if a["audit"]["family"] == "legacy")
-    == 240
+    == expected["legacy_promoted"]
 )
 assert not read(root / "diagnostics/decision.json")["adoption"]
 for name in ("test-results", "preflight", "prefix-audit"):
     assert read(root / f"{name}.json")["passed"]
 snap = read(root / "snapshot-audit.json")
-assert snap["raw_ema_exact"] and snap["exports"] == 2 * len(SAVED)
+assert snap["raw_ema_exact"] and snap["exports"] == 2 * len(METHODS) * len(SAVED)
 for f, h in snap["bindings"].items():
     assert sha(Path(f)) == h
-for step in SAVED:
+for step in SAVED[1:]:
     assert read(root / f"training/restore-{step}.json")["full_state_exact"]
 phases = [
     "preflight",
-    "train-18000",
+    "train-1200",
     "evaluation",
     "stress",
     "scene512",
@@ -136,8 +118,8 @@ for group in ("evaluation", "stress"):
         assert sha(root / group / f) == h
     count = 0
     for file in (root / group / "predictions").glob("*.npz"):
-        with np.load(file) as a, np.load(HI / group / "predictions" / file.name) as b:
-            for method, old_method in (("initial", "initial"), ("winner", "consistent")):
+        with np.load(file) as a, np.load(HJ / group / "predictions" / file.name) as b:
+            for method, old_method in (("initial", "consistent"),):
                 reference_compare(a[method], b[old_method])
         count += 1
     assert count == 1536
@@ -150,16 +132,15 @@ for group, key, count in [("scene512", "model_outputs", 192), ("width-sweep", "o
 assert read(root / "scene512/metrics.json")["protected_exact"]
 assert read(root / "width-sweep/metrics.json")["states_unchanged"]
 for file in (root / "scene512").glob("predictions-*.npz"):
-    with np.load(file) as a, np.load(HI / "scene512" / file.name) as b:
-        for method, old_method in (("initial", "initial"), ("winner", "consistent")):
+    with np.load(file) as a, np.load(HJ / "scene512" / file.name) as b:
+        for method, old_method in (("initial", "consistent"),):
             for encoding in ("float", "uint8"):
                 reference_compare(a[method + "_" + encoding], b[old_method + "_" + encoding])
 for file in (root / "width-sweep").glob("wide-*.npz"):
-    with np.load(file) as a, np.load(HI / "width-sweep" / file.name) as b:
+    with np.load(file) as a, np.load(HJ / "width-sweep" / file.name) as b:
         for key, old_key in (
             ("source", "source"),
-            ("initial", "initial"),
-            ("winner", "consistent"),
+            ("initial", "consistent"),
         ):
             if key == "source":
                 np.testing.assert_array_equal(a[key], b[old_key])
@@ -172,8 +153,8 @@ for group, outputs, pages in [("ambiguity", 12, 3), ("geometry", 144, 9), ("coll
     if group == "geometry":
         assert (
             metrics["primary_outputs"] == 72
-            and metrics["repeated_anchors_exact"]
-            and metrics["trained_anchors_match_FU_exact"]
+            and metrics["repeated_anchors_within_tolerance"]
+            and len(metrics["comparisons"]) == 72
         )
     for f, h in metrics["bindings"].items():
         assert sha(Path(f)) == h
@@ -184,11 +165,9 @@ for group, outputs, pages in [("ambiguity", 12, 3), ("geometry", 144, 9), ("coll
         assert observations[r["file"]] and sha(folder / r["file"]) == r["sha256"]
     if group in ("ambiguity", "geometry", "collision"):
         for file in folder.glob("*.npz"):
-            with np.load(file) as a, np.load(HI / "diagnostics" / group / file.name) as b:
+            with np.load(file) as a, np.load(HJ / "diagnostics" / group / file.name) as b:
                 if "initial" in a.files:
-                    reference_compare(a["initial"], b["initial"])
-                if "winner" in a.files:
-                    reference_compare(a["winner"], b["consistent"])
+                    reference_compare(a["initial"], b["consistent"])
 details = root / "diagnostics/details"
 records = read(details / "manifest.json")["records"]
 observations = read(details / "observations.json")
@@ -223,28 +202,10 @@ coherent = read(root / "coherent-probes/metrics.json")
 assert coherent["outputs"] == 96 and coherent["states_unchanged"] and coherent["protected_exact"]
 for p, h in coherent["bindings"].items():
     assert sha(Path(p)) == h
-for file in (root / "mask-probes").glob("*-depth*.npz"):
-    with np.load(file) as a, np.load(HI / "mask-probes" / file.name) as b:
-        reference_compare(a["winner"], b["consistent"])
-for file in (root / "coherent-probes").glob("*-depth*.npz"):
-    with np.load(file) as a, np.load(HI / "coherent-probes" / file.name) as b:
-        reference_compare(a["winner"], b["consistent"])
 assert all(v > 0 for v in read(root / "prefix-audit.json")["hidden_parameter_changes"].values())
-hi_rows = [json.loads(s) for s in (HI / "training/sampling.jsonl").read_text().splitlines()]
-for k, a in enumerate(rows):
-    b = hi_rows[k % START]
-    for key in (
-        "input_sha256",
-        "candidate_payload_sha256",
-        "context_keep",
-        "audit",
-        "coherent_extension",
-        "consistent_original",
-    ):
-        assert a[key] == b[key]
 summary = {}
 for method in METHODS:
-    norms = [r["metrics"][method]["gradient_norm"] for r in rows[START:]]
+    norms = [r["metrics"][method]["gradient_norm"] for r in rows]
     summary[method] = dict(
         clipped=sum(v > 1 for v in norms),
         maximum_norm=max(norms),
@@ -254,9 +215,9 @@ for method in METHODS:
 write(
     root / "diagnostics/integrity.json",
     dict(
-        original_gp_batches_verified=18000,
-        new_updates=12000,
-        inherited_updates=6000,
+        original_hh_batches_verified=1200,
+        new_updates_per_arm=1200,
+        inherited_updates=0,
         families=families,
         new_whole_axis_examples=whole,
         newly_allowed_partial_examples=promoted,
@@ -307,13 +268,13 @@ files += [
 write(
     root / "completion.json",
     dict(
-        stage="complete_coarse_duration",
-        steps=18000,
-        additional_steps=12000,
-        inherited_steps=6000,
-        trained_arms=1,
+        stage="complete_late_opening",
+        steps=1200,
+        trained_arms=2,
+        optimizer_reset_both=True,
         reference=(
-            "FW mixed6000; archived HI coarse6000, numeric tolerance declared before training"
+            "HJ raw18000; matched control and opening fine-tuning; "
+            "numeric tolerance declared before training"
         ),
         outputs=9516,
         additional_outputs=338,

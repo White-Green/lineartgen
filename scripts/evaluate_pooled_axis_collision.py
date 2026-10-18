@@ -11,7 +11,7 @@ from flax import nnx
 from learned_coarse_axis_model import infer, load_field
 from PIL import Image, ImageDraw
 from plausible_study import digest
-from pooled_axis_study import GO, LABELS, STEPS, check
+from pooled_axis_study import GO, LABELS, MODELREF, STEPS, check
 from pooled_axis_study import REPORT_METHODS as METHODS
 
 parser = argparse.ArgumentParser()
@@ -41,12 +41,12 @@ for depth in (1, 3, 6):
     for m, value in predictions.items():
         assert np.isfinite(value).all() and value.min() >= -1 and value.max() <= 1
         if m == "initial":
-            original = GO / f"predictions-{m}-{depth}.npz"
+            original = MODELREF / f"diagnostics/collision/predictions-{depth}.npz"
             bindings[str(original)] = sha(original)
             with np.load(original) as old:
-                np.testing.assert_allclose(value, old["prediction"], atol=1e-4, rtol=0)
+                np.testing.assert_allclose(value, old["consistent"], atol=1e-5, rtol=1e-5)
                 differences.append(
-                    dict(method=m, depth=depth, max_abs=float(abs(value - old["prediction"]).max()))
+                    dict(method=m, depth=depth, max_abs=float(abs(value - old["consistent"]).max()))
                 )
     queries[str(depth)] = {m: v[:, 128, 85, 0].tolist() for m, v in predictions.items()}
     file = out / f"predictions-{depth}.npz"
@@ -76,7 +76,8 @@ write(
     dict(
         outputs=18,
         states_unchanged=True,
-        reference_cpu_gpu_atol=1e-4,
+        reference_atol=1e-5,
+        reference_rtol=1e-5,
         reference_differences=differences,
         query_pixels=queries,
         bindings=bindings,

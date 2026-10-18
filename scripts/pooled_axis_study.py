@@ -1,4 +1,4 @@
-"""HJ: continue the unchanged HI model, objective and optimizer for two data cycles."""
+"""HL: compare late opening with matched unchanged-loss continuation."""
 
 import argparse
 import fcntl
@@ -24,11 +24,10 @@ from procedural_shape_study import AMBIGUITY as AMBIGUITY
 from procedural_shape_study import DIAGNOSTIC as DIAGNOSTIC
 from procedural_shape_study import EVAL_SEED as EVAL_SEED
 from procedural_shape_study import GK as GK
-from procedural_shape_study import MODELREF as MODELREF
 from procedural_shape_study import select
 from scale_style_balance_study import update
 
-from lineartgen.config import load_config
+from lineartgen.config import load_config, save_config
 from lineartgen.training import checkpoints, lineart_state
 
 GP = Path("../jax-pooled-procedural-20261017/runs/pooled-procedural-20261017-retry1").resolve()
@@ -42,19 +41,15 @@ HD = Path("../jax-supported-axis-broad-20261017/runs/supported-axis-broad-202610
 HF = Path("../jax-coherent-mask-fit-20261017/runs/coherent-mask-fit-20261017").resolve()
 HG = Path("../jax-mask-context-fit-20261017/runs/mask-context-fit-20261017").resolve()
 HH = Path("../jax-coherent-axis-broad-20261017/runs/coherent-axis-broad-20261017").resolve()
-HI = Path("../jax-learned-coarse-axis-20261017/runs/learned-coarse-axis-20261017").resolve()
-DOC = Path("docs/coarse-duration-plan-20261018.md")
-METHODS = ("consistent",)
+HJ = Path("../jax-coarse-duration-20261018/runs/coarse-duration-20261018").resolve()
+HK = Path("../jax-sign-reduction-audit-20261018/runs/sign-reduction-audit-20261018").resolve()
+MODELREF = HJ
+DOC = Path("docs/late-opening-plan-20261018.md")
+METHODS = ("winner", "consistent")
 REPORT_METHODS = ("winner", "consistent")
-LABELS = dict(initial="FW mixed6000", winner="HI coarse6000", consistent="HJ coarse18000")
-START = 6000
-STEPS = 18000
-SAVED = (START, START + 6, START + 36, *range(7000, STEPS + 1, 1000))
-
-
-def cycle_index(step):
-    assert 0 <= step < STEPS
-    return step % START
+LABELS = dict(initial="HJ coarse18000", winner="HL control1200", consistent="HL opening1200")
+STEPS = 1200
+SAVED = (0, 6, 36, 400, 800, 1200)
 
 
 def arms_from_root(root):
@@ -67,7 +62,7 @@ def arms_from_root(root):
             and model.head.component == 0
         )
         arms[name] = make_arm(cfg, model)
-        arms[name]["gradient"] = axis_gradient()
+        arms[name]["gradient"] = axis_gradient(opening_weight=0.0 if name == "winner" else 0.1)
     return arms
 
 
@@ -79,14 +74,10 @@ def load_data():
     data["hh_rows"] = [
         json.loads(s) for s in (HH / "training/sampling.jsonl").read_text().splitlines()
     ]
-    data["hi_rows"] = [
-        json.loads(s) for s in (HI / "training/sampling.jsonl").read_text().splitlines()
-    ]
     return data
 
 
 def batch(data, step):
-    step = cycle_index(step)
     p, c, d = previous_batch(data, step)
     old = data["gw_rows"][step]
     assert digest((p, c[0], d)) == old["input_sha256"]
@@ -128,34 +119,45 @@ def batch(data, step):
     assert digest(c) == hh["candidate_payload_sha256"]
     assert data["coherent_extension"] == hh["coherent_extension"]
     assert data["last_audit"] == hh["audit"]
-    hi = data["hi_rows"][step]
-    assert digest((p, c[0], d)) == hi["input_sha256"]
-    assert digest(c) == hi["candidate_payload_sha256"]
-    assert data["coherent_extension"] == hi["coherent_extension"]
     return p, c, d
 
 
 def prepare(root):
     assert not subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()
-    reviewed = read(HI / "review-completion.json")
+    reviewed = read(HJ / "review-completion.json")
     assert reviewed["original_strict_protocol_passed"] is False
-    assert read(HI / "diagnostics/decision.json")["partial_shape_gain"]
-    assert not read(HI / "diagnostics/decision.json")["broad_quality_pass"]
     for f, h in reviewed["evidence"].items():
-        assert sha(HI / f) == h
+        assert sha(HJ / f) == h, f
+    for f, h in read(HJ / "supplemental-binding.json")["bindings"].items():
+        assert sha(Path(f)) == h, f
+    for f, h in read(HJ / "snapshot-audit.json")["bindings"].items():
+        assert sha(Path(f)) == h, f
     root.mkdir(parents=True, exist_ok=False)
-    (root / "diagnostics").mkdir()
-    shutil.copytree(HI / "snapshots/step-6000/consistent/raw", root / "initials/consistent")
-    shutil.copytree(HI / "snapshots/step-6000/consistent", root / "snapshots/step-6000/consistent")
-    shutil.copytree(HI / "training/checkpoints/6000", root / "training/checkpoints/6000")
-    shutil.copy2(HI / "training/sampling.jsonl", root / "training/sampling.jsonl")
-    shutil.copy2(HI / "config.json", root / "config.json")
-    model, cfg = load_field(root / "initials/consistent")
-    assert cfg == load_config(root / "config.json")
-    assert cfg.train.steps == 6000 and cfg.train.minimum_learning_rate == 2e-5
-    assert cfg.train.peak_learning_rate == 2e-4 and cfg.train.batch_size == 4
+    model, cfg = load_field(HJ / "snapshots/step-18000/consistent/raw")
     assert sum(v.size for v in jax.tree.leaves(nnx.state(model, nnx.Param))) == 22508
-    shutil.copytree(HI / "reference", root / "reference")
+    train = cfg.train.model_copy(
+        update=dict(
+            steps=STEPS,
+            learning_rate_decay_steps=STEPS,
+            learning_rate=1e-5,
+            minimum_learning_rate=2e-5,
+            warmup_steps=0,
+        )
+    )
+    cfg = cfg.model_copy(update=dict(train=train))
+    assert cfg.train.peak_learning_rate == 2e-5
+    for name in METHODS:
+        save_field(
+            model,
+            cfg,
+            root / f"initials/{name}",
+            provenance="HL HJ raw18000, matched fresh optimizer; research only",
+        )
+        restored, cc = load_field(root / f"initials/{name}")
+        exact(nnx.state(model, nnx.Param), nnx.state(restored, nnx.Param))
+        assert cc == cfg
+    save_config(cfg, root / "config.json")
+    shutil.copytree(HJ / "snapshots/step-18000/consistent/raw", root / "reference")
     for name in (
         "train.npz",
         "data.json",
@@ -168,56 +170,67 @@ def prepare(root):
         "width-plan.json",
         "probe.json",
     ):
-        (root / name).symlink_to((HI / name).resolve(), target_is_directory=(HI / name).is_dir())
+        (root / name).symlink_to((HJ / name).resolve(), target_is_directory=(HJ / name).is_dir())
     (root / "scene512").mkdir()
     for name in ["plan.json"] + [f"input-{i}.npz" for i in range(8)]:
-        shutil.copy2(HI / "scene512" / name, root / "scene512" / name)
-    (root / "diagnostics/orientation").mkdir()
+        shutil.copy2(HJ / "scene512" / name, root / "scene512" / name)
+    (root / "diagnostics/orientation").mkdir(parents=True)
     shutil.copy2(
-        HI / "diagnostics/orientation/square48-input.npz",
+        HJ / "diagnostics/orientation/square48-input.npz",
         root / "diagnostics/orientation/square48-input.npz",
-    )
-    (root / f"snapshots/step-{STEPS}").mkdir()
-    (root / f"snapshots/step-{STEPS}/winner").symlink_to(
-        HI / "snapshots/step-6000/consistent", target_is_directory=True
     )
     for folder in ("mask-probes", "coherent-probes"):
         (root / folder).mkdir()
         for split in ("train", "transfer"):
-            shutil.copy2(HI / folder / f"{split}.npz", root / folder / f"{split}.npz")
-    shutil.copytree(HI / "support-preview", root / "support-preview")
+            shutil.copy2(HJ / folder / f"{split}.npz", root / folder / f"{split}.npz")
+    shutil.copytree(HH / "support-preview", root / "support-preview")
     write(
         root / "teacher-reuse.json",
         dict(
-            source=str(HI / "support-preview"),
+            source=str(HH / "support-preview"),
             pages=3,
             new_pages_viewed=0,
-            files={str(f): sha(f) for f in (HI / "support-preview").iterdir() if f.is_file()},
-            explanation="Unchanged HI/HH teachers; two exact repetitions of6000 batches",
+            files={str(f): sha(f) for f in (HH / "support-preview").iterdir() if f.is_file()},
+            explanation="Unchanged first1200 HH/HI/HJ batches and retained-axis teacher policy.",
         ),
     )
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     subprocess.run(
         ["git", "archive", "--format=tar.gz", "-o", str(root / "source.tar.gz"), commit], check=True
     )
-    # Training journal and optimizer checkpoint copy are mutable; bind their immutable HI origins.
-    files = [
-        p for p in root.rglob("*") if p.is_file() and "training" not in p.relative_to(root).parts
-    ]
-    files += [Path(f) for f in read(HI / "plan.json")["bindings"]]
+    files = [p for p in root.rglob("*") if p.is_file()]
+    files += [Path(p) for p in read(HJ / "plan.json")["bindings"]]
     files += [
-        HI / "review-completion.json",
-        HI / "supplemental-binding.json",
-        HI / "diagnostics/decision.json",
-        HI / "training/sampling.jsonl",
+        HJ / "review-completion.json",
+        HJ / "supplemental-binding.json",
+        HJ / "training/sampling.jsonl",
+        HK / "completion.json",
+        HK / "decision.json",
+        HH / "diagnostics/active-ink-audit.json",
         DOC.resolve(),
     ]
-    files += [p for p in (HI / "training/checkpoints/6000").rglob("*") if p.is_file()]
+    files += [p for p in (HJ / "snapshots/step-18000/consistent/raw").iterdir() if p.is_file()]
     files += [
         Path(f).resolve()
         for f in subprocess.check_output(["git", "ls-files"], text=True).splitlines()
         if f.endswith((".py", ".toml")) or f == "uv.lock"
     ]
+    hhrows = [json.loads(s) for s in (HH / "training/sampling.jsonl").read_text().splitlines()][
+        :STEPS
+    ]
+    expected = dict(
+        whole=sum(
+            sum(a["audit"]["alternate_allowed"])
+            for a in hhrows
+            if a["audit"]["family"] == "ambiguous"
+        ),
+        promoted=sum(sum(a["coherent_extension"]["promoted"]) for a in hhrows),
+        legacy_promoted=sum(
+            sum(a["coherent_extension"]["promoted"])
+            for a in hhrows
+            if a["audit"]["family"] == "legacy"
+        ),
+    )
     write(
         root / "plan.json",
         dict(
@@ -225,17 +238,13 @@ def prepare(root):
             bindings={str(p.resolve()): sha(p) for p in files},
             archive_sha256=sha(root / "source.tar.gz"),
             steps=STEPS,
-            start=START,
-            additional_steps=STEPS - START,
             saved=SAVED,
             parameters=22508,
-            trained_arms=1,
-            inherited_steps=6000,
-            schedule="Original cosine6000 remains at2e-5; optimizer/EMA/count restored, no reset",
-            comparison="Archived HI raw6000 vs HJ raw18000; schema winner=HI, consistent=HJ",
-            original_HI_strict_protocol_passed=False,
-            reference_tolerance=dict(atol=1e-5, rtol=1e-5),
-            cross_execution_inference_tolerance=dict(atol=1e-5, rtol=1e-5),
+            trained_arms=2,
+            initial="HJ raw18000",
+            opening_weights=dict(winner=0.0, consistent=0.1),
+            optimizer="Both fresh AdamW/EMA; constant2e-5=base1e-5*sqrt4, no inherited moments",
+            expected_counts=expected,
             adoption=False,
             fresh_confirmation=False,
         ),
@@ -262,7 +271,7 @@ def snapshot(root, arms, step):
                 model,
                 arm["config"],
                 root / f"snapshots/step-{step}/{name}/{mode}",
-                provenance=f"HJ coarse duration {name} {step} {mode}; research only",
+                provenance=f"HL late opening {name} {step} {mode}; research only",
             )
 
 
@@ -278,7 +287,7 @@ def train(root, until):
     out.mkdir(exist_ok=True)
     rows = []
     with checkpoints.manager(out / "checkpoints", keep=len(SAVED)) as manager:
-        start = lineart_state.restore(manager, arms) if manager.latest_step() is not None else START
+        start = lineart_state.restore(manager, arms) if manager.latest_step() is not None else 0
         journal = out / "sampling.jsonl"
         if journal.exists():
             rows = [json.loads(s) for s in journal.read_text().splitlines()]
@@ -286,13 +295,9 @@ def train(root, until):
                 "Preserve interruption evidence and explicitly audit replay before retry"
             )
             assert [r["step"] for r in rows] == list(range(1, start + 1))
-        assert start >= START
-        if start == START:
-            raw, _ = load_field(root / "snapshots/step-6000/consistent/raw")
-            ema, _ = load_field(root / "snapshots/step-6000/consistent/ema")
-            exact(nnx.state(raw, nnx.Param), nnx.state(arms["consistent"]["model"], nnx.Param))
-            exact(nnx.state(ema, nnx.Param), arms["consistent"]["ema"])
-            write(out / "restore-6000.json", dict(full_state_exact=True, inherited=True))
+        if start == 0:
+            lineart_state.save(manager, arms, 0)
+            snapshot(root, arms, 0)
         assert start < until
         for k in range(start, until):
             p, c, d = batch(data, k)
@@ -304,9 +309,7 @@ def train(root, until):
                 assert all(np.isfinite(v) for v in metrics[name].values())
             row = dict(
                 step=k + 1,
-                **select(cycle_index(k)),
-                cycle=k // START,
-                source_step=cycle_index(k) + 1,
+                **select(k),
                 metrics=metrics,
                 seconds=seconds,
                 input_sha256=digest((p, c[0], d)),
@@ -319,16 +322,12 @@ def train(root, until):
             rows.append(row)
             with journal.open("a") as f:
                 f.write(json.dumps(row) + "\n")
-            if k == START + 35:
+            if k == 35:
                 replay = arms_from_root(root)
-                assert lineart_state.restore(manager, replay, START) == START
-                for j in range(START, START + 36):
+                for j in range(36):
                     for name in METHODS:
                         exact(update(replay[name], *batch(data, j)), rows[j]["metrics"][name])
-                exact(
-                    lineart_state.payload(replay, START + 36),
-                    lineart_state.payload(arms, START + 36),
-                )
+                exact(lineart_state.payload(replay, 36), lineart_state.payload(arms, 36))
                 initial = arms_from_root(root)["consistent"]["model"].coarse_branch
                 learned = arms["consistent"]["model"].coarse_branch
                 hidden_changes = {
@@ -350,7 +349,6 @@ def train(root, until):
                         metrics_exact=True,
                         full_state_exact=True,
                         steps=36,
-                        start=START,
                         hidden_parameter_changes=hidden_changes,
                     ),
                 )
@@ -361,7 +359,7 @@ def train(root, until):
                 exact(lineart_state.payload(restored, k + 1), lineart_state.payload(arms, k + 1))
                 snapshot(root, arms, k + 1)
                 write(out / f"restore-{k + 1}.json", dict(full_state_exact=True))
-            if k < START + 36 or (k + 1) % 100 == 0:
+            if k < 36 or (k + 1) % 100 == 0:
                 write(out / "progress.json", dict(step=k + 1, metrics=metrics))
                 print(dict(step=k + 1), flush=True)
         if until < STEPS:
@@ -378,10 +376,7 @@ def train(root, until):
                     assert cfg == arm["config"]
                     exact(expected, nnx.state(model, nnx.Param))
                     bindings.update({str(p): sha(p) for p in folder.iterdir() if p.is_file()})
-        write(
-            root / "snapshot-audit.json",
-            dict(raw_ema_exact=True, exports=2 * len(SAVED), bindings=bindings),
-        )
+        write(root / "snapshot-audit.json", dict(raw_ema_exact=True, exports=24, bindings=bindings))
 
 
 if __name__ == "__main__":

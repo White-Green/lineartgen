@@ -92,10 +92,10 @@ def render():
         for col, label in enumerate(
             (
                 "uint8 rough source",
-                "FW mixed6000 uint8",
-                "HI coarse6000 uint8",
                 "HJ coarse18000 uint8",
-                "HJ coarse18000 float",
+                "HL control1200 uint8",
+                "HL opening1200 uint8",
+                "HL opening1200 float",
             )
         ):
             pen.text((col * SIZE + 8, 8), label, fill="black")

@@ -33,7 +33,7 @@ states = {m: digest(nnx.state(v, nnx.Param)) for m, v in models.items()}
 bindings = {str(ip.resolve()): sha(ip)}
 for path in paths.values():
     bindings.update({str(f): sha(f) for f in path.iterdir() if f.is_file()})
-pages = []
+pages, comparisons = [], []
 for depth in (1, 3, 6):
     reference = root / f"diagnostics/ambiguity/depth-{depth}.npz"
     bindings[str(reference)] = sha(reference)
@@ -42,7 +42,7 @@ for depth in (1, 3, 6):
     initial_ref = MODELREF / f"diagnostics/ambiguity/depth-{depth}.npz"
     bindings[str(initial_ref.resolve())] = sha(initial_ref)
     with np.load(initial_ref) as z:
-        expected["initial"] = z["mixed"][1]
+        expected["initial"] = z["consistent"][1]
     values = []
     for i in range(8):
         prepared = prepare_inputs(
@@ -55,7 +55,17 @@ for depth in (1, 3, 6):
         pred = {m: np.asarray(infer(v, prepared)) for m, v in models.items()}
         for m, v in pred.items():
             assert np.isfinite(v).all() and v.min() >= -1 and v.max() <= 1
-            np.testing.assert_array_equal(v[1], expected[m])
+            comparisons.append(
+                dict(
+                    depth=depth,
+                    index=i,
+                    method=m,
+                    exact=bool(np.array_equal(v[1], expected[m])),
+                    maximum_absolute_difference=float(abs(v[1] - expected[m]).max()),
+                    mismatched_elements=int(np.count_nonzero(v[1] != expected[m])),
+                )
+            )
+            np.testing.assert_allclose(v[1], expected[m], atol=1e-5, rtol=1e-5)
         file = out / f"predictions-{depth}-{i}.npz"
         np.savez_compressed(file, **pred)
         bindings[str(file)] = sha(file)
@@ -86,8 +96,13 @@ write(
         outputs=144,
         primary_outputs=72,
         states_unchanged=True,
-        repeated_anchors_exact=True,
-        trained_anchors_match_FU_exact=True,
+        repeated_anchors_exact=all(c["exact"] for c in comparisons),
+        trained_anchors_match_FU_exact=all(
+            c["exact"] for c in comparisons if c["method"] != "initial"
+        ),
+        comparisons=comparisons,
+        repeated_anchors_within_tolerance=True,
+        cross_execution_tolerance=dict(atol=1e-5, rtol=1e-5),
         bindings=bindings,
     ),
 )

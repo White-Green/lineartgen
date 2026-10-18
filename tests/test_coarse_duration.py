@@ -1,11 +1,11 @@
 import jax
 import jax.numpy as jnp
 import numpy as np
+from coarse_duration_study import HI, START, STEPS, cycle_index
 from cue_capacity import make_arm
 from flax import nnx
 from learned_coarse_axis_model import load_field
 from plausible_study import exact
-from pooled_axis_study import HI, START, STEPS, cycle_index
 
 from lineartgen.training import checkpoints
 

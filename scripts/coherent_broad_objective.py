@@ -26,7 +26,19 @@ def allowed_mask(normal, allowed, strengths, candidates, policy):
     return jnp.repeat(jnp.stack((original, ~original), 1), 9, 1)
 
 
-def axis_parts(fields, original, merged, axis, strengths, eligible, allowed, normal, *, policy):
+def axis_parts(
+    fields,
+    original,
+    merged,
+    axis,
+    strengths,
+    eligible,
+    allowed,
+    normal,
+    *,
+    policy,
+    opening_weight=0.0,
+):
     teacher = tuple(
         jnp.where(eligible[:, None, None, None, None], b, a)
         for a, b in zip(original, merged, strict=True)
@@ -58,12 +70,14 @@ def axis_parts(fields, original, merged, axis, strengths, eligible, allowed, nor
     parts, prior = jax.lax.cond(jnp.any(allowed), extended, unchanged, operand=None)
     return parts | dict(
         opening_consistency=prior,
-        loss=parts["loss"] + 0.0 * prior,
+        loss=parts["loss"] + opening_weight * prior,
         axis_eligible_fraction=allowed.astype(jnp.float32).mean(),
     )
 
 
-def axis_gradient(policy="retained"):
+def axis_gradient(policy="retained", *, opening_weight=0.0):
+    assert opening_weight >= 0
+
     @nnx.jit
     def gradient(model, prepared, bases, directions):
         base, merged, eligible, keep, axis, axis_directions, allowed = bases
@@ -83,6 +97,7 @@ def axis_gradient(policy="retained"):
                 allowed,
                 directions,
                 policy=policy,
+                opening_weight=opening_weight,
             )
             return parts["loss"], parts
 

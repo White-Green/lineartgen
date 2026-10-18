@@ -37,7 +37,7 @@ def evaluate(root):
             reference = MODELREF / "width-sweep" / ip.name
             with np.load(reference) as previous:
                 np.testing.assert_array_equal(source, previous["source"])
-                old = previous["mixed"]
+                old = previous["consistent"]
             bindings[str(reference.resolve())] = sha(reference)
             bindings[str(ip)] = sha(ip)
             prepared = prepare_inputs(
