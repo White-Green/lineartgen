@@ -1,4 +1,4 @@
-"""HO: verify frozen HJ initialization and unchanged-control update parity."""
+"""HP: verify HO initialization and unchanged-opening control update parity."""
 
 import argparse
 from pathlib import Path
@@ -6,11 +6,11 @@ from pathlib import Path
 import jax
 import numpy as np
 from campaign_protocol import read, sha, write
-from coherent_broad_base_objective import axis_gradient as old_gradient
+from coherent_broad_objective import axis_gradient as old_gradient
 from flax import nnx
 from learned_coarse_axis_model import infer, load_field
 from plausible_study import exact
-from pooled_axis_study import HJ, METHODS, STEPS, arms_from_root, batch, check, load_data
+from pooled_axis_study import HO, METHODS, STEPS, arms_from_root, batch, check, load_data
 from scale_style_balance_study import update
 
 from lineartgen.training import lineart_state
@@ -21,7 +21,7 @@ root = p.parse_args().root.resolve()
 check(root)
 assert jax.devices()[0].platform != "cpu"
 data, arms = load_data(), arms_from_root(root)
-base, _ = load_field(HJ / "snapshots/step-18000/consistent/raw")
+base, _ = load_field(HO / "snapshots/step-6000/consistent/raw")
 for arm in arms.values():
     exact(nnx.state(base, nnx.Param), nnx.state(arm["model"], nnx.Param))
     exact(nnx.state(base, nnx.Param), arm["ema"])
@@ -42,23 +42,24 @@ for step in (0, 1, 2, 3, 4, 5, 18, 19, 20, 21, 22, 23, 30, 31, 32, 33, 34, 35):
         parts[name] = {k: float(v) for k, v in pp.items()}
     np.testing.assert_allclose(
         parts["consistent"]["loss"] - parts["winner"]["loss"],
-        0.1 * parts["winner"]["opening_consistency"],
+        0.1 * parts["winner"]["support_margin"],
         atol=1e-7,
         rtol=1e-5,
     )
-    assert parts["consistent"]["opening_consistency"] == parts["winner"]["opening_consistency"]
+    assert parts["consistent"]["support_margin"] == parts["winner"]["support_margin"]
     rows.append(
         dict(step=step, family=data["last_audit"]["family"], initial_pixels_exact=True, parts=parts)
     )
-assert any(r["parts"]["winner"]["opening_consistency"] > 0 for r in rows)
+assert any(r["parts"]["winner"]["support_margin"] > 0 for r in rows)
 old = arms_from_root(root)["winner"]
-old["gradient"] = old_gradient()
+old["gradient"] = old_gradient(opening_weight=0.1)
 new = arms_from_root(root)["winner"]
 for step in range(6):
     b = batch(data, step)
-    exact(update(old, *b), update(new, *b))
+    a, z = update(old, *b), update(new, *b)
+    exact(a, {k: z[k] for k in a})
 exact(lineart_state.payload({"control": old}, 6), lineart_state.payload({"control": new}, 6))
-for step in (5994, 5999):
+for step in (1194, 1199):
     batch(data, step)
 for f, h in read(root / "teacher-reuse.json")["files"].items():
     assert sha(Path(f)) == h and sha(root / "support-preview" / Path(f).name) == h

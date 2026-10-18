@@ -18,7 +18,7 @@ p.add_argument("--root", type=Path, required=True)
 root = p.parse_args().root.resolve()
 check(root)
 out = root / "coherent-probes"
-paths = {m: root / f"snapshots/step-6000/{m}/raw" for m in ("winner", "consistent")}
+paths = {m: root / f"snapshots/step-1200/{m}/raw" for m in ("winner", "consistent")}
 models = {m: load_field(path)[0] for m, path in paths.items()}
 states = {m: digest(nnx.state(v, nnx.Param)) for m, v in models.items()}
 records, bindings, outputs = [], {}, 0
@@ -65,8 +65,8 @@ for split in ("train", "transfer"):
                     [
                         f"{split}{i} d{depth} source",
                         "retained teacher",
-                        "HO control6000",
-                        "HO opening6000",
+                        "HP control1200",
+                        "HP support1200",
                     ]
                     for i in ids
                 ],

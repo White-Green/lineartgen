@@ -13,6 +13,7 @@ parser.add_argument(
     "phase",
     choices=(
         "preflight",
+        "support-fields",
         "train",
         "evaluation",
         "stress",
@@ -28,11 +29,12 @@ parser.add_argument(
     ),
 )
 parser.add_argument("--root", type=Path, required=True)
-parser.add_argument("--until", type=int, choices=(1000, 2000, 3000, 4000, 5000, 6000))
+parser.add_argument("--until", type=int, choices=(400, 800, 1200))
 args = parser.parse_args()
 root = args.root.resolve()
 scripts = dict(
     preflight="audit_pooled_axis.py",
+    **{"support-fields": "audit_support_margin_fields.py"},
     train="pooled_axis_study.py",
     evaluation="evaluate_pooled_axis.py",
     stress="evaluate_pooled_axis_rough.py",

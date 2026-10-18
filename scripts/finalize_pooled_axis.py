@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 from campaign_protocol import read, sha, write
-from pooled_axis_study import HH, HM, METHODS, SAVED, STEPS, check
+from pooled_axis_study import HH, HO, METHODS, SAVED, STEPS, check
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--root", type=Path, required=True)
@@ -49,7 +49,7 @@ for k, (a, b) in enumerate(zip(rows, old, strict=True)):
         assert all(np.isfinite(v) for v in a["metrics"][m].values())
         bits = int(a["metrics"][m]["selected_alternate_bits"])
         assert [(bits >> j) & 1 for j in range(4)] == [int(not v) for v in a["consistent_original"]]
-assert families == dict(legacy=3750, long_bar_fill=1500, ambiguous=750)
+assert families == dict(legacy=750, long_bar_fill=300, ambiguous=150)
 expected = read(root / "plan.json")["expected_counts"]
 assert whole == expected["whole"] and promoted == expected["promoted"]
 assert (
@@ -59,6 +59,11 @@ assert (
 assert not read(root / "diagnostics/decision.json")["adoption"]
 for name in ("test-results", "preflight", "prefix-audit"):
     assert read(root / f"{name}.json")["passed"]
+support = read(root / "diagnostics/support-fields/results.json")
+assert support["passed"] and len(support["rows"]) == 10
+for f, h in support["bindings"].items():
+    assert sha(Path(f)) == h
+assert sha(Path(support["reference_review"])) == support["reference_review_sha256"]
 snap = read(root / "snapshot-audit.json")
 assert snap["raw_ema_exact"] and snap["exports"] == 2 * len(METHODS) * len(SAVED)
 for f, h in snap["bindings"].items():
@@ -67,7 +72,8 @@ for step in SAVED[1:]:
     assert read(root / f"training/restore-{step}.json")["full_state_exact"]
 phases = [
     "preflight",
-    "train-6000",
+    "support-fields",
+    "train-1200",
     "evaluation",
     "stress",
     "scene512",
@@ -118,7 +124,7 @@ for group in ("evaluation", "stress"):
         assert sha(root / group / f) == h
     count = 0
     for file in (root / group / "predictions").glob("*.npz"):
-        with np.load(file) as a, np.load(HM / group / "predictions" / file.name) as b:
+        with np.load(file) as a, np.load(HO / group / "predictions" / file.name) as b:
             for method, old_method in (("initial", "consistent"),):
                 reference_compare(a[method], b[old_method])
         count += 1
@@ -132,12 +138,12 @@ for group, key, count in [("scene512", "model_outputs", 192), ("width-sweep", "o
 assert read(root / "scene512/metrics.json")["protected_exact"]
 assert read(root / "width-sweep/metrics.json")["states_unchanged"]
 for file in (root / "scene512").glob("predictions-*.npz"):
-    with np.load(file) as a, np.load(HM / "scene512" / file.name) as b:
+    with np.load(file) as a, np.load(HO / "scene512" / file.name) as b:
         for method, old_method in (("initial", "consistent"),):
             for encoding in ("float", "uint8"):
                 reference_compare(a[method + "_" + encoding], b[old_method + "_" + encoding])
 for file in (root / "width-sweep").glob("wide-*.npz"):
-    with np.load(file) as a, np.load(HM / "width-sweep" / file.name) as b:
+    with np.load(file) as a, np.load(HO / "width-sweep" / file.name) as b:
         for key, old_key in (
             ("source", "source"),
             ("initial", "consistent"),
@@ -165,7 +171,7 @@ for group, outputs, pages in [("ambiguity", 12, 3), ("geometry", 144, 9), ("coll
         assert observations[r["file"]] and sha(folder / r["file"]) == r["sha256"]
     if group in ("ambiguity", "geometry", "collision"):
         for file in folder.glob("*.npz"):
-            with np.load(file) as a, np.load(HM / "diagnostics" / group / file.name) as b:
+            with np.load(file) as a, np.load(HO / "diagnostics" / group / file.name) as b:
                 if "initial" in a.files:
                     reference_compare(a["initial"], b["consistent"])
 details = root / "diagnostics/details"
@@ -268,12 +274,12 @@ files += [
 write(
     root / "completion.json",
     dict(
-        stage="complete_late_opening_restart",
+        stage="complete_support_margin_cleanup",
         steps=STEPS,
         trained_arms=2,
         optimizer_reset_both=True,
         reference=(
-            "HJ raw18000; cosine restart; HM opening6000 display reference; "
+            "HO opening6000 initial/reference; opening.1 both, support0/.1; "
             "numeric tolerance declared before training"
         ),
         outputs=9516,

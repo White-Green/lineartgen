@@ -1,4 +1,4 @@
-"""HO: matched late-opening cosine restart after the HM duration comparison."""
+"""HP: matched support-margin cleanup from HO opening6000."""
 
 import argparse
 import fcntl
@@ -12,7 +12,7 @@ import jax
 import numpy as np
 from axis_family_data import axis_payload
 from campaign_protocol import read, sha, write
-from coherent_broad_objective import axis_gradient, selected_original
+from coherent_broad_objective import selected_original
 from cue_capacity import make_arm
 from flax import nnx
 from learned_coarse_axis_model import load_field, save_field
@@ -26,6 +26,7 @@ from procedural_shape_study import EVAL_SEED as EVAL_SEED
 from procedural_shape_study import GK as GK
 from procedural_shape_study import select
 from scale_style_balance_study import update
+from support_margin_objective import support_gradient
 
 from lineartgen.config import load_config, save_config
 from lineartgen.training import checkpoints, lineart_state
@@ -45,13 +46,14 @@ HJ = Path("../jax-coarse-duration-20261018/runs/coarse-duration-20261018").resol
 HK = Path("../jax-sign-reduction-audit-20261018/runs/sign-reduction-audit-20261018").resolve()
 HM = Path("../jax-late-opening-duration-20261018/runs/late-opening-duration-20261018").resolve()
 HN = Path("../jax-opening-gradient-audit-20261018/runs/opening-gradient-audit-20261018").resolve()
-MODELREF = HM
-DOC = Path("docs/late-opening-restart-plan-20261018.md")
+HO = Path("../jax-late-opening-restart-20261018/runs/late-opening-restart-20261018").resolve()
+MODELREF = HO
+DOC = Path("docs/support-margin-cleanup-plan-20261018.md")
 METHODS = ("winner", "consistent")
 REPORT_METHODS = ("winner", "consistent")
-LABELS = dict(initial="HM opening6000", winner="HO control6000", consistent="HO opening6000")
-STEPS = 6000
-SAVED = (0, 6, 36, 1000, 2000, 3000, 4000, 5000, 6000)
+LABELS = dict(initial="HO opening6000", winner="HP control1200", consistent="HP support1200")
+STEPS = 1200
+SAVED = (0, 6, 36, 400, 800, 1200)
 
 
 def arms_from_root(root):
@@ -64,7 +66,7 @@ def arms_from_root(root):
             and model.head.component == 0
         )
         arms[name] = make_arm(cfg, model)
-        arms[name]["gradient"] = axis_gradient(opening_weight=0.0 if name == "winner" else 0.1)
+        arms[name]["gradient"] = support_gradient(weight=0.0 if name == "winner" else 0.1)
     return arms
 
 
@@ -148,13 +150,15 @@ def prepare(root):
         assert sha(Path(f)) == h, f
     for f, h in read(HJ / "snapshot-audit.json")["bindings"].items():
         assert sha(Path(f)) == h, f
-    for source in (HM, HN):
+    for source in (HM, HN, HO):
         for f, h in read(source / "completion.json")["evidence"].items():
             assert sha(source / f) == h, f
     for f, h in read(HM / "supplemental-binding.json")["evidence"].items():
         assert sha(HM / f) == h, f
+    for f, h in read(HO / "supplemental-binding.json")["evidence"].items():
+        assert sha(Path(f)) == h, f
     root.mkdir(parents=True, exist_ok=False)
-    model, cfg = load_field(HJ / "snapshots/step-18000/consistent/raw")
+    model, cfg = load_field(HO / "snapshots/step-6000/consistent/raw")
     assert sum(v.size for v in jax.tree.leaves(nnx.state(model, nnx.Param))) == 22508
     cfg = restart_config(cfg)
     assert cfg.train.peak_learning_rate == 2e-4
@@ -163,13 +167,13 @@ def prepare(root):
             model,
             cfg,
             root / f"initials/{name}",
-            provenance="HO HJ raw18000, matched fresh optimizer; research only",
+            provenance="HP HO opening6000, matched fresh optimizer; research only",
         )
         restored, cc = load_field(root / f"initials/{name}")
         exact(nnx.state(model, nnx.Param), nnx.state(restored, nnx.Param))
         assert cc == cfg
     save_config(cfg, root / "config.json")
-    shutil.copytree(HM / "snapshots/step-6000/consistent/raw", root / "reference")
+    shutil.copytree(HO / "snapshots/step-6000/consistent/raw", root / "reference")
     for name in (
         "train.npz",
         "data.json",
@@ -203,7 +207,7 @@ def prepare(root):
             pages=3,
             new_pages_viewed=0,
             files={str(f): sha(f) for f in (HH / "support-preview").iterdir() if f.is_file()},
-            explanation="Unchanged6000 HH/HI/HJ/HM batches and retained-axis teacher policy.",
+            explanation="Unchanged first1200 HH batches and retained-axis teacher policy.",
         ),
     )
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
@@ -222,10 +226,12 @@ def prepare(root):
         HM / "supplemental-binding.json",
         HM / "training/sampling.jsonl",
         HN / "completion.json",
+        HO / "completion.json",
+        HO / "supplemental-binding.json",
         HH / "diagnostics/active-ink-audit.json",
         DOC.resolve(),
     ]
-    files += [p for p in (HJ / "snapshots/step-18000/consistent/raw").iterdir() if p.is_file()]
+    files += [p for p in (HO / "snapshots/step-6000/consistent/raw").iterdir() if p.is_file()]
     files += [p for p in (HM / "snapshots/step-6000/consistent/raw").iterdir() if p.is_file()]
     files += [
         Path(f).resolve()
@@ -258,9 +264,10 @@ def prepare(root):
             saved=SAVED,
             parameters=22508,
             trained_arms=2,
-            initial="HJ raw18000",
-            opening_weights=dict(winner=0.0, consistent=0.1),
-            optimizer="Both fresh AdamW/EMA; cosine2e-4 to2e-5 over6000; peak=base1e-4*sqrt4",
+            initial="HO opening6000",
+            opening_weights=dict(winner=0.1, consistent=0.1),
+            support_weights=dict(winner=0.0, consistent=0.1),
+            optimizer="Both fresh AdamW/EMA; cosine2e-4 to2e-5 over1200; peak=base1e-4*sqrt4",
             expected_counts=expected,
             adoption=False,
             fresh_confirmation=False,
@@ -288,7 +295,7 @@ def snapshot(root, arms, step):
                 model,
                 arm["config"],
                 root / f"snapshots/step-{step}/{name}/{mode}",
-                provenance=f"HO late opening cosine restart {name} {step} {mode}; research only",
+                provenance=f"HP support-margin cleanup {name} {step} {mode}; research only",
             )
 
 
@@ -296,6 +303,7 @@ def train(root, until):
     check(root)
     assert jax.devices()[0].platform != "cpu" and until in SAVED[3:]
     assert read(root / "test-results.json")["passed"] and read(root / "preflight.json")["passed"]
+    assert read(root / "diagnostics/support-fields/results.json")["passed"]
     preview = read(root / "support-preview/observations.json")
     for r in read(root / "support-preview/manifest.json")["records"]:
         assert preview[r["file"]] and sha(root / "support-preview" / r["file"]) == r["sha256"]
