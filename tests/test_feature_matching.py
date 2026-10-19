@@ -14,8 +14,10 @@ def test_correct_gray_targets_are_stationary_and_protected_predictions_have_no_e
     target = jnp.linspace(-1, 1, 32 * 32).reshape(1, 32, 32, 1)
     condition = jnp.zeros((1, 32, 32, 2))
     active = jnp.ones_like(target, bool).at[:, :, 16:].set(False)
+
     def objective(p):
         return feature_distance(critic, p, target, condition, active, metric=metric).sum()
+
     value, gradient = jax.value_and_grad(objective)(target)
     assert float(value) == 0
     np.testing.assert_array_equal(gradient, 0)

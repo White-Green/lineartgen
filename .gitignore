@@ -1,4 +1,5 @@
 .venv*/
+.venv
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -9,6 +10,7 @@ build/
 runs/
 .cache/
 .worktrees/
+:memory:.ses
 dataset/**/*.png
 dataset/**/*.jpg
 dataset/**/*.jpeg

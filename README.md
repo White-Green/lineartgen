@@ -1,5 +1,9 @@
 # lineartgen — JAX rewrite
 
+このブランチはKrita向けgraph試用版のruntime 0.3.0を整備する。
+最新の配布方式は[graphモデルの説明](docs/graph-preview-20261019.md)を参照。
+下記の学習CLI・実験履歴は従来のUNet系も含む。
+
 2026-10-07、[芯の保持・局所誤差を含む6条件の追加実験](docs/ink-structure-experiment-20261007.md)を開始。
 
 2026-10-06、[線画lossの5条件×追加10k比較を完了](docs/lineart-loss-results-20261006.md)。
@@ -180,36 +184,28 @@ loss はノイズ量で正規化した誤差、濃淡のバランス、identity�
 
 ## Krita への配布
 
-export するのは 1 解像度の U-Net のみ。BGRA 入出力、padding、seed、段階的な denoise と
-再帰は NumPy で実行する。Krita 内では JAX / Flax / Orbax を import しない。
-
-runtime 0.2.1 から、画像とノイズ強度マップを先に各解像度へ縮小し、その後で各段に
-独立した Gaussian ノイズを一度だけ加える。複数回の denoise では各段の状態を更新して
-引き継ぎ、小さい段の clean 予測を次の段の insert に渡す。JAX の検証用 sampling も同じ順序。
-学習時の縮小→ノイズ付加に揃えたため、以前の runtime と多段推論の出力は変わる。
-更新後も同じ入力・設定・Seed での再現性は保つ。
+runtime 0.3.0のgraph試用版は、共有重みから解像度段別に展開した6個のONNXを使う。
+モデルは画素の濃淡ではなく、線の位置・接続・幅・塗りを予測する。
+前処理・再帰・不透明線分の描画はNumPyで実行し、Krita内ではJAX / Flax / Orbaxをimportしない。
+Lineart passesは1〜6、既定3。入力を局所的な濃さで正規化してから縮小し、
+小さい段の占有予測を次の段へ渡す。Gaussianノイズは加えず、Seedは出力に影響しない。
+既存のBGRA `LineartModel.infer` API、下描きのalpha利用、描き途中の線画の保護を維持する。
+詳細、学習の出自、既知の品質制約は[graph試用版](docs/graph-preview-20261019.md)を参照。
 
 ```bash
-uv run --frozen --extra export lineartgen export --run-dir runs/experiment-001 \
-  --output packages/lineartgen-runtime/src/lineartgen_runtime/assets/model.onnx
 uv build --project packages/lineartgen-runtime --wheel --out-dir dist
 ```
 
-runtime 0.2.2 の同梱モデルは、JAXで100,000更新学習した基準UNetのEMA重み。
-channels `[4,10,20,40]`、各block 3 conv、126,765パラメータで、現在の学習済み候補の
-最大構造を使う。実験の主seed 42（data seed 47）の `seed42_baseline` を固定した。
-元のONNXと同梱assetはbyte単位で一致し、checkpoint・ONNXのSHA256と出自を
-`assets/model-source.json` に記録している。[品質評価](docs/completion-results-20260930.md)も参照。
-以前のepoch 1500モデルから切り替わるため、同じSeedでも生成結果は変わる。
+`assets/graph-model.json`はcheckpointと6個のONNXのhash、学習更新数、描画条件を記録する。
+`assets/graph-reference.npz`はJAXから独立に生成した6段の検査用出力。
+CIは実際に同梱するONNX Runtimeで各段と最終描画を照合する。
+ONNXはopset20 / IR10、空間寸法は可変。大きな入力では重なり付きtileを使う。
 
-ONNX は opset 20 / IR 10。jax2onnx の可変形状 Pool / Resize 変換には制約があるため、
-固定形状で trace した後、許可した演算だけを対象に Resize を定数倍率へ変換し、
-空間次元を可変にする。未知の演算は明示的にエラーにする。
-export のたびに小サイズ・非正方形・大サイズで JAX と ONNX Runtime を数値比較し、
-成功してから出力先を置き換える。
+従来のUNet export CLIは引き続き利用できる。明示的に`.onnx`パスを渡すと旧runtime経路を使う。
+graphの配布重みの更新にUNet用`lineartgen export`を使わない。
 
 ランタイムは Python 3.10 以上をサポートし、専用 `uv.lock` を持つ。
-Windows は DirectML、Linux などは CPU 用の wheelhouse を作って ZIP に同梱する。
+配布するWindows ZIPはPython3.13 x64用。DirectMLとCPU fallbackを同梱する。
 実際の ZIP ビルドは Diffusion Drawing 側の README / `scripts/package.py` を使う。
 この作業の consumer worktree は `../diffusion-drawing-jax`。
 
