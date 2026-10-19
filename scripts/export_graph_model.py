@@ -88,14 +88,18 @@ def build(model, level):
         ([2 * radius + 1, 1], [radius, 0, radius, 0]),
         ([1, 2 * radius + 1], [0, radius, 0, radius]),
     ):
+        # ORT 1.24.4 miscounts padded AveragePool windows at image borders,
+        # including when Pad + AveragePool is fused by its optimizer. Express
+        # the training reduce-window sum and fixed divisor explicitly instead.
         pooled = b.op(
-            "AveragePool",
+            "Conv",
             pooled,
+            b.const(np.ones((1, 1, *kernel), np.float32)),
             kernel_shape=kernel,
             pads=pads,
             strides=[1, 1],
-            count_include_pad=1,
         )
+        pooled = b.op("Div", pooled, b.const(2 * radius + 1))
     stem = b.op("Add", stem, b.conv(pooled, model.pooled_stem))
     factor = max(1, 16 // 2**level)
     coarse = (

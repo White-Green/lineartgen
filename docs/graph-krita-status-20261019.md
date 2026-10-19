@@ -37,3 +37,13 @@ Ruff/checkとformat成功。プラグインの30テストとLinux Python3.12のZ
 Windows Python3.13のCIを実行し、artifactを取得できるところまで確認する。
 Windows GPU実機とKrita GUIの評価は利用者による試用が必要。
 最終モデル・入力別出力・失敗画像・配布仕様はruntime branchの`docs/graph-preview-20261019.md`に集約する。
+
+## ONNX Runtime 1.24.4互換性の修正
+
+Windows CIの独立JAX参照チェックが、padding付きAveragePoolの境界計算差を検出した。
+LinuxのORT 1.24.4でも再現し、Pad分離だけでは最適化時の融合で再発した。
+export時の局所平均を固定all-one Convの和と固定除数で表し、学習重みと参照値、許容誤差を保持した。
+ORT 1.24.4/1.29.0双方の20条件、分割処理、保護領域、6段参照照合が成功。
+1.24.4では4種類の最適化設定すべてで6段参照照合が通った。
+[数値照合](benchmarks/graph-onnx-portability-20261019.json)。
+新しいexportは`runs/graph-export-final-portable`、既存の学習結果・選定は不変。
