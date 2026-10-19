@@ -10,6 +10,7 @@ build/
 runs/
 .cache/
 .worktrees/
+:memory:.ses
 dataset/**/*.png
 dataset/**/*.jpg
 dataset/**/*.jpeg

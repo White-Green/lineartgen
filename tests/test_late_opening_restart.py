@@ -3,8 +3,8 @@ import json
 import jax.numpy as jnp
 import numpy as np
 from cue_capacity import make_arm
-from learned_coarse_axis_model import load_field
 from late_opening_restart_study import HH, HJ, HM, STEPS, restart_config
+from learned_coarse_axis_model import load_field
 
 
 def test_restart_schedule_and_sqrt_batch_scaling():

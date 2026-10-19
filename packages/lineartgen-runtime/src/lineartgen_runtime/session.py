@@ -13,6 +13,20 @@ from .sampling import denoise
 
 class LineartModel:
     def __init__(self, model_path=None, num_threads=None, *, provider="auto", device_id=0):
+        graph_path = (
+            Path(model_path)
+            if model_path is not None
+            else Path(__file__).parent / "assets" / "graph-model.json"
+        )
+        self._graph = None
+        if graph_path.name == "graph-model.json" and graph_path.is_file():
+            from .graph import GraphLineartModel
+
+            self._graph = GraphLineartModel(
+                graph_path, num_threads, provider=provider, device_id=device_id
+            )
+            self.backend, self.device = self._graph.backend, self._graph.device
+            return
         import onnxruntime as ort
 
         path = (
@@ -82,6 +96,8 @@ class LineartModel:
         self._lock = threading.Lock()
 
     def forward(self, image, noise_level, insert, guide=None, progress=None):
+        if self._graph is not None:
+            raise ValueError("Graph models use per-level heads; call infer for BGRA images")
         inputs = {"image": image, "noise_level": noise_level, "insert": insert}
         if self.source_conditioning:
             if guide is None:
@@ -99,6 +115,16 @@ class LineartModel:
 
     def infer(self, *, scribble, lineart, width, height, strength, seed, denoise_steps):
         """Restore BGRA input; one_pass models use one pass for any valid step request."""
+        if self._graph is not None:
+            return self._graph.infer(
+                scribble=scribble,
+                lineart=lineart,
+                width=width,
+                height=height,
+                strength=strength,
+                seed=seed,
+                denoise_steps=denoise_steps,
+            )
         width, height = operator.index(width), operator.index(height)
         seed, denoise_steps = operator.index(seed), operator.index(denoise_steps)
         if not np.isfinite(strength) or not 0 <= strength <= 1:
