@@ -11,9 +11,9 @@ from lineartgen_runtime.graph import GraphLineartModel, render
 from PIL import Image, ImageDraw
 
 
-def benchmark(assets, size, depth, output):
+def benchmark(assets, size, depth, output, threads=1):
     before = time.monotonic()
-    model = GraphLineartModel(assets / "graph-model.json", provider="cpu")
+    model = GraphLineartModel(assets / "graph-model.json", threads, provider="cpu")
     loading = time.monotonic() - before
     drawing = Image.new("L", (size, size), 0)
     draw = ImageDraw.Draw(drawing)
@@ -38,7 +38,7 @@ def benchmark(assets, size, depth, output):
         size=size,
         depth=depth,
         provider=model.device,
-        threads=1,
+        threads=threads,
         model_training_steps=model.metadata["training_steps"],
         loading_seconds=loading,
         heads_seconds=inference,
@@ -57,5 +57,6 @@ if __name__ == "__main__":
     parser.add_argument("--assets", type=Path, required=True)
     parser.add_argument("--size", type=int, required=True)
     parser.add_argument("--depth", type=int, default=3)
+    parser.add_argument("--threads", type=int, default=1)
     parser.add_argument("--output", type=Path, required=True)
     benchmark(**vars(parser.parse_args()))
