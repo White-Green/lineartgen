@@ -1,0 +1,502 @@
+{
+  "records": [
+    {
+      "index": 0,
+      "kind": "curve",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.15244450140744448,
+          "ink_pixels": 553,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 495
+        },
+        {
+          "depth": 3,
+          "seconds": 0.16282095294445753,
+          "ink_pixels": 554,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 493
+        },
+        {
+          "depth": 6,
+          "seconds": 0.16939983237534761,
+          "ink_pixels": 554,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 493
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 1,
+      "kind": "curve",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.14580957498401403,
+          "ink_pixels": 550,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 499
+        },
+        {
+          "depth": 3,
+          "seconds": 0.17028501350432634,
+          "ink_pixels": 551,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 500
+        },
+        {
+          "depth": 6,
+          "seconds": 0.17367316130548716,
+          "ink_pixels": 551,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 500
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 2,
+      "kind": "repeated_sketch_curve",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.13592360634356737,
+          "ink_pixels": 563,
+          "components": 3,
+          "holes": 0,
+          "intermediate_pixels": 481
+        },
+        {
+          "depth": 3,
+          "seconds": 0.17163242399692535,
+          "ink_pixels": 564,
+          "components": 2,
+          "holes": 0,
+          "intermediate_pixels": 476
+        },
+        {
+          "depth": 6,
+          "seconds": 0.16935082338750362,
+          "ink_pixels": 564,
+          "components": 2,
+          "holes": 0,
+          "intermediate_pixels": 476
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 3,
+      "kind": "curve",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.1299585998058319,
+          "ink_pixels": 539,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 487
+        },
+        {
+          "depth": 3,
+          "seconds": 0.16271191649138927,
+          "ink_pixels": 539,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 482
+        },
+        {
+          "depth": 6,
+          "seconds": 0.16764994524419308,
+          "ink_pixels": 539,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 482
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 4,
+      "kind": "clear_pair",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.14179356768727303,
+          "ink_pixels": 1070,
+          "components": 2,
+          "holes": 1,
+          "intermediate_pixels": 863
+        },
+        {
+          "depth": 3,
+          "seconds": 0.15833078045397997,
+          "ink_pixels": 1074,
+          "components": 3,
+          "holes": 1,
+          "intermediate_pixels": 879
+        },
+        {
+          "depth": 6,
+          "seconds": 0.17031027283519506,
+          "ink_pixels": 1074,
+          "components": 3,
+          "holes": 1,
+          "intermediate_pixels": 879
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 5,
+      "kind": "ambiguous_pair",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.13815271854400635,
+          "ink_pixels": 538,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 491
+        },
+        {
+          "depth": 3,
+          "seconds": 0.1860139211639762,
+          "ink_pixels": 541,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 489
+        },
+        {
+          "depth": 6,
+          "seconds": 0.16772069316357374,
+          "ink_pixels": 541,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 489
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 6,
+      "kind": "crossing",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.13718532770872116,
+          "ink_pixels": 925,
+          "components": 3,
+          "holes": 0,
+          "intermediate_pixels": 784
+        },
+        {
+          "depth": 3,
+          "seconds": 0.17027552518993616,
+          "ink_pixels": 934,
+          "components": 3,
+          "holes": 0,
+          "intermediate_pixels": 766
+        },
+        {
+          "depth": 6,
+          "seconds": 0.1782563691958785,
+          "ink_pixels": 934,
+          "components": 3,
+          "holes": 0,
+          "intermediate_pixels": 767
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 7,
+      "kind": "junction",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.12968613766133785,
+          "ink_pixels": 661,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 600
+        },
+        {
+          "depth": 3,
+          "seconds": 0.15995191037654877,
+          "ink_pixels": 661,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 599
+        },
+        {
+          "depth": 6,
+          "seconds": 0.1748309349641204,
+          "ink_pixels": 661,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 599
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 8,
+      "kind": "explicit_gap",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.1295908810570836,
+          "ink_pixels": 432,
+          "components": 2,
+          "holes": 0,
+          "intermediate_pixels": 389
+        },
+        {
+          "depth": 3,
+          "seconds": 0.1843022247776389,
+          "ink_pixels": 430,
+          "components": 2,
+          "holes": 0,
+          "intermediate_pixels": 388
+        },
+        {
+          "depth": 6,
+          "seconds": 0.17768867779523134,
+          "ink_pixels": 430,
+          "components": 2,
+          "holes": 0,
+          "intermediate_pixels": 388
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 9,
+      "kind": "broken_sketch",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.13612288050353527,
+          "ink_pixels": 405,
+          "components": 3,
+          "holes": 0,
+          "intermediate_pixels": 371
+        },
+        {
+          "depth": 3,
+          "seconds": 0.1630021771416068,
+          "ink_pixels": 407,
+          "components": 3,
+          "holes": 0,
+          "intermediate_pixels": 371
+        },
+        {
+          "depth": 6,
+          "seconds": 0.16730501502752304,
+          "ink_pixels": 407,
+          "components": 3,
+          "holes": 0,
+          "intermediate_pixels": 371
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 10,
+      "kind": "very_wide_line",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.13096544798463583,
+          "ink_pixels": 345,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 292
+        },
+        {
+          "depth": 3,
+          "seconds": 0.16047482378780842,
+          "ink_pixels": 346,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 294
+        },
+        {
+          "depth": 6,
+          "seconds": 0.16627564746886492,
+          "ink_pixels": 346,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 294
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 11,
+      "kind": "short_wide_line",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.1294831344857812,
+          "ink_pixels": 184,
+          "components": 1,
+          "holes": 0,
+          "intermediate_pixels": 173
+        },
+        {
+          "depth": 3,
+          "seconds": 0.16273704543709755,
+          "ink_pixels": 185,
+          "components": 2,
+          "holes": 0,
+          "intermediate_pixels": 168
+        },
+        {
+          "depth": 6,
+          "seconds": 0.16417472157627344,
+          "ink_pixels": 185,
+          "components": 2,
+          "holes": 0,
+          "intermediate_pixels": 168
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 12,
+      "kind": "fill",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.1334145637229085,
+          "ink_pixels": 8089,
+          "components": 39,
+          "holes": 31,
+          "intermediate_pixels": 0
+        },
+        {
+          "depth": 3,
+          "seconds": 0.1838775472715497,
+          "ink_pixels": 7841,
+          "components": 49,
+          "holes": 28,
+          "intermediate_pixels": 3
+        },
+        {
+          "depth": 6,
+          "seconds": 0.1628644298762083,
+          "ink_pixels": 7844,
+          "components": 47,
+          "holes": 28,
+          "intermediate_pixels": 3
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 13,
+      "kind": "fill_and_curve",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.13086163066327572,
+          "ink_pixels": 573,
+          "components": 6,
+          "holes": 0,
+          "intermediate_pixels": 531
+        },
+        {
+          "depth": 3,
+          "seconds": 0.16514346096664667,
+          "ink_pixels": 581,
+          "components": 4,
+          "holes": 0,
+          "intermediate_pixels": 536
+        },
+        {
+          "depth": 6,
+          "seconds": 0.16472216416150331,
+          "ink_pixels": 582,
+          "components": 4,
+          "holes": 0,
+          "intermediate_pixels": 536
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 14,
+      "kind": "blank",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.12408634833991528,
+          "ink_pixels": 0,
+          "components": 0,
+          "holes": 0,
+          "intermediate_pixels": 0
+        },
+        {
+          "depth": 3,
+          "seconds": 0.16249112226068974,
+          "ink_pixels": 0,
+          "components": 0,
+          "holes": 0,
+          "intermediate_pixels": 0
+        },
+        {
+          "depth": 6,
+          "seconds": 0.15212618932127953,
+          "ink_pixels": 0,
+          "components": 0,
+          "holes": 0,
+          "intermediate_pixels": 0
+        }
+      ],
+      "protected_exact": true
+    },
+    {
+      "index": 15,
+      "kind": "mixed_scene",
+      "whole": [
+        {
+          "depth": 1,
+          "seconds": 0.8759665237739682,
+          "ink_pixels": 2472,
+          "components": 8,
+          "holes": 2,
+          "intermediate_pixels": 2157
+        },
+        {
+          "depth": 3,
+          "seconds": 0.9668420497328043,
+          "ink_pixels": 2501,
+          "components": 7,
+          "holes": 2,
+          "intermediate_pixels": 2180
+        },
+        {
+          "depth": 6,
+          "seconds": 0.9735768912360072,
+          "ink_pixels": 2502,
+          "components": 7,
+          "holes": 2,
+          "intermediate_pixels": 2181
+        }
+      ],
+      "protected_exact": true
+    }
+  ],
+  "selection_sha256": "4810ed87dc2255308b15fd9123612f52fbed16d5a8e7a5458e22bb80274d9482",
+  "visually_reviewed": false
+}

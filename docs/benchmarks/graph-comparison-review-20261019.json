@@ -1,0 +1,43 @@
+{
+  "reviewed_files": [
+    "d1-whole-256-00.png",
+    "d1-whole-256-01.png",
+    "d1-whole-256-02.png",
+    "d1-whole-256-03.png",
+    "d1-whole-256-04.png",
+    "d1-whole-512-00.png",
+    "d1-whole-512-01.png",
+    "d1-whole-512-02.png",
+    "d1-whole-512-03.png",
+    "d3-whole-256-00.png",
+    "d3-whole-256-01.png",
+    "d3-whole-256-02.png",
+    "d3-whole-256-03.png",
+    "d3-whole-256-04.png",
+    "d3-whole-512-00.png",
+    "d3-whole-512-01.png",
+    "d3-whole-512-02.png",
+    "d3-whole-512-03.png",
+    "d6-whole-256-00.png",
+    "d6-whole-256-01.png",
+    "d6-whole-256-02.png",
+    "d6-whole-256-03.png",
+    "d6-whole-256-04.png",
+    "d6-whole-512-00.png",
+    "d6-whole-512-01.png",
+    "d6-whole-512-02.png",
+    "d6-whole-512-03.png",
+    "d3-partial-256-00.png",
+    "d3-partial-256-01.png",
+    "d3-partial-512-00.png"
+  ],
+  "reviewed_count": 30,
+  "observations": [
+    "All 30 native pages were visually reviewed: raw versus EMA on 25 drawings at depths 1/3/6 and eight partial cases.",
+    "No material overall visual difference between raw and EMA. EMA is a provisional stable-average choice, not a demonstrated quality gain.",
+    "Straight/curved strokes, junctions, deliberate gaps, filled rectangle, blank and wide-bar centerlines remain recognizable.",
+    "Probe 36 cap closure and probe 38 closed double tracks persist; scene 1 joins and scene 5 local thickening/stray dots persist in both.",
+    "No broad gray halos seen in active generated regions. Gray retained on protected side of partial inputs is expected.",
+    "D3 and D6 are visually almost identical on these cases."
+  ]
+}

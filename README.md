@@ -1,6 +1,7 @@
 # lineartgen — JAX rewrite
 
-このブランチはKrita向けgraph試用版のruntime 0.3.0を整備する。
+このブランチは累計100,200更新のEMAを同梱したKrita向けgraph試用版（runtime 0.3.0）。
+Strength 0.5・Lineart passes 3から試せる。ベタ塗りの復元と曖昧な二重線には失敗が残る。
 最新の配布方式は[graphモデルの説明](docs/graph-preview-20261019.md)を参照。
 下記の学習CLI・実験履歴は従来のUNet系も含む。
 

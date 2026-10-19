@@ -1,4 +1,25 @@
-# ローカル検証結果（2026-09-30 更新）
+# ローカル検証結果（2026-10-19 更新）
+
+## Graph試用版（runtime 0.3.0）
+
+累計100,200更新のEMAを既定モデルとして検証した。
+[学習・実画像評価・既知の失敗](graph-preview-20261019.md)を参照。
+未使用例のベタ塗りの失敗を含め、品質目標をすべて満たしたとはしていない。
+
+| 検証 | 結果 |
+| --- | --- |
+| 学習監査 | 追加84,000更新、深さ1〜6各14,000回、全記録・raw/EMAが有限、固定したソース・データのhash一致 |
+| 最終JAX/ONNX照合 | 20条件、raster最大差2.921e-6、1byte超差0、分類反転0、tile差0、保護画素完全一致 |
+| 目視 | raw/EMA比較30ページ、既知527例/1,180条件の指定57ページ、未使用16例の全32ページ |
+| runtime・学習・export全体 | 最終graphを既定にした230テスト成功、360.61秒、既存のdeprecation warning 3件 |
+| Ruff | checkとformat --check成功（155ファイル） |
+| Krita UI・描画イベント・ワーカー | 30テスト成功、5.781秒 |
+| 最終wheel・ローカルZIP | Linux Python3.12 / ORT1.29.0、同梱依存のみでBGRAと全6段の独立JAX参照を照合して成功 |
+
+Windows ZIPはプラグインの`rewrite/graph-preview-20261019`のActionsでビルドする。
+Windows CIはDirectML wheel同梱を確認し、利用可能なproviderで推論と公式importerを検査する。
+実際のWindows GPU・Krita GUIでの操作確認とは区別する。
+以下は旧UNetを配布していた時点の履歴で、当時の出自は現在の`legacy-model-source.json`にある。
 
 Burn / JAX の学習更新と PNG 読み込みの実測比較は [training-speed.md](training-speed.md) を参照。
 

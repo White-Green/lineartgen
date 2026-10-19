@@ -1,0 +1,4 @@
+# Keep exported model/reference checksums stable on Windows checkouts.
+packages/lineartgen-runtime/src/lineartgen_runtime/assets/*.json text eol=lf
+packages/lineartgen-runtime/src/lineartgen_runtime/assets/*.onnx binary
+packages/lineartgen-runtime/src/lineartgen_runtime/assets/*.npz binary

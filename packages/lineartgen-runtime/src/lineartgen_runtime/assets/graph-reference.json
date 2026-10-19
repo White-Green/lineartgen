@@ -1,0 +1,10 @@
+{
+  "checkpoint_sha256": "09e4f6d1a775cacc3e0b6a75805cc2912b3dc9a33646ff48eb5018599ca09aa8",
+  "arrays_sha256": "94874d4cf32e5667994e1631d3f09181d3649a322c12edfefaa846ffbd29872c",
+  "depth": 6,
+  "reference": "JAX CPU research graph, no ONNX outputs used",
+  "tolerance": {
+    "atol": 0.0002,
+    "rtol": 0.0002
+  }
+}

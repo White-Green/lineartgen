@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "parent_steps": 16200,
+  "added_steps": 84000,
+  "cumulative_steps": 100200,
+  "depth_counts": {
+    "1": 14000,
+    "2": 14000,
+    "3": 14000,
+    "4": 14000,
+    "5": 14000,
+    "6": 14000
+  },
+  "finite": true,
+  "weights": {
+    "raw": {
+      "path": "snapshots/step-84000/raw.npz",
+      "sha256": "b8624d9492431f4ec96af0484fdcdfd8d4189551afbdab0f230eec426af9929c"
+    },
+    "ema": {
+      "path": "snapshots/step-84000/ema.npz",
+      "sha256": "09e4f6d1a775cacc3e0b6a75805cc2912b3dc9a33646ff48eb5018599ca09aa8"
+    }
+  },
+  "peak_learning_rate": 0.00019999999494757503,
+  "final_learning_rate": 1.9999999949504854e-06,
+  "clipping_fraction": 0.9979523809523809,
+  "partial_fraction": 0.24982440476190476,
+  "extra_fraction": 0.24961904761904763,
+  "note": "Update counts and finite training are verified; this alone does not establish visual quality or convergence.",
+  "training_source_commit": "f05b68387a40202c0adc5b900c11eb8eb740754d",
+  "training_source_archive_sha256": "2c6b6817d7cb3b0d958883870c1ff736d0d72454950fccdc7e04c132a06a60b9",
+  "training_seconds": 27533.0487
+}

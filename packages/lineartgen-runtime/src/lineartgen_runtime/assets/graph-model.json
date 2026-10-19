@@ -1,0 +1,123 @@
+{
+  "format_version": 2,
+  "representation": "attraction_graph",
+  "parameters": 22725,
+  "levels": 6,
+  "default_depth": 3,
+  "halo": 32,
+  "image_scale": 1.0,
+  "radius": 1.0,
+  "max_edge_length": 2.0,
+  "supersampling": 4,
+  "local_peak_window": 33,
+  "training_steps": 100200,
+  "checkpoint_sha256": "09e4f6d1a775cacc3e0b6a75805cc2912b3dc9a33646ff48eb5018599ca09aa8",
+  "source_checkpoint": "snapshots/step-84000/ema.npz",
+  "files": {
+    "graph-level-0.onnx": "1eebda4cd1bb5ec5c579a2a74b84b3ae074eb64a1f8b799bce386742d19c84f5",
+    "graph-level-1.onnx": "d4c88c9999ca7f76c6acd52664e0c017d1643cf2aa85d1c5917ff4c8e1f0df96",
+    "graph-level-2.onnx": "29be2d0b48d308c40dc58f4f7efad6f6faa7fa6c0520164b1fcb062f2b0e34cf",
+    "graph-level-3.onnx": "bc33acf7e7fad46c82a357960d0b46365c18af4dbc442fa6afaa1976e81c2558",
+    "graph-level-4.onnx": "b9762ff769d8186600db995f6563d0f0aa96005e9dd9ead85c4cea81880113ef",
+    "graph-level-5.onnx": "d25070f370d1f92bfb3891f7b9e2cc0e9b11df74695299979374c1cf23a4df3a"
+  },
+  "validation": [
+    {
+      "level": 0,
+      "size": [
+        32,
+        48
+      ],
+      "max_abs_error": 1.8596649169921875e-05
+    },
+    {
+      "level": 0,
+      "size": [
+        64,
+        64
+      ],
+      "max_abs_error": 2.3126602172851562e-05
+    },
+    {
+      "level": 1,
+      "size": [
+        16,
+        24
+      ],
+      "max_abs_error": 2.47955322265625e-05
+    },
+    {
+      "level": 1,
+      "size": [
+        32,
+        32
+      ],
+      "max_abs_error": 2.86102294921875e-05
+    },
+    {
+      "level": 2,
+      "size": [
+        8,
+        12
+      ],
+      "max_abs_error": 2.288818359375e-05
+    },
+    {
+      "level": 2,
+      "size": [
+        16,
+        16
+      ],
+      "max_abs_error": 2.288818359375e-05
+    },
+    {
+      "level": 3,
+      "size": [
+        4,
+        6
+      ],
+      "max_abs_error": 6.67572021484375e-06
+    },
+    {
+      "level": 3,
+      "size": [
+        8,
+        8
+      ],
+      "max_abs_error": 8.58306884765625e-06
+    },
+    {
+      "level": 4,
+      "size": [
+        4,
+        6
+      ],
+      "max_abs_error": 1.049041748046875e-05
+    },
+    {
+      "level": 4,
+      "size": [
+        8,
+        8
+      ],
+      "max_abs_error": 9.059906005859375e-06
+    },
+    {
+      "level": 5,
+      "size": [
+        4,
+        6
+      ],
+      "max_abs_error": 1.2874603271484375e-05
+    },
+    {
+      "level": 5,
+      "size": [
+        8,
+        8
+      ],
+      "max_abs_error": 8.58306884765625e-06
+    }
+  ],
+  "description": "Synthetic rough-to-line graph; experimental, residual double lines possible."
+}

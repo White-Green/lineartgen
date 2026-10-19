@@ -1,0 +1,228 @@
+{
+  "rows": [
+    {
+      "name": "probe-00",
+      "depth": 1,
+      "mode": "whole",
+      "head_max_abs_error": 4.482269287109375e-05,
+      "raster_max_abs_error": 2.9206275939941406e-06,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 1.1610738979652524
+    },
+    {
+      "name": "probe-00",
+      "depth": 3,
+      "mode": "whole",
+      "head_max_abs_error": 4.57763671875e-05,
+      "raster_max_abs_error": 1.9073486328125e-06,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 1.3928286107257009
+    },
+    {
+      "name": "probe-00",
+      "depth": 6,
+      "mode": "whole",
+      "head_max_abs_error": 4.1961669921875e-05,
+      "raster_max_abs_error": 1.7285346984863281e-06,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 2.2956083193421364
+    },
+    {
+      "name": "probe-00",
+      "depth": 3,
+      "mode": "partial",
+      "head_max_abs_error": 5.340576171875e-05,
+      "raster_max_abs_error": 1.3113021850585938e-06,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 0.321110175922513
+    },
+    {
+      "name": "probe-36",
+      "depth": 1,
+      "mode": "whole",
+      "head_max_abs_error": 3.4332275390625e-05,
+      "raster_max_abs_error": 1.3709068298339844e-06,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 1.199405531398952
+    },
+    {
+      "name": "probe-36",
+      "depth": 3,
+      "mode": "whole",
+      "head_max_abs_error": 3.62396240234375e-05,
+      "raster_max_abs_error": 1.4901161193847656e-06,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 1.6870953971520066
+    },
+    {
+      "name": "probe-36",
+      "depth": 6,
+      "mode": "whole",
+      "head_max_abs_error": 3.62396240234375e-05,
+      "raster_max_abs_error": 1.6838312149047852e-06,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 2.6402562549337745
+    },
+    {
+      "name": "probe-36",
+      "depth": 3,
+      "mode": "partial",
+      "head_max_abs_error": 3.814697265625e-05,
+      "raster_max_abs_error": 1.5795230865478516e-06,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 0.3555015567690134
+    },
+    {
+      "name": "probe-54",
+      "depth": 1,
+      "mode": "whole",
+      "head_max_abs_error": 3.62396240234375e-05,
+      "raster_max_abs_error": 0.0,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 1.0139957973733544
+    },
+    {
+      "name": "probe-54",
+      "depth": 3,
+      "mode": "whole",
+      "head_max_abs_error": 3.24249267578125e-05,
+      "raster_max_abs_error": 0.0,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 1.5211470341309905
+    },
+    {
+      "name": "probe-54",
+      "depth": 6,
+      "mode": "whole",
+      "head_max_abs_error": 3.24249267578125e-05,
+      "raster_max_abs_error": 0.0,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 2.455567386932671
+    },
+    {
+      "name": "probe-54",
+      "depth": 3,
+      "mode": "partial",
+      "head_max_abs_error": 3.4332275390625e-05,
+      "raster_max_abs_error": 0.0,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 0.3027308005839586
+    },
+    {
+      "name": "probe-56",
+      "depth": 1,
+      "mode": "whole",
+      "head_max_abs_error": 0.000644683837890625,
+      "raster_max_abs_error": 0.0,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 1.033272205851972
+    },
+    {
+      "name": "probe-56",
+      "depth": 3,
+      "mode": "whole",
+      "head_max_abs_error": 0.000759124755859375,
+      "raster_max_abs_error": 0.0,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 1.6584959598258138
+    },
+    {
+      "name": "probe-56",
+      "depth": 6,
+      "mode": "whole",
+      "head_max_abs_error": 0.000865936279296875,
+      "raster_max_abs_error": 0.0,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 2.39029982406646
+    },
+    {
+      "name": "probe-56",
+      "depth": 3,
+      "mode": "partial",
+      "head_max_abs_error": 0.000728607177734375,
+      "raster_max_abs_error": 0.0,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 0.28875865042209625
+    },
+    {
+      "name": "scene-3",
+      "depth": 1,
+      "mode": "whole",
+      "head_max_abs_error": 4.57763671875e-05,
+      "raster_max_abs_error": 2.086162567138672e-06,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 2.1402954747900367
+    },
+    {
+      "name": "scene-3",
+      "depth": 3,
+      "mode": "whole",
+      "head_max_abs_error": 4.57763671875e-05,
+      "raster_max_abs_error": 2.384185791015625e-06,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 2.7453018901869655
+    },
+    {
+      "name": "scene-3",
+      "depth": 6,
+      "mode": "whole",
+      "head_max_abs_error": 4.9591064453125e-05,
+      "raster_max_abs_error": 1.7285346984863281e-06,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 3.4612378301098943
+    },
+    {
+      "name": "scene-3",
+      "depth": 3,
+      "mode": "partial",
+      "head_max_abs_error": 4.57763671875e-05,
+      "raster_max_abs_error": 1.430511474609375e-06,
+      "raster_pixels_over_one_byte": 0,
+      "categorical_sign_changes": 0,
+      "protected_exact": true,
+      "seconds": 1.4532153150066733
+    }
+  ],
+  "tile_max_abs_error": 0.0,
+  "heads_passed": true,
+  "protected_exact": true,
+  "visually_reviewed": false
+}
