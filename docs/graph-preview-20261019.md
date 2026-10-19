@@ -38,7 +38,8 @@ Lineart passesは1〜6、既定3。Seedは受理するが生成結果に影響�
 
 ネットワークは512px coreと192px halo、描画は256px tileを使い、
 線分をまとめて計算してPythonの反復コストを抑える。
-初期16,200重みで1024px/3段/CPU1threadは約7.5秒、peak RSS約1.0GiB。
+CPUは既定で最大4threadを使う。初期16,200重みの1024px/3段は、
+1threadで約7.5秒、4threadで約3.9秒、peak RSS約1.0GiB。両出力の画素は一致した。
 これは開発機での測定で、Windows GPUの速度を示すものではない。
 
 初期書き出しの20条件でJAX/ONNXの最終画像最大誤差2.09e-6、1byte超差なし。

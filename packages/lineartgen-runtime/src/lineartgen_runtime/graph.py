@@ -3,6 +3,7 @@
 import hashlib
 import json
 import operator
+import os
 import threading
 from pathlib import Path
 
@@ -137,7 +138,9 @@ class GraphLineartModel:
             raise ValueError("Unsupported graph model manifest")
         if provider not in ("auto", "cpu", "directml"):
             raise ValueError("provider must be auto, cpu or directml")
-        threads = 1 if num_threads is None else operator.index(num_threads)
+        threads = (
+            min(4, os.cpu_count() or 1) if num_threads is None else operator.index(num_threads)
+        )
         if threads < 1:
             raise ValueError("num_threads must be positive")
         use_dml = provider != "cpu" and "DmlExecutionProvider" in ort.get_available_providers()
