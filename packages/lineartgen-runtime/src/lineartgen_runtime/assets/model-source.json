@@ -12,7 +12,7 @@
   "training_source_archive_sha256": "2c6b6817d7cb3b0d958883870c1ff736d0d72454950fccdc7e04c132a06a60b9",
   "checkpoint_weights_sha256": "09e4f6d1a775cacc3e0b6a75805cc2912b3dc9a33646ff48eb5018599ca09aa8",
   "checkpoint_config_sha256": "8fa4ee2bcbcae6b7792451316168f8fcf055253daa23fdc8094fe277f94b4c6e",
-  "graph_manifest_sha256": "9859362b42ec76430ae8f972d3ad16f6825206aeb74d964d10d223d6ebe83634",
+  "graph_manifest_sha256": "ce8c8b6f8b19455a0cc0937a0bec492cbdc5537345c9cd48cdd448a8a897c161",
   "reference_metadata_sha256": "5a151bae4cf5b813062f712f19211ecae6a2d6f16d10ca6d52238f71caa32a53",
   "reference_arrays_sha256": "94874d4cf32e5667994e1631d3f09181d3649a322c12edfefaa846ffbd29872c",
   "training": {
@@ -88,7 +88,19 @@
     "raster_pixels_over_one_byte": 0,
     "categorical_sign_changes": 0,
     "protected_exact": true,
-    "tile_max_abs_error": 0.0
+    "tile_max_abs_error": 0.0,
+    "runtime_versions": [
+      "1.24.4",
+      "1.29.0"
+    ]
   },
-  "legacy_model_source": "legacy-model-source.json"
+  "legacy_model_source": "legacy-model-source.json",
+  "onnx_export": {
+    "local_mean": "separable fixed all-one Conv sums divided by full kernel size; zero padding",
+    "reason": "Avoid padded AveragePool border discrepancies in ONNX Runtime 1.24.4, including Pad fusion. Training weights, preprocessing and independent JAX references unchanged.",
+    "validated_cpu_runtime_versions": [
+      "1.24.4",
+      "1.29.0"
+    ]
+  }
 }

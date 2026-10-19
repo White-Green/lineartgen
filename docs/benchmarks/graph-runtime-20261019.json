@@ -9,7 +9,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 1.1610738979652524
+      "seconds": 1.040798851288855
     },
     {
       "name": "probe-00",
@@ -20,7 +20,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 1.3928286107257009
+      "seconds": 1.1670603547245264
     },
     {
       "name": "probe-00",
@@ -31,7 +31,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 2.2956083193421364
+      "seconds": 2.0619737524539232
     },
     {
       "name": "probe-00",
@@ -42,7 +42,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 0.321110175922513
+      "seconds": 0.2555444724857807
     },
     {
       "name": "probe-36",
@@ -53,7 +53,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 1.199405531398952
+      "seconds": 1.0502350376918912
     },
     {
       "name": "probe-36",
@@ -64,7 +64,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 1.6870953971520066
+      "seconds": 1.3096573688089848
     },
     {
       "name": "probe-36",
@@ -75,7 +75,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 2.6402562549337745
+      "seconds": 2.168543837033212
     },
     {
       "name": "probe-36",
@@ -86,7 +86,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 0.3555015567690134
+      "seconds": 0.28595284651964903
     },
     {
       "name": "probe-54",
@@ -97,7 +97,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 1.0139957973733544
+      "seconds": 0.8996081510558724
     },
     {
       "name": "probe-54",
@@ -108,7 +108,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 1.5211470341309905
+      "seconds": 1.2718770829960704
     },
     {
       "name": "probe-54",
@@ -119,7 +119,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 2.455567386932671
+      "seconds": 2.221373151987791
     },
     {
       "name": "probe-54",
@@ -130,7 +130,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 0.3027308005839586
+      "seconds": 0.21667777094990015
     },
     {
       "name": "probe-56",
@@ -141,7 +141,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 1.033272205851972
+      "seconds": 0.88010941632092
     },
     {
       "name": "probe-56",
@@ -152,7 +152,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 1.6584959598258138
+      "seconds": 1.3075876012444496
     },
     {
       "name": "probe-56",
@@ -163,7 +163,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 2.39029982406646
+      "seconds": 2.2500071888789535
     },
     {
       "name": "probe-56",
@@ -174,7 +174,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 0.28875865042209625
+      "seconds": 0.24035557359457016
     },
     {
       "name": "scene-3",
@@ -185,7 +185,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 2.1402954747900367
+      "seconds": 1.5865651527419686
     },
     {
       "name": "scene-3",
@@ -196,7 +196,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 2.7453018901869655
+      "seconds": 2.261436930857599
     },
     {
       "name": "scene-3",
@@ -207,7 +207,7 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 3.4612378301098943
+      "seconds": 3.2890585977584124
     },
     {
       "name": "scene-3",
@@ -218,11 +218,243 @@
       "raster_pixels_over_one_byte": 0,
       "categorical_sign_changes": 0,
       "protected_exact": true,
-      "seconds": 1.4532153150066733
+      "seconds": 1.020799009129405
     }
   ],
   "tile_max_abs_error": 0.0,
   "heads_passed": true,
   "protected_exact": true,
-  "visually_reviewed": false
+  "visually_reviewed": false,
+  "runtime_version": "1.29.0",
+  "additional_runtime_validation": {
+    "1.24.4": {
+      "rows": [
+        {
+          "name": "probe-00",
+          "depth": 1,
+          "mode": "whole",
+          "head_max_abs_error": 4.482269287109375e-05,
+          "raster_max_abs_error": 2.9206275939941406e-06,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 1.0076168337836862
+        },
+        {
+          "name": "probe-00",
+          "depth": 3,
+          "mode": "whole",
+          "head_max_abs_error": 4.57763671875e-05,
+          "raster_max_abs_error": 1.9073486328125e-06,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 1.2029075399041176
+        },
+        {
+          "name": "probe-00",
+          "depth": 6,
+          "mode": "whole",
+          "head_max_abs_error": 4.1961669921875e-05,
+          "raster_max_abs_error": 1.7285346984863281e-06,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 2.0432738345116377
+        },
+        {
+          "name": "probe-00",
+          "depth": 3,
+          "mode": "partial",
+          "head_max_abs_error": 5.340576171875e-05,
+          "raster_max_abs_error": 1.3113021850585938e-06,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 0.2650069873780012
+        },
+        {
+          "name": "probe-36",
+          "depth": 1,
+          "mode": "whole",
+          "head_max_abs_error": 3.4332275390625e-05,
+          "raster_max_abs_error": 1.3709068298339844e-06,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 1.066405475139618
+        },
+        {
+          "name": "probe-36",
+          "depth": 3,
+          "mode": "whole",
+          "head_max_abs_error": 3.62396240234375e-05,
+          "raster_max_abs_error": 1.4901161193847656e-06,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 1.4310214053839445
+        },
+        {
+          "name": "probe-36",
+          "depth": 6,
+          "mode": "whole",
+          "head_max_abs_error": 3.62396240234375e-05,
+          "raster_max_abs_error": 1.6838312149047852e-06,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 2.1299394285306334
+        },
+        {
+          "name": "probe-36",
+          "depth": 3,
+          "mode": "partial",
+          "head_max_abs_error": 3.814697265625e-05,
+          "raster_max_abs_error": 1.5795230865478516e-06,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 0.27816258929669857
+        },
+        {
+          "name": "probe-54",
+          "depth": 1,
+          "mode": "whole",
+          "head_max_abs_error": 3.62396240234375e-05,
+          "raster_max_abs_error": 0.0,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 0.9157642191275954
+        },
+        {
+          "name": "probe-54",
+          "depth": 3,
+          "mode": "whole",
+          "head_max_abs_error": 3.24249267578125e-05,
+          "raster_max_abs_error": 0.0,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 1.3889693608507514
+        },
+        {
+          "name": "probe-54",
+          "depth": 6,
+          "mode": "whole",
+          "head_max_abs_error": 3.24249267578125e-05,
+          "raster_max_abs_error": 0.0,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 2.1121439784765244
+        },
+        {
+          "name": "probe-54",
+          "depth": 3,
+          "mode": "partial",
+          "head_max_abs_error": 3.4332275390625e-05,
+          "raster_max_abs_error": 0.0,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 0.21239258348941803
+        },
+        {
+          "name": "probe-56",
+          "depth": 1,
+          "mode": "whole",
+          "head_max_abs_error": 0.000644683837890625,
+          "raster_max_abs_error": 0.0,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 0.8970145313069224
+        },
+        {
+          "name": "probe-56",
+          "depth": 3,
+          "mode": "whole",
+          "head_max_abs_error": 0.000759124755859375,
+          "raster_max_abs_error": 0.0,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 1.4361061938107014
+        },
+        {
+          "name": "probe-56",
+          "depth": 6,
+          "mode": "whole",
+          "head_max_abs_error": 0.000865936279296875,
+          "raster_max_abs_error": 0.0,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 2.089512661099434
+        },
+        {
+          "name": "probe-56",
+          "depth": 3,
+          "mode": "partial",
+          "head_max_abs_error": 0.000728607177734375,
+          "raster_max_abs_error": 0.0,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 0.23439542017877102
+        },
+        {
+          "name": "scene-3",
+          "depth": 1,
+          "mode": "whole",
+          "head_max_abs_error": 4.57763671875e-05,
+          "raster_max_abs_error": 2.086162567138672e-06,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 1.6556128161028028
+        },
+        {
+          "name": "scene-3",
+          "depth": 3,
+          "mode": "whole",
+          "head_max_abs_error": 4.57763671875e-05,
+          "raster_max_abs_error": 2.384185791015625e-06,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 2.3684782925993204
+        },
+        {
+          "name": "scene-3",
+          "depth": 6,
+          "mode": "whole",
+          "head_max_abs_error": 4.9591064453125e-05,
+          "raster_max_abs_error": 1.7285346984863281e-06,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 3.062891392968595
+        },
+        {
+          "name": "scene-3",
+          "depth": 3,
+          "mode": "partial",
+          "head_max_abs_error": 4.57763671875e-05,
+          "raster_max_abs_error": 1.430511474609375e-06,
+          "raster_pixels_over_one_byte": 0,
+          "categorical_sign_changes": 0,
+          "protected_exact": true,
+          "seconds": 1.202111929655075
+        }
+      ],
+      "tile_max_abs_error": 0.0,
+      "heads_passed": true,
+      "protected_exact": true,
+      "visually_reviewed": false
+    }
+  },
+  "export_local_mean": "Fixed all-one separable Conv sums and full-kernel divisors; zero padding. Avoids ORT 1.24.4 padded AveragePool border discrepancy and Pad fusion."
 }
