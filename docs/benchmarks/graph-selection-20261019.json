@@ -1,0 +1,29 @@
+{
+  "selected_at": "2026-10-19T19:15:13.743349+00:00",
+  "weights": "ema",
+  "checkpoint_sha256": "09e4f6d1a775cacc3e0b6a75805cc2912b3dc9a33646ff48eb5018599ca09aa8",
+  "parent_steps": 16200,
+  "added_steps": 84000,
+  "total_steps": 100200,
+  "heldout_seen_before_selection": false,
+  "reason": "Completed scheduled continuation with small late visual changes. Raw/EMA are visually similar on 30 comparison pages; choose the moving average as a stable final preview, without claiming superiority. Reviewed all 57 predefined broad development pages; documented residual double tracks, local thickening and tiny dots. No image-MSE selection.",
+  "development_reviews": {
+    "raw_ema_pages": 30,
+    "broad_pages": 57,
+    "broad_cases": 527,
+    "broad_conditions": 1180
+  },
+  "final_validation": {
+    "conditions": 20,
+    "max_raster_abs_error": 2.9206275939941406e-06,
+    "over_one_byte_pixels": 0,
+    "sign_changes": 0,
+    "protected_exact": true
+  },
+  "limits": [
+    "Synthetic-only training and evaluation.",
+    "Ambiguous repeated strokes and some widths can produce double lines, closed loops or stray dots.",
+    "Strong blur may produce local thickening.",
+    "Krita Windows GUI and real GPU quality require user trial."
+  ]
+}
