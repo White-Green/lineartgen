@@ -1,10 +1,11 @@
 import jax.numpy as jnp
 import numpy as np
 import pytest
-from lineartgen.models.painted_normalization import normalized_painted_guide as training
 from lineartgen_runtime.graph import normalized_guide
 from lineartgen_runtime.masked_normalization import normalized_masked_guide
 from lineartgen_runtime.painted_normalization import normalized_painted_guide as runtime
+
+from lineartgen.models.painted_normalization import normalized_painted_guide as training
 
 
 @pytest.mark.parametrize("strength", [0.0, 0.1, 0.5, 0.75])

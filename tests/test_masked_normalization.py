@@ -1,9 +1,10 @@
 import jax.numpy as jnp
 import numpy as np
 import pytest
-from lineartgen.models.masked_normalization import normalized_masked_guide as training
 from lineartgen_runtime.graph import normalized_guide
 from lineartgen_runtime.masked_normalization import normalized_masked_guide as runtime
+
+from lineartgen.models.masked_normalization import normalized_masked_guide as training
 
 
 @pytest.mark.parametrize("noise", [0.0, 0.1, 0.5, 1.0])
