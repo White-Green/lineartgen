@@ -1,8 +1,9 @@
 # lineartgen — JAX rewrite
 
-このブランチは累計100,200更新のEMAを同梱したKrita向けgraph試用版（runtime 0.3.0）。
-Strength 0.5・Lineart passes 3から試せる。ベタ塗りの復元と曖昧な二重線には失敗が残る。
-最新の配布方式は[graphモデルの説明](docs/graph-preview-20261019.md)を参照。
+このブランチは累計152,400更新のEMAを同梱したKrita向け線幅試用版（runtime 0.4.0）。
+1〜32倍の線画データを学習し、形状と幅を別のCNNで推定する。
+Strength 0.5・Lineart passes 3から試せる。薄い細線の幅と密集輪郭には課題が残る。
+最新の配布方式と実出力は[今回の試用版の説明](docs/native-preview-20261024.md)を参照。
 下記の学習CLI・実験履歴は従来のUNet系も含む。
 
 2026-10-07、[芯の保持・局所誤差を含む6条件の追加実験](docs/ink-structure-experiment-20261007.md)を開始。

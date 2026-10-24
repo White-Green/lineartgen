@@ -1,0 +1,106 @@
+{
+  "campaign": "graph-long-20261019",
+  "representation": "attraction_graph",
+  "parameters": 22725,
+  "weights": "ema",
+  "parent_steps": 16200,
+  "added_training_steps": 84000,
+  "training_steps": 100200,
+  "training_seed": 2026101910,
+  "training_source_commit": "f05b68387a40202c0adc5b900c11eb8eb740754d",
+  "training_source_branch": "rewrite/graph-krita-20261019",
+  "training_source_archive_sha256": "2c6b6817d7cb3b0d958883870c1ff736d0d72454950fccdc7e04c132a06a60b9",
+  "checkpoint_weights_sha256": "09e4f6d1a775cacc3e0b6a75805cc2912b3dc9a33646ff48eb5018599ca09aa8",
+  "checkpoint_config_sha256": "8fa4ee2bcbcae6b7792451316168f8fcf055253daa23fdc8094fe277f94b4c6e",
+  "graph_manifest_sha256": "ce8c8b6f8b19455a0cc0937a0bec492cbdc5537345c9cd48cdd448a8a897c161",
+  "reference_metadata_sha256": "5a151bae4cf5b813062f712f19211ecae6a2d6f16d10ca6d52238f71caa32a53",
+  "reference_arrays_sha256": "94874d4cf32e5667994e1631d3f09181d3649a322c12edfefaa846ffbd29872c",
+  "training": {
+    "data": "synthetic only: 512 original and 1024 extended-width examples",
+    "extended_width_probability": 0.25,
+    "batch_size": 4,
+    "depth_counts": {
+      "1": 14000,
+      "2": 14000,
+      "3": 14000,
+      "4": 14000,
+      "5": 14000,
+      "6": 14000
+    },
+    "stage_loss": "normalized 0.5 ** level",
+    "objective": "vertex, edge, position, width and fill; top-one-percent fill hard negatives; no image MSE",
+    "peak_learning_rate": 0.0002,
+    "final_learning_rate": 2e-06,
+    "warmup_steps": 600,
+    "schedule": "cosine",
+    "partial_probability": 0.25,
+    "blur_sigma_range": [
+      0,
+      1
+    ],
+    "opacity_range": [
+      0.65,
+      1
+    ],
+    "augmentations": [
+      "D4",
+      "blur",
+      "opacity",
+      "partial mask"
+    ]
+  },
+  "selection": {
+    "selected_at": "2026-10-19T19:15:13.743349+00:00",
+    "weights": "ema",
+    "checkpoint_sha256": "09e4f6d1a775cacc3e0b6a75805cc2912b3dc9a33646ff48eb5018599ca09aa8",
+    "parent_steps": 16200,
+    "added_steps": 84000,
+    "total_steps": 100200,
+    "heldout_seen_before_selection": false,
+    "reason": "Completed scheduled continuation with small late visual changes. Raw/EMA are visually similar on 30 comparison pages; choose the moving average as a stable final preview, without claiming superiority. Reviewed all 57 predefined broad development pages; documented residual double tracks, local thickening and tiny dots. No image-MSE selection.",
+    "development_reviews": {
+      "raw_ema_pages": 30,
+      "broad_pages": 57,
+      "broad_cases": 527,
+      "broad_conditions": 1180
+    },
+    "final_validation": {
+      "conditions": 20,
+      "max_raster_abs_error": 2.9206275939941406e-06,
+      "over_one_byte_pixels": 0,
+      "sign_changes": 0,
+      "protected_exact": true
+    },
+    "limits": [
+      "Synthetic-only training and evaluation.",
+      "Ambiguous repeated strokes and some widths can produce double lines, closed loops or stray dots.",
+      "Strong blur may produce local thickening.",
+      "Krita Windows GUI and real GPU quality require user trial."
+    ]
+  },
+  "validation": {
+    "conditions": 20,
+    "heads_passed": true,
+    "head_atol": 0.0002,
+    "head_rtol": 0.0002,
+    "max_head_abs_error": 0.000865936279296875,
+    "max_raster_abs_error": 2.9206275939941406e-06,
+    "raster_pixels_over_one_byte": 0,
+    "categorical_sign_changes": 0,
+    "protected_exact": true,
+    "tile_max_abs_error": 0.0,
+    "runtime_versions": [
+      "1.24.4",
+      "1.29.0"
+    ]
+  },
+  "legacy_model_source": "legacy-model-source.json",
+  "onnx_export": {
+    "local_mean": "separable fixed all-one Conv sums divided by full kernel size; zero padding",
+    "reason": "Avoid padded AveragePool border discrepancies in ONNX Runtime 1.24.4, including Pad fusion. Training weights, preprocessing and independent JAX references unchanged.",
+    "validated_cpu_runtime_versions": [
+      "1.24.4",
+      "1.29.0"
+    ]
+  }
+}

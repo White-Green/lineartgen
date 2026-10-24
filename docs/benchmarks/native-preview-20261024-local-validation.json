@@ -1,0 +1,36 @@
+{
+  "complete": true,
+  "scope": "Local package verification before Windows CI",
+  "runtime_tests": {
+    "passed": 284,
+    "warnings": 3,
+    "seconds": 324.39
+  },
+  "ort_1_24_4_graph_tests": {
+    "passed": 17
+  },
+  "plugin_tests": {
+    "passed": 30,
+    "seconds": 5.758
+  },
+  "linux_zip_smoke": true,
+  "krita_official_importer": {
+    "version": "5.2.9",
+    "installed_files_exact": 1408
+  },
+  "six_stage_jax_reference": true,
+  "scalar_raster_reference": true,
+  "bgra_reference": true,
+  "protected_pixels_exact": true,
+  "ruff_check": true,
+  "ruff_format": true,
+  "wheel_matches_current_source_and_assets": true,
+  "checkpoint_sha256": "34bf1c87a61cab5cece9b4168c562686be8dd28f5401d8e656dc95d8ff0a29fb",
+  "windows_ci_pending": true,
+  "windows_gpu_tested": false,
+  "krita_gui_tested": false,
+  "notes": [
+    "Initial sandbox run stopped at local IPC/thread checks; normal-environment rerun passed.",
+    "Initial test collection exposed two missing JAX normalization parity modules; both were included before the successful full run."
+  ]
+}

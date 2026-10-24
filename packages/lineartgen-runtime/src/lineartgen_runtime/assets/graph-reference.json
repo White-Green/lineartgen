@@ -1,10 +1,14 @@
 {
-  "checkpoint_sha256": "09e4f6d1a775cacc3e0b6a75805cc2912b3dc9a33646ff48eb5018599ca09aa8",
-  "arrays_sha256": "94874d4cf32e5667994e1631d3f09181d3649a322c12edfefaa846ffbd29872c",
+  "checkpoint_sha256": "34bf1c87a61cab5cece9b4168c562686be8dd28f5401d8e656dc95d8ff0a29fb",
+  "arrays_sha256": "65df4e185bd5979695ad8ac8e2045c53a995098341eca0bcd75075677729b4e6",
   "depth": 6,
-  "reference": "JAX CPU research graph, no ONNX outputs used",
+  "reference": "JAX CPU forward and research scalar capsule renderer; no ONNX predictions",
+  "preprocessing": "Same NumPy original-layer preprocessing used in training",
+  "generator_sha256": "156d00938e9335601a5660d4e3de902b08cc7a56a4bf84088616f6d6a2a7e36b",
   "tolerance": {
     "atol": 0.0002,
     "rtol": 0.0002
-  }
+  },
+  "max_stroke_width": null,
+  "bgra_strength": 0.5
 }

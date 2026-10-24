@@ -1,0 +1,31 @@
+{
+  "complete": true,
+  "native_unique_sources": 891,
+  "native_unique_crops": 4904,
+  "native_draws_by_scale_band": {
+    "0": 1993,
+    "1": 1991,
+    "2": 2022,
+    "3": 1993,
+    "4": 3084,
+    "5": 2914
+  },
+  "neighbor_unique_crops": 192,
+  "pressure_draws_by_band": {
+    "0": 979,
+    "1": 1051,
+    "2": 970,
+    "3": 1036,
+    "4": 976,
+    "5": 988
+  },
+  "depth_counts": {
+    "1": 1000,
+    "2": 1000,
+    "3": 1000,
+    "4": 1000,
+    "5": 1000,
+    "6": 1000
+  },
+  "geometry_loss_terms_exact_between_arms": true
+}

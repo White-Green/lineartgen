@@ -1,0 +1,8 @@
+{
+  "reviewed": true,
+  "adopted": false,
+  "reason": "Rendered-profile weight16 slightly improves full-stroke fine width over matched control, but worsens fine partial width; both arms broaden thin neighbors relative to initialization.",
+  "next": "Factorial diagnostic separating rough opacity, blur and painted-layer presence; no further coefficient increase.",
+  "independent_validation_used": false,
+  "final_test_used": false
+}

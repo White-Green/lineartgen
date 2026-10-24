@@ -125,8 +125,12 @@ def test_graph_stage_tiling_preserves_non_square_predictions(graph_model):
     source = rng.uniform(0.2, 1, (1, 64, 320, 1)).astype(np.float32)
     noise = rng.uniform(0, 0.75, source.shape).astype(np.float32)
     insert = rng.uniform(-1, 1, (1, 32, 160, 1)).astype(np.float32)
-    actual = graph_model.stage(source, noise, insert, 0, tile_size=64)
-    expected = graph_model.stage(source, noise, insert, 0, tile_size=None)
+    detail = rng.uniform(0.2, 1, source.shape).astype(np.float32)
+    rough = rng.uniform(0.2, 1, source.shape).astype(np.float32)
+    actual = graph_model.stage(source, noise, insert, 0, tile_size=64, detail=detail, rough=rough)
+    expected = graph_model.stage(
+        source, noise, insert, 0, tile_size=None, detail=detail, rough=rough
+    )
     np.testing.assert_allclose(actual, expected, atol=2e-4, rtol=2e-4)
 
 
@@ -141,8 +145,44 @@ def test_packaged_graph_matches_independent_jax_reference(graph_model):
     path = assets / "graph-reference.npz"
     assert hashlib.sha256(path.read_bytes()).hexdigest() == reference["arrays_sha256"]
     with np.load(path, allow_pickle=False) as z:
-        heads = graph_model.heads(z["source"], z["strength"], 6)
+        heads = graph_model.heads(
+            z["source"],
+            z["strength"],
+            6,
+            **{name: z[name] for name in ("layer_guide", "detail_guide", "rough_guide")},
+        )
         for level, actual in enumerate(heads):
             np.testing.assert_allclose(actual, z[f"head{level}"], **reference["tolerance"])
         assert np.any(heads[0][..., 0] >= 0)
-        np.testing.assert_allclose(render(heads[0][0]), z["raster"], atol=2 / 255, rtol=0)
+        np.testing.assert_allclose(
+            render(heads[0][0], max_width=graph_model.metadata["max_stroke_width"]),
+            z["raster"],
+            atol=2 / 255,
+            rtol=0,
+        )
+        result = graph_model.infer(
+            scribble=z["scribble"].tobytes(),
+            lineart=z["lineart"].tobytes(),
+            width=64,
+            height=64,
+            strength=reference["bgra_strength"],
+            seed=42,
+            denoise_steps=6,
+        )
+        actual = np.frombuffer(result, np.uint8).reshape(64, 64, 4)
+        np.testing.assert_allclose(actual, z["bgra"], atol=1, rtol=0)
+        protected = z["lineart"][..., 3] == 255
+        np.testing.assert_array_equal(actual[protected], z["bgra"][protected])
+
+
+def test_native_renderer_preserves_widths_beyond_the_legacy_eight_pixel_limit():
+    head = np.full((64, 96, 9), -20, np.float32)
+    head[32, 16:80, 0] = 2
+    head[32, 16:79, 4] = 2
+    head[..., 1:3] = 0
+    head[..., 3] = np.log(24)
+    native = render(head, max_width=None)
+    legacy = render(head)
+    assert ((1 - native[:, 48, 0]) / 2).sum() == pytest.approx(24, abs=0.02)
+    assert ((1 - legacy[:, 48, 0]) / 2).sum() == pytest.approx(8, abs=0.02)
+    np.testing.assert_array_equal(native, render(head, max_width=None, tile_size=16))

@@ -1,0 +1,27 @@
+{
+  "complete": true,
+  "steps_per_arm": 6000,
+  "all_finite": true,
+  "source_bindings_unchanged": true,
+  "draws_exact": true,
+  "matched_curriculum": true,
+  "restore_exact": true,
+  "depths": {
+    "1": 1000,
+    "2": 1000,
+    "3": 1000,
+    "4": 1000,
+    "5": 1000,
+    "6": 1000
+  },
+  "geometry_raw_ema_exact": true,
+  "width_updated": true,
+  "weights": {
+    "snapshots/step-6000/control/raw.npz": "6ed66022bb63ea70f5b150912582ce1672ca8c7124ba39c5d22db4be68c133f6",
+    "snapshots/step-6000/control/ema.npz": "34bf1c87a61cab5cece9b4168c562686be8dd28f5401d8e656dc95d8ff0a29fb",
+    "snapshots/step-6000/render16/raw.npz": "13f67083de7c2cb3984b1940f0f84e1655769e2afe2b1927258cad5dbbc764e2",
+    "snapshots/step-6000/render16/ema.npz": "fa03b3b75d71d815bf0ba0ed166f66108c219e5a0e7d4abe1086e2cb6a520dc3"
+  },
+  "training_seconds": 4848.046640589833,
+  "final_test_used": false
+}

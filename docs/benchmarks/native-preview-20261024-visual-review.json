@@ -1,0 +1,21 @@
+{
+  "reviewed": true,
+  "artifacts": [
+    "partial-profiles-ema/partial-widths.png",
+    "thin-review-ema/width-0.3.png",
+    "thin-review-ema/width-0.6.png",
+    "thin-review-ema/width-1.png",
+    "deployed-comparison/native--native-0336-x1.png",
+    "deployed-comparison/native--native-0885-x32.png",
+    "deployed-comparison/native--native-0803-x1.png",
+    "deployed-comparison/native--native-0083-x16.png",
+    "deployed-comparison/fine-context--leaves-0.png",
+    "deployed-comparison/gaps--width-3.0-gap-6.png"
+  ],
+  "findings": [
+    "Pressure-profile peak and tail remain too thin in partial-edit fine curves.",
+    "All48 EMA neighbor conditions inspected in three enlarged sheets; thickening remains.",
+    "Broad hole remains filled; native contour gaps and true-gap near-joining remain.",
+    "Deployed checkpoint is substantially worse on these cases, but coefficient16 is not a joint improvement."
+  ]
+}
