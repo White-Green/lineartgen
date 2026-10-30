@@ -16,6 +16,19 @@ class LineartModel:
         self._spatial = None
         self._curve = None
         self._graph = None
+        stage_path = (
+            Path(model_path)
+            if model_path is not None
+            else Path(__file__).parent / "assets" / "spatial-stage-model.json"
+        )
+        if stage_path.name == "spatial-stage-model.json" and stage_path.is_file():
+            from .spatial_stage import StageLineartModel
+
+            self._spatial = StageLineartModel(
+                stage_path, num_threads, provider=provider, device_id=device_id
+            )
+            self.backend, self.device = self._spatial.backend, self._spatial.device
+            return
         spatial_path = (
             Path(model_path)
             if model_path is not None

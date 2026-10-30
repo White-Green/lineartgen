@@ -1,6 +1,6 @@
 """ONNX inference only: importing this package never imports JAX or Flax."""
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 
 def __getattr__(name):
