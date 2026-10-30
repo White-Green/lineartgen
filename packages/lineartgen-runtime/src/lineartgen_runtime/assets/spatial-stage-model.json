@@ -1,0 +1,31 @@
+{
+  "format_version": 1,
+  "representation": "spatial_intent_stage_graph",
+  "input_channels": 10,
+  "output_channels": 9,
+  "normalization": "separate_layers_sum",
+  "noise_rng": "numpy_seedsequence_pcg64_v1",
+  "noise_after_downsample": true,
+  "global_recursion": true,
+  "minimum_stage_size": 8,
+  "feedback": "spatial_occupancy_fill_width_v1",
+  "renderer": "attraction_graph_native_width_v1",
+  "depths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "stage": {
+    "file": "spatial-stage.onnx",
+    "sha256": "38424fdbe7967b54131ec5343d2b2ff811f794b98c6be21214af7a2ed22f182b"
+  },
+  "checkpoint_sha256": "bc8ea33a594740eab7834b776633e9f7d8eda8270033038aa71293f03ea54ab2",
+  "training_steps": 48000,
+  "parameters": 116045,
+  "preview": true,
+  "cnn_core": 512,
+  "cnn_halo": 64
+}

@@ -1,0 +1,22 @@
+{
+  "checkpoint_sha256": "bc8ea33a594740eab7834b776633e9f7d8eda8270033038aa71293f03ea54ab2",
+  "onnx_sha256": "38424fdbe7967b54131ec5343d2b2ff811f794b98c6be21214af7a2ed22f182b",
+  "arrays_sha256": "2305acf644d2ef9cfe8341639d0ee8097c45d6c7806853cb138abd26f74031f3",
+  "training_steps": 48000,
+  "depths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "tolerance": {
+    "atol": 0.0001,
+    "rtol": 0.0001
+  },
+  "bgra_atol": 2,
+  "bgra_strength": 0.5,
+  "seed": 0,
+  "reference_backend": "CPU JAX"
+}

@@ -1,0 +1,40 @@
+{
+  "preview": true,
+  "goal": "Select intended paths and branches from retracing and stray rough strokes",
+  "synthetic_only": true,
+  "parameters": 116045,
+  "training_steps": 48000,
+  "checkpoint_sha256": "bc8ea33a594740eab7834b776633e9f7d8eda8270033038aa71293f03ea54ab2",
+  "research_commit": "be47d3e",
+  "runtime_commit": "fc7376e",
+  "training_run": "intent-vertex-bottleneck-fit-20261030",
+  "selected_arm": "path final EMA6000",
+  "confirmation": {
+    "latent_split": 5,
+    "layouts": 48,
+    "variants": 6,
+    "cleanup_conditions": 96,
+    "model_joint90": 52,
+    "copy_joint90": 5,
+    "contrast_joint90": 0,
+    "cleanup_keep": 0.9927539747049422,
+    "ghost": 0.3346129867866177,
+    "native_conditions": 144,
+    "same_generator_family": true,
+    "real_hand_drawings_tested": false
+  },
+  "records": {
+    "runs/intent-trial-stage-48000-20261030/verification.json": "dc7b72befcd7c99ac7b02949af765e7268d2bfda36027ef7c6d6319f46e12a7c",
+    "runs/intent-trial-confirmation-48000-20261030/review.json": "725d2a0332915ad5de4d32d9fe31bd573392633df612c2c08c6dce71e3a5092a",
+    "runs/intent-trial-confirmation-48000-20261030/actual-visual-review.json": "92d1914fd8797f4bdc34bb3037e4e8b18a129e998dd3247edab6b3bc00b9d02a",
+    "runs/intent-trial-native-confirmation-48000-20261030/review.json": "dbedb499c73a1c8ffd5d375e915b7824b2cea9e968c3e10b17a51fa38a0a9e04",
+    "runs/intent-trial-native-confirmation-48000-20261030/actual-visual-review.json": "be068dda9f78982567fc70d0a6556959805d6e7dea19b0434ee34b73103b7a8f"
+  },
+  "limitations": [
+    "Some true paths/branches and thick closed loops break",
+    "Dense retracing can remain, especially at large scale",
+    "Hooks and width excess remain",
+    "Real hand-drawn rough sketches not yet evaluated"
+  ],
+  "windows_validation": "Pending plugin CI"
+}
