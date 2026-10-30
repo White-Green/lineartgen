@@ -13,6 +13,22 @@ from .sampling import denoise
 
 class LineartModel:
     def __init__(self, model_path=None, num_threads=None, *, provider="auto", device_id=0):
+        self._spatial = None
+        self._curve = None
+        self._graph = None
+        spatial_path = (
+            Path(model_path)
+            if model_path is not None
+            else Path(__file__).parent / "assets" / "spatial-model.json"
+        )
+        if spatial_path.name == "spatial-model.json" and spatial_path.is_file():
+            from .spatial import SpatialLineartModel
+
+            self._spatial = SpatialLineartModel(
+                spatial_path, num_threads, provider=provider, device_id=device_id
+            )
+            self.backend, self.device = self._spatial.backend, self._spatial.device
+            return
         curve_path = (
             Path(model_path)
             if model_path is not None
@@ -83,6 +99,10 @@ class LineartModel:
         self._lock = threading.Lock()
 
     def forward(self, image, noise_level, insert):
+        if self._spatial is not None:
+            raise ValueError(
+                "Spatial graph models use an image pyramid; call infer for BGRA images"
+            )
         if self._curve is not None:
             raise ValueError("Curve models use an image pyramid; call infer for BGRA images")
         if self._graph is not None:
@@ -97,6 +117,16 @@ class LineartModel:
         )[0]
 
     def infer(self, *, scribble, lineart, width, height, strength, seed, denoise_steps):
+        if self._spatial is not None:
+            return self._spatial.infer(
+                scribble=scribble,
+                lineart=lineart,
+                width=width,
+                height=height,
+                strength=strength,
+                seed=seed,
+                denoise_steps=denoise_steps,
+            )
         if self._curve is not None:
             return self._curve.infer(
                 scribble=scribble,

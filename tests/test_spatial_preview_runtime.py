@@ -8,6 +8,7 @@ import sys
 import numpy as np
 import onnx
 import pytest
+from lineartgen_runtime import LineartModel
 from lineartgen_runtime.graph import render
 from lineartgen_runtime.spatial import SpatialLineartModel
 
@@ -152,3 +153,13 @@ def test_validation_and_no_training_framework_import(manifest):
     manifest.write_text(json.dumps(spec))
     with pytest.raises(ValueError, match="digest mismatch"):
         SpatialLineartModel(manifest, provider="cpu")
+
+
+def test_public_api_dispatches_the_spatial_manifest(manifest):
+    model = LineartModel(manifest, provider="cpu")
+    assert model.backend == "onnxruntime spatial graph"
+    assert model.infer(**options()) == SpatialLineartModel(manifest, provider="cpu").infer(
+        **options()
+    )
+    with pytest.raises(ValueError, match="image pyramid"):
+        model.forward(None, None, None)
