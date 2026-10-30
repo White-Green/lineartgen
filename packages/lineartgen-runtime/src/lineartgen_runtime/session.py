@@ -13,6 +13,20 @@ from .sampling import denoise
 
 class LineartModel:
     def __init__(self, model_path=None, num_threads=None, *, provider="auto", device_id=0):
+        curve_path = (
+            Path(model_path)
+            if model_path is not None
+            else Path(__file__).parent / "assets" / "curve-model.json"
+        )
+        self._curve = None
+        if curve_path.name == "curve-model.json" and curve_path.is_file():
+            from .curves import CurveLineartModel
+
+            self._curve = CurveLineartModel(
+                curve_path, num_threads, provider=provider, device_id=device_id
+            )
+            self.backend, self.device = self._curve.backend, self._curve.device
+            return
         graph_path = (
             Path(model_path)
             if model_path is not None
@@ -69,6 +83,8 @@ class LineartModel:
         self._lock = threading.Lock()
 
     def forward(self, image, noise_level, insert):
+        if self._curve is not None:
+            raise ValueError("Curve models use an image pyramid; call infer for BGRA images")
         if self._graph is not None:
             raise ValueError("Graph models use per-level heads; call infer for BGRA images")
         return self._session.run(
@@ -81,6 +97,16 @@ class LineartModel:
         )[0]
 
     def infer(self, *, scribble, lineart, width, height, strength, seed, denoise_steps):
+        if self._curve is not None:
+            return self._curve.infer(
+                scribble=scribble,
+                lineart=lineart,
+                width=width,
+                height=height,
+                strength=strength,
+                seed=seed,
+                denoise_steps=denoise_steps,
+            )
         if self._graph is not None:
             return self._graph.infer(
                 scribble=scribble,
