@@ -8,11 +8,12 @@ import threading
 from pathlib import Path
 
 import numpy as np
-from .stage_feedback import forward
-from .stage_tiles import TiledSession
+
 from .curve_inputs import levels_from_bgra
 from .graph import render
 from .images import PyramidPlan, prepare_input, to_bgra
+from .stage_feedback import forward
+from .stage_tiles import TiledSession
 
 
 class StageLineartModel:
@@ -49,7 +50,9 @@ class StageLineartModel:
         use_dml = provider != "cpu" and "DmlExecutionProvider" in ort.get_available_providers()
         if provider == "directml" and not use_dml:
             raise RuntimeError("DirectML is unavailable; install onnxruntime-directml")
-        threads = min(4, os.cpu_count() or 1) if num_threads is None else operator.index(num_threads)
+        threads = (
+            min(4, os.cpu_count() or 1) if num_threads is None else operator.index(num_threads)
+        )
         if threads < 1:
             raise ValueError("num_threads must be positive")
         self._options = ort.SessionOptions()
@@ -58,7 +61,9 @@ class StageLineartModel:
         if use_dml:
             self._options.enable_mem_pattern = False
             self._options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
-            self._providers.insert(0, ("DmlExecutionProvider", {"device_id": operator.index(device_id)}))
+            self._providers.insert(
+                0, ("DmlExecutionProvider", {"device_id": operator.index(device_id)})
+            )
         self.backend = "onnxruntime spatial stage graph"
         self.device = "not initialized"
         self._session = None
@@ -69,10 +74,14 @@ class StageLineartModel:
         import onnxruntime as ort
 
         if self._session is None:
-            session = ort.InferenceSession(str(self._model_path), sess_options=self._options, providers=self._providers)
+            session = ort.InferenceSession(
+                str(self._model_path), sess_options=self._options, providers=self._providers
+            )
             inputs = {value.name: value.shape for value in session.get_inputs()}
             outputs = {value.name: value.shape for value in session.get_outputs()}
-            if inputs != {"features": [1, "height", "width", 10]} or outputs != {"graph": [1, "height", "width", 9]}:
+            if inputs != {"features": [1, "height", "width", 10]} or outputs != {
+                "graph": [1, "height", "width", 9]
+            }:
                 raise ValueError("Unexpected spatial stage ONNX input/output contract")
             self.device = ", ".join(session.get_providers())
             self._session = TiledSession(session)
@@ -90,10 +99,13 @@ class StageLineartModel:
         clean, noise = prepare_input(scribble, lineart, plan, strength, image_scale=1.0)
         if strength == 0 or not np.any(noise > 0):
             return to_bgra(clean, plan, alpha_threshold=0.0)
-        inputs, rows, cols = levels_from_bgra(scribble, lineart, width, height, strength, seed, depth)
+        inputs, rows, cols = levels_from_bgra(
+            scribble, lineart, width, height, strength, seed, depth
+        )
         with self._lock:
             head = forward(self._get_session(), inputs)[0][0]
-            prediction = render(head, max_width=None)[rows.pad:rows.pad + height, cols.pad:cols.pad + width]
+            prediction = render(head, max_width=None)[
+                rows.pad : rows.pad + height, cols.pad : cols.pad + width
+            ]
         prediction = np.where(noise > 0, prediction[None], clean)
         return to_bgra(prediction, plan, alpha_threshold=0.0)
-

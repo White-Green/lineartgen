@@ -6,7 +6,9 @@ import numpy as np
 class TiledSession:
     def __init__(self, session, core=512, halo=64):
         if core < 8 or core % 8 or halo < 64 or halo % 8:
-            raise ValueError("CNN cores and halos must align to eight; halo must cover the receptive field")
+            raise ValueError(
+                "CNN cores and halos must align to eight; halo must cover the receptive field"
+            )
         self.session, self.core, self.halo = session, core, halo
         self.last_calls = []
 
@@ -34,6 +36,5 @@ class TiledSession:
                 tile = self.session.run(["graph"], {"features": crop})[0]
                 if tile.shape != (1, bottom - top, right - left, 9) or not np.isfinite(tile).all():
                     raise RuntimeError("Invalid tiled stage graph")
-                result[:, y:y1, x:x1] = tile[:, y - top:y1 - top, x - left:x1 - left]
+                result[:, y:y1, x:x1] = tile[:, y - top : y1 - top, x - left : x1 - left]
         return [result]
-

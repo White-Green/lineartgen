@@ -6,7 +6,9 @@ import numpy as np
 def resize_linear(value, height, width):
     def axis_resize(image, axis, count):
         source = image.shape[axis]
-        coordinate = (np.arange(count, dtype=np.float32) + np.float32(0.5)) * np.float32(source / count) - np.float32(0.5)
+        coordinate = (np.arange(count, dtype=np.float32) + np.float32(0.5)) * np.float32(
+            source / count
+        ) - np.float32(0.5)
         low = np.floor(coordinate).astype(np.int64)
         fraction = coordinate - low.astype(np.float32)
         shape = [1] * image.ndim
@@ -40,8 +42,12 @@ def features(image, previous, level):
         occupied, fill = sigmoid(previous[..., :1]), sigmoid(previous[..., 8:9])
         union = 1 - (1 - occupied) * (1 - fill)
         log_width = np.clip(previous[..., 3:4] + np.float32(np.log(2.0)), -8, 8) / 4
-        context = resize_linear(np.concatenate((union, occupied, occupied * log_width), -1), height, width)
-    condition = np.broadcast_to(np.asarray([level / 5, float(previous is None)], np.float32), (1, height, width, 2))
+        context = resize_linear(
+            np.concatenate((union, occupied, occupied * log_width), -1), height, width
+        )
+    condition = np.broadcast_to(
+        np.asarray([level / 5, float(previous is None)], np.float32), (1, height, width, 2)
+    )
     return np.concatenate((image, context, condition), -1)
 
 
