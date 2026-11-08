@@ -1,6 +1,6 @@
 {
   "format_version": 1,
-  "representation": "spatial_intent_stage_graph",
+  "representation": "context_component_selection_stage_graph",
   "input_channels": 10,
   "output_channels": 9,
   "normalization": "separate_layers_sum",
@@ -20,12 +20,28 @@
   ],
   "stage": {
     "file": "spatial-stage.onnx",
-    "sha256": "38424fdbe7967b54131ec5343d2b2ff811f794b98c6be21214af7a2ed22f182b"
+    "sha256": "c2472dde2c06b1e0977dffb411ce17cdd7a4f397205c3eeba386e854f5e5a42c"
   },
-  "checkpoint_sha256": "bc8ea33a594740eab7834b776633e9f7d8eda8270033038aa71293f03ea54ab2",
-  "training_steps": 48000,
-  "parameters": 116045,
+  "checkpoint_sha256": "9c9f2dda03b133ab01610b636270b4aee5aef30005a43828c4e8f05347d5235d",
+  "parameters": 139186,
   "preview": true,
   "cnn_core": 512,
-  "cnn_halo": 64
+  "cnn_halo": 192,
+  "latent_channels": 16,
+  "base_feedback_channels": 9,
+  "selection_score_scale": 8.0,
+  "component_projection": "base_component_mean",
+  "component_threshold": 0.0,
+  "selection_dilations": [
+    2,
+    4,
+    8,
+    16,
+    32,
+    64
+  ],
+  "base_training_steps": 48000,
+  "selection_training_steps": 7200,
+  "wide_selection_training_steps": 4200,
+  "route_consistency_training_steps": 1200
 }

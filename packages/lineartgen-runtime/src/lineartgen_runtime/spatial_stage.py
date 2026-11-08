@@ -12,8 +12,7 @@ import numpy as np
 from .curve_inputs import levels_from_bgra
 from .graph import render
 from .images import PyramidPlan, prepare_input, to_bgra
-from .stage_feedback import forward
-from .stage_tiles import TiledSession
+from .selection_feedback import TiledSelectionSession, forward
 
 
 class StageLineartModel:
@@ -24,7 +23,13 @@ class StageLineartModel:
         self.metadata = json.loads(self._path.read_text())
         expected = dict(
             format_version=1,
-            representation="spatial_intent_stage_graph",
+            representation="context_component_selection_stage_graph",
+            latent_channels=16,
+            base_feedback_channels=9,
+            selection_score_scale=8.0,
+            component_projection="base_component_mean",
+            component_threshold=0.0,
+            cnn_halo=192,
             input_channels=10,
             output_channels=9,
             normalization="separate_layers_sum",
@@ -64,7 +69,7 @@ class StageLineartModel:
             self._providers.insert(
                 0, ("DmlExecutionProvider", {"device_id": operator.index(device_id)})
             )
-        self.backend = "onnxruntime spatial stage graph"
+        self.backend = "onnxruntime context component graph (research trial)"
         self.device = "not initialized"
         self._session = None
         self._lock = threading.Lock()
@@ -79,12 +84,17 @@ class StageLineartModel:
             )
             inputs = {value.name: value.shape for value in session.get_inputs()}
             outputs = {value.name: value.shape for value in session.get_outputs()}
-            if inputs != {"features": [1, "height", "width", 10]} or outputs != {
-                "graph": [1, "height", "width", 9]
+            if inputs != {
+                "features": [1, "height", "width", 10],
+                "latent": [1, "height", "width", 16],
+            } or outputs != {
+                "graph": [1, "height", "width", 9],
+                "state": [1, "height", "width", 16],
+                "base_graph": [1, "height", "width", 9],
             }:
                 raise ValueError("Unexpected spatial stage ONNX input/output contract")
             self.device = ", ".join(session.get_providers())
-            self._session = TiledSession(session)
+            self._session = TiledSelectionSession(session)
         return self._session
 
     def infer(self, *, scribble, lineart, width, height, strength, seed, denoise_steps):
