@@ -21,13 +21,17 @@ class StageLineartModel:
 
         self._path = Path(manifest)
         self.metadata = json.loads(self._path.read_text())
+        projection = self.metadata.get("component_projection")
+        learned = projection == "base_component_mean_max_mlp32"
+        if projection not in ("base_component_mean", "base_component_mean_max_mlp32"):
+            raise ValueError("Unsupported component projection")
         expected = dict(
-            format_version=1,
+            format_version=2 if learned else 1,
             representation="context_component_selection_stage_graph",
             latent_channels=16,
             base_feedback_channels=9,
             selection_score_scale=8.0,
-            component_projection="base_component_mean",
+            component_projection=projection,
             component_threshold=0.0,
             cnn_halo=192,
             input_channels=10,
@@ -50,6 +54,22 @@ class StageLineartModel:
         self._model_path = self._path.parent / filename
         if hashlib.sha256(self._model_path.read_bytes()).hexdigest() != entry["sha256"]:
             raise ValueError("Stage model digest mismatch")
+        self._readout = None
+        if learned:
+            from .component_readout import load_parameters
+
+            if (self.metadata.get("parameters") != 140275
+                    or self.metadata.get("cnn_parameters") != 139186
+                    or self.metadata.get("readout_parameters") != 1089):
+                raise ValueError("Unsupported component readout parameter counts")
+            entry = self.metadata["readout"]
+            filename = entry["file"]
+            if Path(filename).name != filename:
+                raise ValueError("Component readout must be a local basename")
+            readout_path = self._path.parent / filename
+            if hashlib.sha256(readout_path.read_bytes()).hexdigest() != entry["sha256"]:
+                raise ValueError("Component readout digest mismatch")
+            self._readout = load_parameters(readout_path)
         if provider not in ("auto", "cpu", "directml"):
             raise ValueError("provider must be auto, cpu or directml")
         use_dml = provider != "cpu" and "DmlExecutionProvider" in ort.get_available_providers()
@@ -69,7 +89,8 @@ class StageLineartModel:
             self._providers.insert(
                 0, ("DmlExecutionProvider", {"device_id": operator.index(device_id)})
             )
-        self.backend = "onnxruntime context component graph (research trial)"
+        self.backend = ("onnxruntime learned component graph (research trial)" if learned
+                        else "onnxruntime context component graph (research trial)")
         self.device = "not initialized"
         self._session = None
         self._lock = threading.Lock()
@@ -113,7 +134,7 @@ class StageLineartModel:
             scribble, lineart, width, height, strength, seed, depth
         )
         with self._lock:
-            head = forward(self._get_session(), inputs)[0][0]
+            head = forward(self._get_session(), inputs, readout=self._readout)[0][0]
             prediction = render(head, max_width=None)[
                 rows.pad : rows.pad + height, cols.pad : cols.pad + width
             ]

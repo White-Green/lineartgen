@@ -100,7 +100,7 @@ def project(head, base, threshold=0.0):
     return result
 
 
-def forward(session, levels):
+def forward(session, levels, *, readout=None):
     from lineartgen_runtime.stage_feedback import features, resize_linear
 
     if not 1 <= len(levels) <= 6:
@@ -124,5 +124,10 @@ def forward(session, levels):
         if any(not np.isfinite(v).all() for v in (head, state, previous)):
             raise RuntimeError("Nonfinite component stage output")
         heads[level] = head
-    heads[0] = project(heads[0][0], previous[0])[None]
+    if readout is None:
+        heads[0] = project(heads[0][0], previous[0])[None]
+    else:
+        from .component_readout import project as readout_project
+
+        heads[0] = readout_project(heads[0][0], state[0], previous[0], readout)[None]
     return tuple(heads)
