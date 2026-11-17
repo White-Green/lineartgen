@@ -1,0 +1,1614 @@
+{
+  "paired_conditions": 1152,
+  "paired_inputs_and_teachers_exact": true,
+  "all_output_hashes_checked": true,
+  "candidate_summary": {
+    "all": {
+      "cases": 1152,
+      "joint90": 287,
+      "cleanup_count": 810,
+      "cleanup_joint90": 143,
+      "mean_keep": 0.85587275437014,
+      "required_paths90": 775,
+      "mean_ghost": 0.734561272588109,
+      "median_width_error": 0.24100645276210914,
+      "measured_width_profiles": 3316,
+      "unmeasurable_width_profiles": 284,
+      "closure_count": 494,
+      "mean_closure_interior_preserved": 0.6886848427941652,
+      "gap_count": 126,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "kind=continuation": {
+      "cases": 144,
+      "joint90": 34,
+      "cleanup_count": 96,
+      "cleanup_joint90": 7,
+      "mean_keep": 0.9320688006617684,
+      "required_paths90": 115,
+      "mean_ghost": 0.9124863109436486,
+      "median_width_error": 0.30258933568938606,
+      "measured_width_profiles": 528,
+      "unmeasurable_width_profiles": 48,
+      "closure_count": 0,
+      "mean_closure_interior_preserved": null,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    },
+    "choice=0": {
+      "cases": 384,
+      "joint90": 33,
+      "cleanup_count": 384,
+      "cleanup_joint90": 33,
+      "mean_keep": 0.8993729535309863,
+      "required_paths90": 293,
+      "mean_ghost": 0.8321367689719584,
+      "median_width_error": 0.20849907525429157,
+      "measured_width_profiles": 898,
+      "unmeasurable_width_profiles": 2,
+      "closure_count": 164,
+      "mean_closure_interior_preserved": 0.7116060138180591,
+      "gap_count": 42,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "zoom=0.5": {
+      "cases": 384,
+      "joint90": 81,
+      "cleanup_count": 270,
+      "cleanup_joint90": 42,
+      "mean_keep": 0.865003947509637,
+      "required_paths90": 247,
+      "mean_ghost": 0.7413009615978734,
+      "median_width_error": 0.2742315639862622,
+      "measured_width_profiles": 1018,
+      "unmeasurable_width_profiles": 182,
+      "closure_count": 160,
+      "mean_closure_interior_preserved": 0.6522607248300993,
+      "gap_count": 42,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "painted=none": {
+      "cases": 576,
+      "joint90": 139,
+      "cleanup_count": 405,
+      "cleanup_joint90": 69,
+      "mean_keep": 0.8490286275410346,
+      "required_paths90": 377,
+      "mean_ghost": 0.7367682158833877,
+      "median_width_error": 0.2423870556196186,
+      "measured_width_profiles": 1658,
+      "unmeasurable_width_profiles": 142,
+      "closure_count": 247,
+      "mean_closure_interior_preserved": 0.6709768938593573,
+      "gap_count": 63,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "tone=0": {
+      "cases": 378,
+      "joint90": 93,
+      "cleanup_count": 270,
+      "cleanup_joint90": 48,
+      "mean_keep": 0.8620625378099811,
+      "required_paths90": 245,
+      "mean_ghost": 0.7066134911441242,
+      "median_width_error": 0.25941129200941926,
+      "measured_width_profiles": 1048,
+      "unmeasurable_width_profiles": 80,
+      "closure_count": 160,
+      "mean_closure_interior_preserved": 0.6063127245079197,
+      "gap_count": 54,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "painted=main": {
+      "cases": 189,
+      "joint90": 47,
+      "cleanup_count": 135,
+      "cleanup_joint90": 24,
+      "mean_keep": 0.8656091626614085,
+      "required_paths90": 135,
+      "mean_ghost": 0.7423562545083415,
+      "median_width_error": 0.1942054870845552,
+      "measured_width_profiles": 595,
+      "unmeasurable_width_profiles": 65,
+      "closure_count": 54,
+      "mean_closure_interior_preserved": 0.808320534654932,
+      "gap_count": 27,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "zoom=1.0": {
+      "cases": 384,
+      "joint90": 101,
+      "cleanup_count": 270,
+      "cleanup_joint90": 55,
+      "mean_keep": 0.8408970505785366,
+      "required_paths90": 249,
+      "mean_ghost": 0.7101780961435266,
+      "median_width_error": 0.21404439375840129,
+      "measured_width_profiles": 1142,
+      "unmeasurable_width_profiles": 58,
+      "closure_count": 166,
+      "mean_closure_interior_preserved": 0.6807407030834759,
+      "gap_count": 42,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "zoom=2.0": {
+      "cases": 384,
+      "joint90": 105,
+      "cleanup_count": 270,
+      "cleanup_joint90": 46,
+      "mean_keep": 0.8617172650222465,
+      "required_paths90": 279,
+      "mean_ghost": 0.7522047600229268,
+      "median_width_error": 0.20467250758380945,
+      "measured_width_profiles": 1156,
+      "unmeasurable_width_profiles": 44,
+      "closure_count": 168,
+      "mean_closure_interior_preserved": 0.7312240455693138,
+      "gap_count": 42,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "choice=1": {
+      "cases": 384,
+      "joint90": 110,
+      "cleanup_count": 384,
+      "cleanup_joint90": 110,
+      "mean_keep": 0.9258941193274297,
+      "required_paths90": 324,
+      "mean_ghost": 0.6290534107350703,
+      "median_width_error": 0.23826600973455253,
+      "measured_width_profiles": 898,
+      "unmeasurable_width_profiles": 2,
+      "closure_count": 164,
+      "mean_closure_interior_preserved": 0.7516760524041448,
+      "gap_count": 42,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "choice=2": {
+      "cases": 384,
+      "joint90": 144,
+      "cleanup_count": 42,
+      "cleanup_joint90": 0,
+      "mean_keep": 0.742351190252004,
+      "required_paths90": 158,
+      "mean_ghost": 0.807085756877838,
+      "median_width_error": 0.256792585563672,
+      "measured_width_profiles": 1520,
+      "unmeasurable_width_profiles": 280,
+      "closure_count": 166,
+      "mean_closure_interior_preserved": 0.6038075510835914,
+      "gap_count": 42,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "kind=closure": {
+      "cases": 126,
+      "joint90": 52,
+      "cleanup_count": 84,
+      "cleanup_joint90": 34,
+      "mean_keep": 0.8795680603651101,
+      "required_paths90": 92,
+      "mean_ghost": 0.5978920747970522,
+      "median_width_error": 0.1916171355296549,
+      "measured_width_profiles": 168,
+      "unmeasurable_width_profiles": 0,
+      "closure_count": 126,
+      "mean_closure_interior_preserved": 0.7125820452151077,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    },
+    "tone=1": {
+      "cases": 396,
+      "joint90": 85,
+      "cleanup_count": 276,
+      "cleanup_joint90": 53,
+      "mean_keep": 0.8125991937760538,
+      "required_paths90": 247,
+      "mean_ghost": 0.692495711014366,
+      "median_width_error": 0.23525407175255547,
+      "measured_width_profiles": 1082,
+      "unmeasurable_width_profiles": 94,
+      "closure_count": 190,
+      "mean_closure_interior_preserved": 0.7477987692944198,
+      "gap_count": 36,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "painted=soft": {
+      "cases": 189,
+      "joint90": 48,
+      "cleanup_count": 135,
+      "cleanup_joint90": 25,
+      "mean_keep": 0.8703189770969769,
+      "required_paths90": 130,
+      "mean_ghost": 0.7259023198731909,
+      "median_width_error": 0.20614355095954912,
+      "measured_width_profiles": 439,
+      "unmeasurable_width_profiles": 29,
+      "closure_count": 103,
+      "mean_closure_interior_preserved": 0.6210235040362101,
+      "gap_count": 27,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "kind=branch": {
+      "cases": 126,
+      "joint90": 47,
+      "cleanup_count": 84,
+      "cleanup_joint90": 16,
+      "mean_keep": 0.9564692536441008,
+      "required_paths90": 115,
+      "mean_ghost": 0.8156382128487569,
+      "median_width_error": 0.301225430351173,
+      "measured_width_profiles": 444,
+      "unmeasurable_width_profiles": 60,
+      "closure_count": 0,
+      "mean_closure_interior_preserved": null,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    },
+    "tone=2": {
+      "cases": 378,
+      "joint90": 109,
+      "cleanup_count": 264,
+      "cleanup_joint90": 42,
+      "mean_keep": 0.8950171772669607,
+      "required_paths90": 283,
+      "mean_ghost": 0.8071218634374607,
+      "median_width_error": 0.21281367178749427,
+      "measured_width_profiles": 1186,
+      "unmeasurable_width_profiles": 110,
+      "closure_count": 144,
+      "mean_closure_interior_preserved": 0.7022118767577129,
+      "gap_count": 36,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "painted=white": {
+      "cases": 198,
+      "joint90": 53,
+      "cleanup_count": 135,
+      "cleanup_joint90": 25,
+      "mean_keep": 0.8526995209920731,
+      "required_paths90": 133,
+      "mean_ghost": 0.728804413496958,
+      "median_width_error": 0.32956775297985186,
+      "measured_width_profiles": 624,
+      "unmeasurable_width_profiles": 48,
+      "closure_count": 90,
+      "mean_closure_interior_preserved": 0.7429365529995593,
+      "gap_count": 9,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "kind=gap": {
+      "cases": 126,
+      "joint90": 48,
+      "cleanup_count": 84,
+      "cleanup_joint90": 35,
+      "mean_keep": 0.8696961770905082,
+      "required_paths90": 78,
+      "mean_ghost": 0.44289986218946514,
+      "median_width_error": 0.11718143229488587,
+      "measured_width_profiles": 168,
+      "unmeasurable_width_profiles": 0,
+      "closure_count": 0,
+      "mean_closure_interior_preserved": null,
+      "gap_count": 126,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "kind=redraw": {
+      "cases": 126,
+      "joint90": 60,
+      "cleanup_count": 84,
+      "cleanup_joint90": 36,
+      "mean_keep": 0.8939631758785545,
+      "required_paths90": 97,
+      "mean_ghost": 0.5334861816001325,
+      "median_width_error": 0.12354790211149638,
+      "measured_width_profiles": 168,
+      "unmeasurable_width_profiles": 0,
+      "closure_count": 126,
+      "mean_closure_interior_preserved": 0.757914635712323,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    },
+    "kind=fragments": {
+      "cases": 126,
+      "joint90": 13,
+      "cleanup_count": 84,
+      "cleanup_joint90": 8,
+      "mean_keep": 0.6177541584504903,
+      "required_paths90": 38,
+      "mean_ghost": 0.7506563225522278,
+      "median_width_error": 0.20759649224137844,
+      "measured_width_profiles": 454,
+      "unmeasurable_width_profiles": 50,
+      "closure_count": 0,
+      "mean_closure_interior_preserved": null,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    },
+    "kind=dense": {
+      "cases": 126,
+      "joint90": 3,
+      "cleanup_count": 126,
+      "cleanup_joint90": 3,
+      "mean_keep": 0.8682830577941124,
+      "required_paths90": 80,
+      "mean_ghost": 0.7643796549515243,
+      "median_width_error": 0.15988180469497165,
+      "measured_width_profiles": 168,
+      "unmeasurable_width_profiles": 0,
+      "closure_count": 126,
+      "mean_closure_interior_preserved": 0.5916506165625756,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    },
+    "kind=composition": {
+      "cases": 126,
+      "joint90": 8,
+      "cleanup_count": 84,
+      "cleanup_joint90": 4,
+      "mean_keep": 0.7881575292168435,
+      "required_paths90": 69,
+      "mean_ghost": 0.769753309233857,
+      "median_width_error": 0.9715184255348639,
+      "measured_width_profiles": 336,
+      "unmeasurable_width_profiles": 0,
+      "closure_count": 116,
+      "mean_closure_interior_preserved": 0.6929289039360071,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    },
+    "kind=crossing": {
+      "cases": 126,
+      "joint90": 22,
+      "cleanup_count": 84,
+      "cleanup_joint90": 0,
+      "mean_keep": 0.88600942675954,
+      "required_paths90": 91,
+      "mean_ghost": 0.9835324703723878,
+      "median_width_error": 0.1774411240868048,
+      "measured_width_profiles": 882,
+      "unmeasurable_width_profiles": 126,
+      "closure_count": 0,
+      "mean_closure_interior_preserved": null,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    }
+  },
+  "reference_summary": {
+    "all": {
+      "cases": 1152,
+      "joint90": 46,
+      "cleanup_count": 810,
+      "cleanup_joint90": 8,
+      "mean_keep": 0.685841843003974,
+      "required_paths90": 428,
+      "mean_ghost": 0.8701997498165062,
+      "median_width_error": 0.26448885381253523,
+      "measured_width_profiles": 3316,
+      "unmeasurable_width_profiles": 284,
+      "closure_count": 494,
+      "mean_closure_interior_preserved": 0.27170888785959885,
+      "gap_count": 126,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "kind=continuation": {
+      "cases": 144,
+      "joint90": 15,
+      "cleanup_count": 96,
+      "cleanup_joint90": 0,
+      "mean_keep": 0.8759755065555923,
+      "required_paths90": 91,
+      "mean_ghost": 0.9939680545085835,
+      "median_width_error": 0.2894972064221545,
+      "measured_width_profiles": 528,
+      "unmeasurable_width_profiles": 48,
+      "closure_count": 0,
+      "mean_closure_interior_preserved": null,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    },
+    "choice=0": {
+      "cases": 384,
+      "joint90": 2,
+      "cleanup_count": 384,
+      "cleanup_joint90": 2,
+      "mean_keep": 0.7469917884365351,
+      "required_paths90": 185,
+      "mean_ghost": 0.9145733751308467,
+      "median_width_error": 0.2102223755832246,
+      "measured_width_profiles": 898,
+      "unmeasurable_width_profiles": 2,
+      "closure_count": 164,
+      "mean_closure_interior_preserved": 0.3096174640731242,
+      "gap_count": 42,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "zoom=0.5": {
+      "cases": 384,
+      "joint90": 11,
+      "cleanup_count": 270,
+      "cleanup_joint90": 0,
+      "mean_keep": 0.7054084907496853,
+      "required_paths90": 148,
+      "mean_ghost": 0.8741500695225894,
+      "median_width_error": 0.36948504362403317,
+      "measured_width_profiles": 1018,
+      "unmeasurable_width_profiles": 182,
+      "closure_count": 160,
+      "mean_closure_interior_preserved": 0.28984319886781795,
+      "gap_count": 42,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "painted=none": {
+      "cases": 576,
+      "joint90": 23,
+      "cleanup_count": 405,
+      "cleanup_joint90": 4,
+      "mean_keep": 0.6751633848976015,
+      "required_paths90": 208,
+      "mean_ghost": 0.8678714381746954,
+      "median_width_error": 0.26843547284149694,
+      "measured_width_profiles": 1658,
+      "unmeasurable_width_profiles": 142,
+      "closure_count": 247,
+      "mean_closure_interior_preserved": 0.2606916475496531,
+      "gap_count": 63,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "tone=0": {
+      "cases": 378,
+      "joint90": 6,
+      "cleanup_count": 270,
+      "cleanup_joint90": 0,
+      "mean_keep": 0.660257030106657,
+      "required_paths90": 105,
+      "mean_ghost": 0.8242462389745374,
+      "median_width_error": 0.27440086342234504,
+      "measured_width_profiles": 1048,
+      "unmeasurable_width_profiles": 80,
+      "closure_count": 160,
+      "mean_closure_interior_preserved": 0.17767778818354016,
+      "gap_count": 54,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "painted=main": {
+      "cases": 189,
+      "joint90": 8,
+      "cleanup_count": 135,
+      "cleanup_joint90": 1,
+      "mean_keep": 0.7292783962370093,
+      "required_paths90": 77,
+      "mean_ghost": 0.8767223917684906,
+      "median_width_error": 0.20249431626156167,
+      "measured_width_profiles": 595,
+      "unmeasurable_width_profiles": 65,
+      "closure_count": 54,
+      "mean_closure_interior_preserved": 0.3503822722166695,
+      "gap_count": 27,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "zoom=1.0": {
+      "cases": 384,
+      "joint90": 18,
+      "cleanup_count": 270,
+      "cleanup_joint90": 4,
+      "mean_keep": 0.6827331300326156,
+      "required_paths90": 144,
+      "mean_ghost": 0.8756465404218655,
+      "median_width_error": 0.24581722905277467,
+      "measured_width_profiles": 1142,
+      "unmeasurable_width_profiles": 58,
+      "closure_count": 166,
+      "mean_closure_interior_preserved": 0.27004967459914947,
+      "gap_count": 42,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "zoom=2.0": {
+      "cases": 384,
+      "joint90": 17,
+      "cleanup_count": 270,
+      "cleanup_joint90": 4,
+      "mean_keep": 0.6693839082296208,
+      "required_paths90": 136,
+      "mean_ghost": 0.8608026395050636,
+      "median_width_error": 0.1764961637731346,
+      "measured_width_profiles": 1156,
+      "unmeasurable_width_profiles": 44,
+      "closure_count": 168,
+      "mean_closure_interior_preserved": 0.25607757619245347,
+      "gap_count": 42,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "choice=1": {
+      "cases": 384,
+      "joint90": 6,
+      "cleanup_count": 384,
+      "cleanup_joint90": 6,
+      "mean_keep": 0.8033189979957767,
+      "required_paths90": 205,
+      "mean_ghost": 0.8590386467807848,
+      "median_width_error": 0.23064662605648406,
+      "measured_width_profiles": 898,
+      "unmeasurable_width_profiles": 2,
+      "closure_count": 164,
+      "mean_closure_interior_preserved": 0.35542575567684026,
+      "gap_count": 42,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "choice=2": {
+      "cases": 384,
+      "joint90": 38,
+      "cleanup_count": 42,
+      "cleanup_joint90": 0,
+      "mean_keep": 0.50721474257961,
+      "required_paths90": 38,
+      "mean_ghost": 0.5665424032691335,
+      "median_width_error": 0.31437715651083864,
+      "measured_width_profiles": 1520,
+      "unmeasurable_width_profiles": 280,
+      "closure_count": 166,
+      "mean_closure_interior_preserved": 0.1515488106243837,
+      "gap_count": 42,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "kind=closure": {
+      "cases": 126,
+      "joint90": 6,
+      "cleanup_count": 84,
+      "cleanup_joint90": 4,
+      "mean_keep": 0.619755807770949,
+      "required_paths90": 50,
+      "mean_ghost": 0.7451959453958539,
+      "median_width_error": 0.2470245591684445,
+      "measured_width_profiles": 168,
+      "unmeasurable_width_profiles": 0,
+      "closure_count": 126,
+      "mean_closure_interior_preserved": 0.18411260690136608,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    },
+    "tone=1": {
+      "cases": 396,
+      "joint90": 16,
+      "cleanup_count": 276,
+      "cleanup_joint90": 0,
+      "mean_keep": 0.7082197363423945,
+      "required_paths90": 174,
+      "mean_ghost": 0.8883427800511399,
+      "median_width_error": 0.2514066389519333,
+      "measured_width_profiles": 1082,
+      "unmeasurable_width_profiles": 94,
+      "closure_count": 190,
+      "mean_closure_interior_preserved": 0.40752723187941925,
+      "gap_count": 36,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "painted=soft": {
+      "cases": 189,
+      "joint90": 4,
+      "cleanup_count": 135,
+      "cleanup_joint90": 1,
+      "mean_keep": 0.647725244566083,
+      "required_paths90": 56,
+      "mean_ghost": 0.8486580102111291,
+      "median_width_error": 0.26428138242192944,
+      "measured_width_profiles": 439,
+      "unmeasurable_width_profiles": 29,
+      "closure_count": 103,
+      "mean_closure_interior_preserved": 0.23389728101430848,
+      "gap_count": 27,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "kind=branch": {
+      "cases": 126,
+      "joint90": 14,
+      "cleanup_count": 84,
+      "cleanup_joint90": 2,
+      "mean_keep": 0.8525994244398397,
+      "required_paths90": 74,
+      "mean_ghost": 0.952662346896174,
+      "median_width_error": 0.3089305979970127,
+      "measured_width_profiles": 444,
+      "unmeasurable_width_profiles": 60,
+      "closure_count": 0,
+      "mean_closure_interior_preserved": null,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    },
+    "tone=2": {
+      "cases": 378,
+      "joint90": 24,
+      "cleanup_count": 264,
+      "cleanup_joint90": 8,
+      "mean_keep": 0.6879831485943741,
+      "required_paths90": 149,
+      "mean_ghost": 0.8982299452050391,
+      "median_width_error": 0.27271928275464485,
+      "measured_width_profiles": 1186,
+      "unmeasurable_width_profiles": 110,
+      "closure_count": 144,
+      "mean_closure_interior_preserved": 0.19698312802906803,
+      "gap_count": 36,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "painted=white": {
+      "cases": 198,
+      "joint90": 11,
+      "cleanup_count": 135,
+      "cleanup_joint90": 2,
+      "mean_keep": 0.7118283097362375,
+      "required_paths90": 87,
+      "mean_ghost": 0.892203782395332,
+      "median_width_error": 0.36190163774560136,
+      "measured_width_profiles": 624,
+      "unmeasurable_width_profiles": 48,
+      "closure_count": 90,
+      "mean_closure_interior_preserved": 0.2980143445967069,
+      "gap_count": 9,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "kind=gap": {
+      "cases": 126,
+      "joint90": 0,
+      "cleanup_count": 84,
+      "cleanup_joint90": 0,
+      "mean_keep": 0.5990692824234223,
+      "required_paths90": 13,
+      "mean_ghost": 0.9518293621678062,
+      "median_width_error": 0.14406674791012503,
+      "measured_width_profiles": 168,
+      "unmeasurable_width_profiles": 0,
+      "closure_count": 0,
+      "mean_closure_interior_preserved": null,
+      "gap_count": 126,
+      "maximum_intentional_gap_alpha": 0.0
+    },
+    "kind=redraw": {
+      "cases": 126,
+      "joint90": 7,
+      "cleanup_count": 84,
+      "cleanup_joint90": 2,
+      "mean_keep": 0.765927735761697,
+      "required_paths90": 71,
+      "mean_ghost": 0.9341753029045414,
+      "median_width_error": 0.15152342493708293,
+      "measured_width_profiles": 168,
+      "unmeasurable_width_profiles": 0,
+      "closure_count": 126,
+      "mean_closure_interior_preserved": 0.4929100493120497,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    },
+    "kind=fragments": {
+      "cases": 126,
+      "joint90": 2,
+      "cleanup_count": 84,
+      "cleanup_joint90": 0,
+      "mean_keep": 0.5898171088332325,
+      "required_paths90": 31,
+      "mean_ghost": 0.9153066492596861,
+      "median_width_error": 0.17346362684125177,
+      "measured_width_profiles": 454,
+      "unmeasurable_width_profiles": 50,
+      "closure_count": 0,
+      "mean_closure_interior_preserved": null,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    },
+    "kind=dense": {
+      "cases": 126,
+      "joint90": 0,
+      "cleanup_count": 126,
+      "cleanup_joint90": 0,
+      "mean_keep": 0.6395103097983811,
+      "required_paths90": 32,
+      "mean_ghost": 0.6286675599138354,
+      "median_width_error": 0.24064433454413034,
+      "measured_width_profiles": 168,
+      "unmeasurable_width_profiles": 0,
+      "closure_count": 126,
+      "mean_closure_interior_preserved": 0.12354283190911648,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    },
+    "kind=composition": {
+      "cases": 126,
+      "joint90": 0,
+      "cleanup_count": 84,
+      "cleanup_joint90": 0,
+      "mean_keep": 0.522236115933284,
+      "required_paths90": 18,
+      "mean_ghost": 0.8787749895010558,
+      "median_width_error": 1.0,
+      "measured_width_profiles": 336,
+      "unmeasurable_width_profiles": 0,
+      "closure_count": 116,
+      "mean_closure_interior_preserved": 0.28752533706209304,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    },
+    "kind=crossing": {
+      "cases": 126,
+      "joint90": 2,
+      "cleanup_count": 84,
+      "cleanup_joint90": 0,
+      "mean_keep": 0.6805233435834223,
+      "required_paths90": 48,
+      "mean_ghost": 0.9343024463677726,
+      "median_width_error": 0.20822904124628883,
+      "measured_width_profiles": 882,
+      "unmeasurable_width_profiles": 126,
+      "closure_count": 0,
+      "mean_closure_interior_preserved": null,
+      "gap_count": 0,
+      "maximum_intentional_gap_alpha": null
+    }
+  },
+  "aggregate_changes": {
+    "cleanup_rate": 0.16666666666666666,
+    "path_condition_rate": 0.3012152777777778,
+    "pairs_rate": 0.3125
+  },
+  "individual_paths": {
+    "total_individual_paths": 3600,
+    "paths90_gained": 782,
+    "paths90_lost": 25,
+    "large_retention_drops": [
+      {
+        "case": [
+          "precision-s2-014-c1-z0.5",
+          0,
+          "none"
+        ],
+        "path": 0,
+        "before": 0.9938398357289527,
+        "after": 0.0,
+        "before_minimum": 0.9938398357289527,
+        "after_minimum": 0.0,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-014-c1-z0.5",
+          0,
+          "none"
+        ],
+        "path": 1,
+        "before": 1.0,
+        "after": 0.045454545454545456,
+        "before_minimum": 0.9938398357289527,
+        "after_minimum": 0.0,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-014-c1-z0.5",
+          0,
+          "none"
+        ],
+        "path": 2,
+        "before": 1.0,
+        "after": 0.0,
+        "before_minimum": 0.9938398357289527,
+        "after_minimum": 0.0,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-014-c1-z0.5",
+          0,
+          "white"
+        ],
+        "path": 0,
+        "before": 0.9938398357289527,
+        "after": 0.01642710472279261,
+        "before_minimum": 0.9938398357289527,
+        "after_minimum": 0.0,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-014-c1-z0.5",
+          0,
+          "white"
+        ],
+        "path": 1,
+        "before": 1.0,
+        "after": 0.045454545454545456,
+        "before_minimum": 0.9938398357289527,
+        "after_minimum": 0.0,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-014-c1-z0.5",
+          0,
+          "white"
+        ],
+        "path": 2,
+        "before": 1.0,
+        "after": 0.0,
+        "before_minimum": 0.9938398357289527,
+        "after_minimum": 0.0,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-020-c2-z1",
+          1,
+          "none"
+        ],
+        "path": 3,
+        "before": 0.6933333333333334,
+        "after": 0.10871794871794872,
+        "before_minimum": 0.6933333333333334,
+        "after_minimum": 0.10871794871794872,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-020-c2-z1",
+          1,
+          "white"
+        ],
+        "path": 3,
+        "before": 0.6953846153846154,
+        "after": 0.11282051282051282,
+        "before_minimum": 0.6953846153846154,
+        "after_minimum": 0.11282051282051282,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-025-c1-z1",
+          0,
+          "none"
+        ],
+        "path": 0,
+        "before": 0.9609720176730486,
+        "after": 0.025036818851251842,
+        "before_minimum": 0.9173313995649021,
+        "after_minimum": 0.025036818851251842,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-025-c1-z1",
+          0,
+          "soft"
+        ],
+        "path": 0,
+        "before": 0.9609720176730486,
+        "after": 0.025036818851251842,
+        "before_minimum": 0.9173313995649021,
+        "after_minimum": 0.025036818851251842,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-028-c1-z2",
+          1,
+          "none"
+        ],
+        "path": 0,
+        "before": 0.9870654810024252,
+        "after": 0.014147130153597413,
+        "before_minimum": 0.9870654810024252,
+        "after_minimum": 0.014147130153597413,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-036-c1-z2",
+          1,
+          "none"
+        ],
+        "path": 1,
+        "before": 1.0,
+        "after": 0.37375178316690444,
+        "before_minimum": 1.0,
+        "after_minimum": 0.37375178316690444,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-036-c1-z2",
+          1,
+          "soft"
+        ],
+        "path": 1,
+        "before": 1.0,
+        "after": 0.37375178316690444,
+        "before_minimum": 1.0,
+        "after_minimum": 0.37375178316690444,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-050-c0-z2",
+          1,
+          "none"
+        ],
+        "path": 2,
+        "before": 1.0,
+        "after": 0.09719934102141681,
+        "before_minimum": 0.331945889698231,
+        "after_minimum": 0.09719934102141681,
+        "missed_by_minimum_drop": true
+      },
+      {
+        "case": [
+          "precision-s2-050-c0-z2",
+          1,
+          "main"
+        ],
+        "path": 2,
+        "before": 1.0,
+        "after": 0.09719934102141681,
+        "before_minimum": 0.331945889698231,
+        "after_minimum": 0.09719934102141681,
+        "missed_by_minimum_drop": true
+      },
+      {
+        "case": [
+          "precision-s2-058-c0-z0.5",
+          1,
+          "none"
+        ],
+        "path": 0,
+        "before": 1.0,
+        "after": 0.0,
+        "before_minimum": 1.0,
+        "after_minimum": 0.0,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-058-c0-z0.5",
+          1,
+          "main"
+        ],
+        "path": 0,
+        "before": 1.0,
+        "after": 0.0,
+        "before_minimum": 1.0,
+        "after_minimum": 0.0,
+        "missed_by_minimum_drop": false
+      },
+      {
+        "case": [
+          "precision-s2-058-c0-z2",
+          1,
+          "none"
+        ],
+        "path": 0,
+        "before": 1.0,
+        "after": 0.027659141753101486,
+        "before_minimum": 1.0,
+        "after_minimum": 0.027659141753101486,
+        "missed_by_minimum_drop": false
+      }
+    ],
+    "large_drops": 18,
+    "cases_with_large_drops": 14,
+    "large_drops_missed_by_minimum": 2
+  },
+  "reviewed": [
+    {
+      "case": [
+        "precision-s2-014-c1-z0.5",
+        0,
+        "none"
+      ],
+      "sha256": "bb1f8e7ad682dae991f9809a72bd173ad4d8c32d981656ce0f24ad5b2fabcf38",
+      "observation": "S12は教師で必要な主線と両端の枝をほぼ全消去する。配布は不要な平行線を残すが必要線は保持している。主線選択の明確な重大退行で、わずかな点状残渣のみ残る。"
+    },
+    {
+      "case": [
+        "precision-s2-014-c1-z0.5",
+        0,
+        "white"
+      ],
+      "sha256": "4d87a94a14c2275c54e845404afdc2c9d5f009b93183c8adff06a1c98d32baa8",
+      "observation": "白保護入力を含めても、S12は主線と両端枝をほぼ全消去する。配布では必要線が残っているため、前例と同じ重大な採否の失敗。点・短片程度しか残らない。"
+    },
+    {
+      "case": [
+        "precision-s2-020-c2-z1",
+        1,
+        "none"
+      ],
+      "sha256": "635bb09df9091920f9ab3cb7271ad5a3d495c802ca8c88dccf296cd2d8106d1d",
+      "observation": "必要な二本の主弧のうち、S12は右側の一本を大半削除する。配布も右弧の下端が切れているが、S12では弧全体が失われる。端の枝や残した弧の保持だけでは成功としない。"
+    },
+    {
+      "case": [
+        "precision-s2-020-c2-z1",
+        1,
+        "white"
+      ],
+      "sha256": "980745450c8712971d66a145bc101e87f3142381dc269286d86e5adbc3dd1668",
+      "observation": "white入力でも必要な右側の主弧を大半削除する。配布で途中まで残った二本目を、S12では点状残渣に近い形まで失っている。二本保持の明確な退行。"
+    },
+    {
+      "case": [
+        "precision-s2-025-c1-z1",
+        0,
+        "none"
+      ],
+      "sha256": "11afb741edee6407e7ae19d046727a8858afd74d7c908262831baa347a3967ac",
+      "observation": "S12は上側の必要な閉輪郭をほぼ丸ごと消す。下側は不要な平行線が減るが、上側の図形の喪失を相殺できない。配布の上側輪郭は上端に切れ目があるものの大部分を保っていた。"
+    },
+    {
+      "case": [
+        "precision-s2-025-c1-z1",
+        0,
+        "soft"
+      ],
+      "sha256": "c025ae6c9f9ecf1a66ded4baeccaa6b680041ef12d1eb00d50ccc59cf8f026fd",
+      "observation": "soft線画があってもS12の上側輪郭はほぼ全消去される。下側の不要線除去だけを改善例として扱えない。複数配置の一つを丸ごと失う退行が残る。"
+    },
+    {
+      "case": [
+        "precision-s2-028-c1-z2",
+        1,
+        "none"
+      ],
+      "sha256": "9db128348e54cb3544b0cbb34a0b41ae3fee94ebe7caa56bf25803c8b8bdf925",
+      "observation": "S12は必要な閉輪郭をほぼ全消去し、むしろ左側の不要な長い線を一本残す。配布は不要線も含めて輪郭を保持していた。正負の選択が逆になる重大な失敗。"
+    },
+    {
+      "case": [
+        "precision-s2-036-c1-z2",
+        1,
+        "none"
+      ],
+      "sha256": "71c98566aae9c4dfaffe5c84f34c493879e1e749304750e6df83443e65c4d1df",
+      "observation": "S12は右側へ上がる必要な枝を大部分削除する一方、不要な上側の波線は残す。主弧と左枝は保つが、枝の長さが配布から大きく失われる。"
+    },
+    {
+      "case": [
+        "precision-s2-036-c1-z2",
+        1,
+        "soft"
+      ],
+      "sha256": "0deb7c8eb5f29d667af60b51f0a5e9247d0dd82353c125a072ea8fe4b591f11b",
+      "observation": "soft入力でもS12は右上へ伸びる必要な枝を大部分失う。不要な上側の平行波線は残っており、枝保持と不要線除去の両面で解決していない。"
+    },
+    {
+      "case": [
+        "precision-s2-050-c0-z2",
+        1,
+        "none"
+      ],
+      "sha256": "54b920b581205b19bc00e4a028a27774e784ee5d518dc38d59d83b3b67f9860c",
+      "observation": "配布でも中央の主線が大きく切れる課題だが、S12はさらに上側の枝と主線片をほぼ削除する。下側の枝は残る。条件内の最悪経路だけでは見落とす追加削除が実際に見える。"
+    },
+    {
+      "case": [
+        "precision-s2-050-c0-z2",
+        1,
+        "main"
+      ],
+      "sha256": "f82b70e37ef7cad587c96d787ffa0dc21668f6a11dcf87a066fd968ccc5af73c",
+      "observation": "main線画ありでも、S12は配布が描けていた上側の枝・主線片をほぼ消す。中央の長い切断も解消せず、短片からの再構成には大きな失敗が残る。"
+    },
+    {
+      "case": [
+        "precision-s2-058-c0-z0.5",
+        1,
+        "none"
+      ],
+      "sha256": "d3cea8bfc16805777856c362fb7633b43fb1265fae650d59466e43d11e429f51",
+      "observation": "S12は必要な外輪郭を全消去し、空の出力になる。配布は内側の不要線を残すものの輪郭は保持している。不要線を含めて全消去する退行。"
+    },
+    {
+      "case": [
+        "precision-s2-058-c0-z0.5",
+        1,
+        "main"
+      ],
+      "sha256": "bceaafffcb22f685f9897ba0a1fd22f2c77a91e194293046099982c00fdb67af",
+      "observation": "main入力でも必要な閉輪郭は全消去され、S12の出力は空になる。この条件の線画入力では全体削除を防げない。配布は輪郭を保持していた。"
+    },
+    {
+      "case": [
+        "precision-s2-058-c0-z2",
+        1,
+        "none"
+      ],
+      "sha256": "cee4756b49a7dcf790be02bd025a4a9c93a4833fa8097a9a461e94523d7e8062",
+      "observation": "2倍でもS12は必要な閉輪郭をほぼ全消去し、点列と右端の小断片だけが残る。同じ配置での失敗が0.5倍だけに限られない。"
+    },
+    {
+      "case": [
+        "precision-s2-029-c0-z2",
+        2,
+        "none"
+      ],
+      "sha256": "6260722f32904527ef8df56bae546028d032a0e63f12350da503bc2544429fe8",
+      "observation": "配布ではほぼ消せていた上側の不要な長い線を、S12は一本まるごと復活させる。主線と両枝は保っているが、不要線除去に関する退行。"
+    },
+    {
+      "case": [
+        "precision-s2-029-c0-z2",
+        2,
+        "main"
+      ],
+      "sha256": "a7c4297ac36bac028b078f5d56847625a4ff9c2e03fcde5bdf0881328a675bb7",
+      "observation": "main入力でもS12は上側の不要な一本を長く描き直す。必要経路は保持するものの、配布が成功した不要線除去を失っている。"
+    },
+    {
+      "case": [
+        "precision-s2-018-c0-z1",
+        2,
+        "none"
+      ],
+      "sha256": "f7ec611755897070526c5c4d7beb6bbcce55e5d4f44d9d558a97a44a9e4bca84",
+      "observation": "両者とも教師の主線と両端枝を残すが、左上側の不要な平行弧も残る。この代表例では意図線の選び分けの改善は見られない。"
+    },
+    {
+      "case": [
+        "precision-s2-018-c2-z1",
+        2,
+        "none"
+      ],
+      "sha256": "bc42487f6c6919fd4c5eee95ba91df78e8907adf805a4873769fe67d60bfdc54",
+      "observation": "必要な二本の主弧はS12も保持する。端の近接枝が教師より塊状に重なっており、細かい分離には問題が残るが、単純に一本化する出力ではない。"
+    },
+    {
+      "case": [
+        "precision-s2-019-c0-z1",
+        0,
+        "none"
+      ],
+      "sha256": "3fbcb22d6c44e88c65a057c221dc5bfd0e7c9976e0e2231b12362668319de848",
+      "observation": "配布では必要な閉輪郭がほぼ消えるが、S12は主な輪郭を復元する。左下に切れ目があり、中央の不要な長い線も残るため、保持の改善と不要線の残存を分けて評価する。"
+    },
+    {
+      "case": [
+        "precision-s2-019-c2-z1",
+        0,
+        "none"
+      ],
+      "sha256": "bf19f9b54c8bbb0a0df0c0b1beac3fdb535c2550b3ab50876db9d8c86c1d8631",
+      "observation": "S12は二重輪郭の左下や下側弧を配布より長く保持する。ただし左端に切れ目が残り、教師の二つの閉輪郭として完全には閉じていない。"
+    },
+    {
+      "case": [
+        "precision-s2-020-c0-z1",
+        1,
+        "none"
+      ],
+      "sha256": "4dbb95f822100dac492684facb4cf7b4ef17a0c61decf339284fa838b4d902bd",
+      "observation": "S12は右側の不要な平行線を除去し、上下の枝を伴う主弧を残す。配布は二本とも残しており、必要線保持と迷い線除去が両立した改善例。"
+    },
+    {
+      "case": [
+        "precision-s2-021-c0-z1",
+        2,
+        "none"
+      ],
+      "sha256": "539d4ce5589b15d7a53bb84de9b3b50601406759c82879bd57470ef5bfb80ffc",
+      "observation": "S12は上端や右側主線の断片化を配布より改善し、中央の意図的な隙間は維持する。ただし不要な内側の平行線も残し、正しい一本だけの輪郭にはならない。"
+    },
+    {
+      "case": [
+        "precision-s2-021-c2-z1",
+        2,
+        "none"
+      ],
+      "sha256": "fe5aa880bd587bee5786ceab32cbe5c9681d0fc821e6c5cc21d58ccd766ff2d0",
+      "observation": "必要な二重輪郭をS12は配布より長く保ち、下端の接続も改善する。意図した隙間を残す一方、上端付近の欠落と小断片があり完全ではない。"
+    },
+    {
+      "case": [
+        "precision-s2-022-c0-z1",
+        0,
+        "none"
+      ],
+      "sha256": "d7569134f30af4220c347619dbbae2c9578aa46443aa6c4dd378b218c9ff6adc",
+      "observation": "S12は下側端付近のつながりを配布より改善するが、必要な右側輪郭の途中が切れ、内側の短い不要線も残る。輪郭の全長を自然に再構成できてはいない。"
+    },
+    {
+      "case": [
+        "precision-s2-022-c2-z1",
+        0,
+        "none"
+      ],
+      "sha256": "cbe5b697e20ca3e53c2ce1d9d8b1f73133c08717dc786630e5e854fb216f52c1",
+      "observation": "S12は必要な二重輪郭の左上端をつなぎ、配布より多くを保持する。ただし右側の長い曲線に途中欠落が残り、二重輪郭の完全な連続性は得られない。"
+    },
+    {
+      "case": [
+        "precision-s2-023-c0-z1",
+        1,
+        "none"
+      ],
+      "sha256": "f8850cc427020bc9fc587f1be185ed6588304fd0a8d89ccc08d82809113248ec",
+      "observation": "S12は不要な下側弧を除去するが、必要な上側主線の中央も大きく削除し、左右の枝を持つ断片に分けてしまう。配布より必要経路の再構成が悪く、この例を除去成功とは呼べない。"
+    },
+    {
+      "case": [
+        "precision-s2-023-c2-z1",
+        1,
+        "none"
+      ],
+      "sha256": "31bd6677ad51504597bf688a7bcbc1284b7a614d4af13c6583502f7984d7669b",
+      "observation": "必要な二本線条件でもS12は中央部分を両方とも大きく失い、端の断片だけを残す。配布も細かな隙間はあるが主弧の長さをより保っている。短片再構成の退行が視覚的に大きい。"
+    },
+    {
+      "case": [
+        "precision-s2-024-c0-z1",
+        2,
+        "none"
+      ],
+      "sha256": "81107b84fa3a14fd233f73dcca30190f40694fbd82dda6b48a7e4357adf254be",
+      "observation": "S12は配布の太い線束と切れ目を減らし、必要な輪郭をより連続して描く。ただし内側に長い不要な線が残り、上端・右下にも短片が残る。密集線からの選択は部分改善に留まる。"
+    },
+    {
+      "case": [
+        "precision-s2-024-c2-z1",
+        2,
+        "none"
+      ],
+      "sha256": "c51d0812f3f9e2c14d8fe4258ef5cb220f53f3b0a6130257894a43a2761c72b3",
+      "observation": "S12は必要な二重輪郭の下端と左端の保持を改善する。一方、太い不要線束を残し、右側の細線も途切れるため、密集した不要線の除去は不十分。"
+    },
+    {
+      "case": [
+        "precision-s2-025-c0-z1",
+        0,
+        "none"
+      ],
+      "sha256": "fbe61fccb3f9acc06fcbb02646b2e3bad881584935fdfa8ebbdf25e280a01427",
+      "observation": "S12では上側の必要な閉輪郭がほぼ消える。配布は切れ目があるが輪郭の大部分を描いている。下側も不要な内部線が残る。大きい個別低下の数値抽出に出ていない条件でも、図形の喪失が視覚的には重大。"
+    },
+    {
+      "case": [
+        "precision-s2-025-c2-z1",
+        0,
+        "none"
+      ],
+      "sha256": "99bae8a8459747fac7f6b232760f4e3471bc23f027fe06e926441d4854c79eb4",
+      "observation": "二本とも必要なchoice2では、S12は配布で大半を失った上側の二重輪郭を復元する。下側の二重輪郭もより保持するが、細い端部・接合部の潰れと欠けは残る。同じgroupのchoice0/1での全消去と区別する。"
+    },
+    {
+      "case": [
+        "precision-s2-026-c0-z1",
+        1,
+        "none"
+      ],
+      "sha256": "146340d2b9a2bae1c42825d21893d069f65881767430d3c712ec30bbb7180d00",
+      "observation": "交差課題ではS12が切れた平行線を連続化するが、それは不要線も含む。中央の必要な重なり線だけを残せず、左右に長い迷い線を増やす。保持改善だけで意図選択成功とは呼べない。"
+    },
+    {
+      "case": [
+        "precision-s2-026-c2-z1",
+        1,
+        "none"
+      ],
+      "sha256": "227bcfe72bb58ec8dba3ceaa93dee57a28544be5f15a87c61c821b419c749e1f",
+      "observation": "全ての平行経路が必要な条件では、S12は配布の長い切断をつなぎ、三本の主線をより長く保持する。端の接合部は複雑に潰れ、小断片も残るが、必要線の連続化は改善。"
+    },
+    {
+      "case": [
+        "precision-s2-002-c0-z0.5",
+        2,
+        "none"
+      ],
+      "sha256": "4b23270421f4e4ca3aaf3713f9e25802af59d08dbf3c774d2da859cbdf7f6624",
+      "observation": "S12は下側の不要な平行線を除去し、左右の枝を伴う必要な主線を保持する。配布が二本とも残す条件で、保持と除去が両立する明瞭な改善。"
+    },
+    {
+      "case": [
+        "precision-s2-002-c2-z1",
+        2,
+        "none"
+      ],
+      "sha256": "8ec8405d47592a7704a059cba3187533f1d33a295af830ce1de6af51ce4e2b2b",
+      "observation": "必要な二本条件で、S12は配布が欠いた左下端の主線・枝を描き、二本の連続性を改善する。右上の細い二枝は塊状に重なる部分がある。"
+    },
+    {
+      "case": [
+        "precision-s2-002-c1-z0.5",
+        2,
+        "none"
+      ],
+      "sha256": "40f79f4d09fdcd241a02d495e0e3808677a9279b425ae6ca2dc400a5860ff9ce",
+      "observation": "両者とも必要な下側主線と両枝を残すが、不要な上側の平行線も残す。S12でもこの対のchoiceを正しく選び分けられていない。"
+    },
+    {
+      "case": [
+        "precision-s2-001-c1-z0.5",
+        1,
+        "soft"
+      ],
+      "sha256": "ace0da5518b6c64915b88a89341ef8d3cb136f72d2fcbc7c0922560069393d98",
+      "observation": "S12は閉輪郭の外側に沿う不要な長い線を除去し、必要な輪郭を保つ。配布は外側線を残しており、意図線選択の明瞭な改善。上端に小さな点状残渣がある。"
+    },
+    {
+      "case": [
+        "precision-s2-010-c0-z1",
+        2,
+        "none"
+      ],
+      "sha256": "c120c68ba2e7aba6853c7aae432772bd7e48e2f66e6ab59ab9928066f8a86513",
+      "observation": "S12は配布で切れていた上端をつなぎ、閉輪郭の保持を改善する。ただし内側の不要な平行線は残るため、保持＋除去の同時達成ではない。"
+    },
+    {
+      "case": [
+        "precision-s2-001-c0-z0.5",
+        1,
+        "none"
+      ],
+      "sha256": "609d4e0c248d7f08148d0876d2651dc4c9b4c374a266cd12c8a5b415be756927",
+      "observation": "S12は配布で失った外輪郭下端を描いて保持を改善する。ただし上端は開き、外側の不要線も残る。閉路と不要線除去が同時には解決していない。"
+    },
+    {
+      "case": [
+        "precision-s2-052-c1-z1",
+        0,
+        "none"
+      ],
+      "sha256": "75cecbb2a52309cc21ada8dafe5f9d0206624837938e8741453ba8065902270b",
+      "observation": "S12は離れた二つの閉輪郭を保持し、それぞれに沿う不要な平行線を除去する。上側輪郭の切れ目も配布より改善する。複数配置でも保持と除去が両立した改善例。"
+    },
+    {
+      "case": [
+        "precision-s2-007-c0-z0.5",
+        1,
+        "none"
+      ],
+      "sha256": "646e56db4e01d2a4020a0692958a374f067e5e83403bccc437fc20d8abccb570",
+      "observation": "S12は左上輪郭の左端を配布よりつなぐが、両図形の不要な内側線が残る。入力より出力が太く見える条件でもあり、端部と不要線の改善は限定的。表示縮小画像だけで定量的な幅評価はしない。"
+    },
+    {
+      "case": [
+        "precision-s2-009-c0-z1",
+        1,
+        "main"
+      ],
+      "sha256": "41b5ad5b50c83dd72425cdf0daf07c86ce25cb4d857c14bcdde59172eb726348",
+      "observation": "S12は下側の不要な長い線を除去し、上下の枝を伴う主線を残す。配布が残す迷い線を消せた改善例。ただし左側に小さな点状残渣がある。"
+    },
+    {
+      "case": [
+        "precision-s2-000-c1-z0.5",
+        0,
+        "main"
+      ],
+      "sha256": "52a865bcf65435001ad6bcb0f8ebdb17cf3e931104bdf1ce6dea7c96604f900d",
+      "observation": "S12は必要な上側弧の左端を配布よりつなぐが、不要な下側の平行弧も残す。全体の保持改善は見えるものの、意図線一本の選択には届かない。"
+    },
+    {
+      "case": [
+        "precision-s2-000-c0-z0.5",
+        0,
+        "main"
+      ],
+      "sha256": "3e11fd93f82628526e9cf16315ad203652056327316468eb546f7b73de5b95c5",
+      "observation": "両者とも主線と端部の枝を保持するが、上側の不要な長い弧が残る。S12でこの条件の迷い線を除去する改善は見られない。"
+    },
+    {
+      "case": [
+        "precision-s2-008-c2-z0.5",
+        2,
+        "none"
+      ],
+      "sha256": "d80d88490f22cf03ee544009129e2cbf19a71192811e2b6c7cfcddfd3bad88ba",
+      "observation": "必要な交差経路群は両者で概ね残る。S12は右側の細い枝・端部の切れ目がやや少なく見えるが、接合部の塊は残る。これは必要線の保持改善で、不要線除去の証拠ではない。"
+    },
+    {
+      "case": [
+        "precision-s2-008-c0-z0.5",
+        2,
+        "none"
+      ],
+      "sha256": "dbe26cbd8d752107eae93a2b96e5354fd56adfba335ba62105a38a1568d10501",
+      "observation": "両者とも教師にない横・縦の平行線を残し、交差から正しい二経路だけを選べない。S12にも明瞭な不要線除去の改善は見られない。"
+    },
+    {
+      "case": [
+        "precision-s2-015-c1-z0.5",
+        1,
+        "main"
+      ],
+      "sha256": "4b2c2ed76b49e7582814c20f8d7a0d8746e94d1bb56c4e91ac64d8e5f34acb93",
+      "observation": "S12は配布の輪郭左上の切れ目をつなぎ、外側の迷い線束の大部分を除去する。ただし下側に短い不要線が複数残る。数値の同時達成を、残渣ゼロの完全成功とは扱わない。"
+    },
+    {
+      "case": [
+        "precision-s2-006-c0-z0.5",
+        0,
+        "main"
+      ],
+      "sha256": "d58c9155392c857098c2ccb4df169502303d6f0b442b148269a8a5f95170ea7a",
+      "observation": "S12は配布で消えた必要な上側輪郭を復元する。ただし密集した下側の不要線群は大量に残り、教師の輪郭一本にはならない。保持改善と選択の未解決を区別する。"
+    },
+    {
+      "case": [
+        "precision-s2-014-c0-z0.5",
+        0,
+        "none"
+      ],
+      "sha256": "969ce82d934ff41c7367814a6d60da2f1332ed513501ab3d14fe8b8ed67cbbba",
+      "observation": "S12は短片を含む必要な主線と両枝をつなぎ、下側の不要な長い線を除去する。配布では不要線が残る。同じgroup14でもchoice1の全消去とchoice0の成功が分かれ、選択はまだ不安定。"
+    },
+    {
+      "case": [
+        "precision-s2-005-c2-z0.5",
+        2,
+        "white"
+      ],
+      "sha256": "854a024db8bb28722bfdac1d2e8f4c31ff717d023f0d971edaf52df948fc858f",
+      "observation": "必要な二本の主線と枝をS12は保ち、配布の右上枝の断片化が少なく見える。中央の小さな不連続や接合部の太さは残り、短片再構成を全般に解決した証拠ではない。"
+    },
+    {
+      "case": [
+        "precision-s2-005-c0-z0.5",
+        2,
+        "none"
+      ],
+      "sha256": "32b401c1818b372f36efd25e343d4d4430f0567c2ef8ebdb76dd33f40a88774c",
+      "observation": "S12も配布も必要な上側主線と両枝を保つが、下側の不要な平行線が残る。短片をつないだだけでは意図線の選択改善にならない例。"
+    },
+    {
+      "case": [
+        "precision-s2-003-c1-z0.5",
+        0,
+        "main"
+      ],
+      "sha256": "41dd1ff5d10d30011e9a484e0c7495df555227b52cb2b7731d39ca0a3cbddf1b",
+      "observation": "S12は外側の不要な平行線を除去し、必要な輪郭と意図的な中央の隙間を残す。下端も配布よりつながり、保持・除去・隙間保持が揃う改善例。"
+    },
+    {
+      "case": [
+        "precision-s2-003-c0-z1",
+        0,
+        "main"
+      ],
+      "sha256": "67d510efe7e0d12e414fe18d1ac06f4e200b7da5ff1c2917c0b3561738f2b7be",
+      "observation": "S12は上端の接続を配布より改善し、意図した隙間も残すが、右側に不要な平行線を残す。保持と閉じ方の改善に留まり、不要線選択は不十分。"
+    },
+    {
+      "case": [
+        "precision-s2-003-c0-z0.5",
+        0,
+        "main"
+      ],
+      "sha256": "8d02cd3b69d4e58bd32b4ce70504710df64ddadf3179b152175b749d3190553b",
+      "observation": "S12は上側の不要な平行線片を減らすが、下側には長い不要片が残る。主輪郭と意図的隙間は保つものの、除去の完遂には至らない。"
+    },
+    {
+      "case": [
+        "precision-s2-004-c0-z2",
+        1,
+        "soft"
+      ],
+      "sha256": "26ff60e551743864c8c6ff576f6d50dbf932f8de4b4e9285538f308743ab40f8",
+      "observation": "S12は内側の不要な描き直し線を大部分除去し、必要な閉輪郭を保つ。左下に短い突起が残るが、配布の長い不要線を消す改善が見える。"
+    },
+    {
+      "case": [
+        "precision-s2-013-c0-z2",
+        2,
+        "none"
+      ],
+      "sha256": "3a1c42ef25f8a492ad3e87eb9824f84f52c96d4131bdf9246c6ff45eef55ce11",
+      "observation": "S12は配布で途切れた上下端の輪郭をつなぎ、必要な閉路を改善する。ただし内側の太い不要線片が残り、輪郭内の選択は未完了。"
+    },
+    {
+      "case": [
+        "precision-s2-004-c0-z0.5",
+        1,
+        "none"
+      ],
+      "sha256": "2b93885ef1874dcdf27c54e6866b932d4cf336fcf3b36fa6e74a9e9df9a53537",
+      "observation": "0.5倍では両者とも閉輪郭を残すが、内側の不要な長い線も残す。S12での不要線除去改善はこの条件では見られない。"
+    },
+    {
+      "case": [
+        "precision-s2-014-c2-z1",
+        0,
+        "none"
+      ],
+      "sha256": "14ae8eefeb8ec5a70753551fce163d73f5a20862ceb661d63f20842204770429",
+      "observation": "S12は必要な二本の主線の中央を大きく削除して左右に分断する。配布には小切れ目があるものの長い部分は残る。単一成分の保持率だけでなく、経路全体の描画量が大きく減る退行。"
+    },
+    {
+      "case": [
+        "precision-s2-014-c2-z1",
+        0,
+        "white"
+      ],
+      "sha256": "10ea994af4d41a09801f42da8df9e12dc6d034865b997e0c93c825456a180c57",
+      "observation": "white入力でもS12は主線中央の広い範囲を失い、端の線片だけになる。配布の小切断から、大きな欠落へ悪化している。"
+    },
+    {
+      "case": [
+        "precision-s2-017-c0-z0.5",
+        0,
+        "none"
+      ],
+      "sha256": "c1660266c4fb17fa7b8c85f260ca25e0e5e8b3ef5b51d9b095ae98f9e7d65e70",
+      "observation": "S12は中央の主線の切れ目を配布よりつなぐが、上側の不要な交差線や接合部の塊は残る。数値上の短枝の90%割れは、この縮小図だけで位置・範囲を断定しない。大きな輪郭全消去は見えない。"
+    },
+    {
+      "case": [
+        "precision-s2-017-c0-z0.5",
+        0,
+        "white"
+      ],
+      "sha256": "654120c051d51696661d854d6328d2fd6f0de1d5ba5670cee5f4e47a95a28165",
+      "observation": "white入力でも中央の主線はS12で連続する一方、上側の不要な交差・突起が残る。短枝の保持低下は数値監査に記録し、縮小表示から細かな欠けの範囲を断定しない。"
+    },
+    {
+      "case": [
+        "precision-s2-038-c2-z0.5",
+        0,
+        "none"
+      ],
+      "sha256": "71bcea28bb9c56a751e235ad939042606880483d513ef70392daf0b79dcf2fba",
+      "observation": "必要な二本の主線と端部枝は大部分残るが、S12には左寄りの主線に短い切れ目がある。接合部の塊も残り、全消去ではないものの二本線の連続性が完全ではない。"
+    },
+    {
+      "case": [
+        "precision-s2-038-c2-z0.5",
+        0,
+        "main"
+      ],
+      "sha256": "79c89c1c4fee80cacb867626d5b2d81f4bd15681070acddd8ba834c78f73ad48",
+      "observation": "main入力でも二本の主線の左寄りに短い欠けが残る。主線と両枝の大部分は保持し、端の太い塊は両モデルで見える。"
+    },
+    {
+      "case": [
+        "precision-s2-050-c1-z1",
+        1,
+        "none"
+      ],
+      "sha256": "616b566f24a7b261d5f73cc7baef7a5b03dead8754d29d8d1fd455edd272f721",
+      "observation": "S12は上部の短い主線片と枝の左端を削除する一方、入力の長い別経路を残す。配布にも正しい短片経路をつなげない問題があり、S12は必要な上側枝の一部をさらに失っている。"
+    },
+    {
+      "case": [
+        "precision-s2-050-c1-z1",
+        1,
+        "main"
+      ],
+      "sha256": "bf46b75c81a585f88d1fb0a5784c6857cd85e537024416676891b3db2ea49e9b",
+      "observation": "main入力でもS12は上部の必要な短片と枝の左側を削除し、長い別経路に寄る。配布の短片再構成不足を解決した出力とは呼べない。"
+    },
+    {
+      "case": [
+        "precision-s2-060-c2-z1",
+        0,
+        "white"
+      ],
+      "sha256": "6ae1871934a112901ffdaf1bae0778e4d68e0db08545f5a51e999bd5ce2388c7",
+      "observation": "S12は二重輪郭の下端を配布よりつなぐ一方、外側上端の切れ目は残る。左下の太い不要線束や内部の不要線も多く、細部の保持低下を含む不完全な再構成。"
+    },
+    {
+      "case": [
+        "precision-s2-063-c2-z2",
+        1,
+        "none"
+      ],
+      "sha256": "bc7e0a55f4ae84ccb7b94e58717c5cf252fbdefb035af1dbe2fcb6062a15134a",
+      "observation": "S12は二本の主線を保つが、上下の必要な二枝のうち細い一方が途切れたり潰れたりする。配布では二枝の分離がより見え、必要二本条件の90%保持を失った例。"
+    },
+    {
+      "case": [
+        "precision-s2-063-c2-z2",
+        1,
+        "white"
+      ],
+      "sha256": "fc61f2ddc0c930954d93bec19a5185378c00e5a80901f9828ce23da05c967302",
+      "observation": "white入力でもS12の上下の細い枝は一部途切れ、近接する二枝の分離が配布より弱い。二本の長い主線そのものは保持するが、短い枝の保持低下が残る。"
+    }
+  ],
+  "reviewed_conditions": 68,
+  "independent_geometries": 64,
+  "handdrawn_tested": false,
+  "selected_main_updates": 12000,
+  "main_evaluated_until": 20000,
+  "minimum_main30000_met": false
+}

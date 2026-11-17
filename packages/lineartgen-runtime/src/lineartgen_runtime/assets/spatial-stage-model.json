@@ -1,5 +1,5 @@
 {
-  "format_version": 1,
+  "format_version": 2,
   "representation": "context_component_selection_stage_graph",
   "input_channels": 10,
   "output_channels": 9,
@@ -20,17 +20,17 @@
   ],
   "stage": {
     "file": "spatial-stage.onnx",
-    "sha256": "c2472dde2c06b1e0977dffb411ce17cdd7a4f397205c3eeba386e854f5e5a42c"
+    "sha256": "aa894b798fbcde598a1083c2743bc7f052ebecaf75dfe5b9796d6e3e57b07f52"
   },
-  "checkpoint_sha256": "9c9f2dda03b133ab01610b636270b4aee5aef30005a43828c4e8f05347d5235d",
-  "parameters": 139186,
+  "checkpoint_sha256": "c0923507a4f377703c3776215f1b03778c37673eb644b355011112532043898b",
+  "parameters": 140275,
   "preview": true,
   "cnn_core": 512,
   "cnn_halo": 192,
   "latent_channels": 16,
   "base_feedback_channels": 9,
   "selection_score_scale": 8.0,
-  "component_projection": "base_component_mean",
+  "component_projection": "base_component_mean_max_mlp32",
   "component_threshold": 0.0,
   "selection_dilations": [
     2,
@@ -41,7 +41,24 @@
     64
   ],
   "base_training_steps": 48000,
-  "selection_training_steps": 7200,
-  "wide_selection_training_steps": 4200,
-  "route_consistency_training_steps": 1200
+  "selection_training_steps": 31200,
+  "wide_selection_training_steps": 28200,
+  "route_consistency_training_steps": 1200,
+  "cnn_parameters": 139186,
+  "readout_parameters": 1089,
+  "readout": {
+    "file": "component-readout.npz",
+    "sha256": "21bcf13de6048be9d7e18316551f91c1eb2db891a8abcc6de010a566e9e653d3"
+  },
+  "decoder_adaptation_training_steps": 6000,
+  "component_retention_training_steps": 6000,
+  "readout_training_steps": 12000,
+  "selected_main_training_steps": 12000,
+  "main_training_evaluated_until": 20000,
+  "early_stopping": true,
+  "minimum_main30000_met": false,
+  "training_history": {
+    "file": "component-learning-history.json",
+    "sha256": "0a7257f408126c3ba8dedb47dd07fa10146b55628f1969a0902f58241b789760"
+  }
 }

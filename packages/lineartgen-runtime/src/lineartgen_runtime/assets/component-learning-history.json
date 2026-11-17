@@ -1,0 +1,73 @@
+{
+  "complete": true,
+  "parameter_array_changes": {
+    "delivered->C6": {
+      "encoder": 0,
+      "decoder_head": 14,
+      "selector": 20
+    },
+    "C6->F6": {
+      "encoder": 0,
+      "decoder_head": 0,
+      "selector": 20
+    },
+    "F6->S0": {
+      "encoder": 0,
+      "decoder_head": 0,
+      "selector": 0
+    },
+    "S0->S12": {
+      "encoder": 0,
+      "decoder_head": 0,
+      "selector": 20
+    }
+  },
+  "inherited_full_base_updates": 48000,
+  "additional_decoder_head_updates": 6000,
+  "total_encoder_updates": 48000,
+  "total_decoder_head_updates": 54000,
+  "inherited_selector_updates": 7200,
+  "inherited_wide_selector_updates": 4200,
+  "additional_C_selector_updates": 6000,
+  "additional_F_selector_updates": 6000,
+  "selected_S_selector_updates": 12000,
+  "selected_S_readout_updates": 12000,
+  "total_existing_selector_updates": 31200,
+  "total_wide_selector_updates": 28200,
+  "main_updates_actually_evaluated": 20000,
+  "selected_main_updates": 12000,
+  "minimum_main30000_met": false,
+  "readout_initialized_untrained": true,
+  "parameter_counts": {
+    "encoder": 61072,
+    "decoder_head": 54973,
+    "selector": 23141
+  },
+  "cnn_parameters": 139186,
+  "readout_parameters": 1089,
+  "total_parameters": 140275,
+  "optimizer_resets": [
+    "C start",
+    "F start",
+    "S start"
+  ],
+  "selected_ancestor_modes": [
+    "delivered RAW",
+    "C6 EMA",
+    "F6 EMA",
+    "S12 EMA"
+  ],
+  "counts_do_not_imply_one_continuous_optimizer_or_same_loss": true,
+  "unrelated_experimental_updates_excluded": true,
+  "source_weights_sha256": {
+    "delivered": "9c9f2dda03b133ab01610b636270b4aee5aef30005a43828c4e8f05347d5235d",
+    "C6": "75e58dad4fe93177794c702105ca8bbaf48968ca6f60fcb437e4edc80c466f9b",
+    "F6": "f000263e6e44af868414be6cd3550dd095a75d5d2413075dc4534975698a92aa",
+    "S0": "f000263e6e44af868414be6cd3550dd095a75d5d2413075dc4534975698a92aa",
+    "S12": "c0923507a4f377703c3776215f1b03778c37673eb644b355011112532043898b",
+    "readout0": "945af8ddaf471b79d92aad8584931921e76ff08d0549134b94713028b565f52c",
+    "S_readout0": "945af8ddaf471b79d92aad8584931921e76ff08d0549134b94713028b565f52c",
+    "S_readout12": "21bcf13de6048be9d7e18316551f91c1eb2db891a8abcc6de010a566e9e653d3"
+  },
+  "research_history_verification_sha256": "a3ed97aac1ba36728c1ccc1b4bd54a541c80a88e5fc91c3d00ad8281c44394a0"
+}
