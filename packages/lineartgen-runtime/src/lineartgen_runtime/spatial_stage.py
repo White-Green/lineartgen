@@ -58,9 +58,11 @@ class StageLineartModel:
         if learned:
             from .component_readout import load_parameters
 
-            if (self.metadata.get("parameters") != 140275
-                    or self.metadata.get("cnn_parameters") != 139186
-                    or self.metadata.get("readout_parameters") != 1089):
+            if (
+                self.metadata.get("parameters") != 140275
+                or self.metadata.get("cnn_parameters") != 139186
+                or self.metadata.get("readout_parameters") != 1089
+            ):
                 raise ValueError("Unsupported component readout parameter counts")
             entry = self.metadata["readout"]
             filename = entry["file"]
@@ -89,8 +91,11 @@ class StageLineartModel:
             self._providers.insert(
                 0, ("DmlExecutionProvider", {"device_id": operator.index(device_id)})
             )
-        self.backend = ("onnxruntime learned component graph (research trial)" if learned
-                        else "onnxruntime context component graph (research trial)")
+        self.backend = (
+            "onnxruntime learned component graph (research trial)"
+            if learned
+            else "onnxruntime context component graph (research trial)"
+        )
         self.device = "not initialized"
         self._session = None
         self._lock = threading.Lock()

@@ -2,25 +2,24 @@
 
 import numpy as np
 import pytest
-
 from lineartgen_runtime.component_readout import SHAPES, descriptors, load_parameters, project
 from lineartgen_runtime.selection_feedback import project as original_project
 
 
 def fixture():
-    base = np.full((7, 9, 9), -20., np.float32)
+    base = np.full((7, 9, 9), -20.0, np.float32)
     base[..., 1:4] = 0
     for row in (1, 5):
         base[row, 1:8, 0] = 2
         base[row, 1:7, 4] = 2
     head = base.copy()
-    head[..., 0] = -.5
+    head[..., 0] = -0.5
     state = np.zeros((7, 9, 16), np.float32)
     state[1, 1:8, 0] = 2
     state[5, 1:8, 0] = -2
     params = {k: np.zeros(shape, np.float32) for k, shape in SHAPES.items()}
-    params['hidden_kernel'][0, 0] = 1
-    params['kernel'][0, 0] = 1
+    params["hidden_kernel"][0, 0] = 1
+    params["kernel"][0, 0] = 1
     return base, head, state, params
 
 
@@ -52,35 +51,35 @@ def test_pooling_retains_mean_and_max_and_ignores_unoccupied_cells():
 
 def test_zero_readout_preserves_original_projection_including_zero_and_empty_scores():
     base, head, state, params = fixture()
-    params['kernel'][:] = 0
+    params["kernel"][:] = 0
     head[1, :, 0] = 0
     np.testing.assert_array_equal(project(head, state, base, params), original_project(head, base))
     base[..., 0] = -20
     np.testing.assert_array_equal(project(head, state, base, params), base)
 
 
-@pytest.mark.parametrize('fault', ['missing', 'extra', 'shape', 'dtype', 'nan'])
+@pytest.mark.parametrize("fault", ["missing", "extra", "shape", "dtype", "nan"])
 def test_invalid_parameter_archives_are_rejected(tmp_path, fault):
     params = fixture()[3]
-    if fault == 'missing':
-        del params['bias']
-    elif fault == 'extra':
-        params['unused'] = np.zeros(1, np.float32)
-    elif fault == 'shape':
-        params['kernel'] = np.zeros((31, 1), np.float32)
-    elif fault == 'dtype':
-        params['kernel'] = params['kernel'].astype(np.float64)
+    if fault == "missing":
+        del params["bias"]
+    elif fault == "extra":
+        params["unused"] = np.zeros(1, np.float32)
+    elif fault == "shape":
+        params["kernel"] = np.zeros((31, 1), np.float32)
+    elif fault == "dtype":
+        params["kernel"] = params["kernel"].astype(np.float64)
     else:
-        params['bias'][0] = np.nan
-    path = tmp_path / 'readout.npz'
+        params["bias"][0] = np.nan
+    path = tmp_path / "readout.npz"
     np.savez(path, **params)
-    with pytest.raises(ValueError, match='Invalid component readout parameter'):
+    with pytest.raises(ValueError, match="Invalid component readout parameter"):
         load_parameters(path)
 
 
 def test_parameter_archive_is_exact_and_read_only(tmp_path):
     params = fixture()[3]
-    path = tmp_path / 'readout.npz'
+    path = tmp_path / "readout.npz"
     np.savez(path, **params)
     loaded = load_parameters(path)
     for k in params:

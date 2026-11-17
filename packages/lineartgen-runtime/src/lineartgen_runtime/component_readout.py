@@ -42,8 +42,14 @@ def descriptors(state, ids):
 
 def scores(params, features, original, mass):
     h = features @ params["hidden_kernel"] + params["hidden_bias"]
-    h = h * np.float32(.5) * (np.float32(1) + np.tanh(
-        np.float32((2 / np.pi) ** .5) * (h + np.float32(.044715) * h ** 3)))
+    h = (
+        h
+        * np.float32(0.5)
+        * (
+            np.float32(1)
+            + np.tanh(np.float32((2 / np.pi) ** 0.5) * (h + np.float32(0.044715) * h**3))
+        )
+    )
     residual = (h @ params["kernel"] + params["bias"])[..., 0]
     return original + np.where(mass > 0, np.float32(8) * residual, np.float32(0))
 
@@ -62,6 +68,6 @@ def project(head, state, base, params):
     if not np.isfinite(score).all():
         raise ValueError("Nonfinite component scores")
     values = result[..., 0][valid]
-    values[score[ids[valid]] < 0] = -20.
+    values[score[ids[valid]] < 0] = -20.0
     result[..., 0][valid] = values
     return result
