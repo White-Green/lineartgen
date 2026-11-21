@@ -1,0 +1,30 @@
+{
+  "format": "lineartgen_latent_edit_v1",
+  "pixel_merge": true,
+  "loop_only": true,
+  "painted_paths": true,
+  "painted_loops": true,
+  "sources": {
+    "diffusion": "7f82e050e3043319d4bcabbe19614b77d104e68db17891feac7bf12546f1d85b",
+    "vae": "8df604901ead6078ee1958fca687a2dac4b068e1c0d6114dcc28e89b8d343f96",
+    "role_prior": "658cf933821bc47c83d78e5d1c2adc24c579d023cf9381104867dd95f1c381dc",
+    "arc_prior": "130d6518948bac3398bc06fa0c47782601c55bbdb6f70688cff963167ec96875",
+    "coverage": "c87444a1d68edf7e650ef2410d896e809891f686980d1039053be26be7468e31",
+    "core_checkpoint": "b2ed0b95f45f1dbd58a6f897b12c7ca3453ea4b44b1c5d54a339ba57b7ca8919",
+    "fusion": "15abaf907892ffb6cad08cffb90903a01833c468b4f4ef055daf776c82f7c645",
+    "coverage_decision": "14e551c3e8a1d1f5880ee29fe6ede5c772932958c2fb6abaab0a7b69e9f156e4",
+    "pixel_merge": "118703d1fdffcfff73559a588e15c2c3c73556c057a3511ac6c9cd998dcf58fe"
+  },
+  "assets": {
+    "latent.json": "07045e2e95dd77b1bf9d564af6b9dd1de062e61607019174d820b9b05af7c54b",
+    "context.npz": "a96a8942304afd5bd9b3a70476686fc2dccf694f483528434780d5462c553e2f",
+    "encoder.onnx": "749f99844e299eb0c35cedb5a555eed9e725247ef3e2beeec535463237f5948a",
+    "decoder.onnx": "eae81b68c11c79e5683783acfc99a07e382633af6ab087de8149901880093504",
+    "fine.onnx": "90edb367dd4ea4bdf2c4118d5f55bfb4d76c222d7f15af5cddbba1db608d98b0",
+    "coarse.onnx": "3e3cdc3cb692885f3308102e698cb56615582112c5b4faaeb1301f7a03202776",
+    "stroke.onnx": "8d22f1acee180e771e77b21f81ee2fec20d0d7aaecdedc4df7a60b9bacf4f2cf",
+    "fusion.onnx": "97bc4c438e5f8a7d53b53896c3533875d8b62c9000a599ed3e2e4dcbc461e1c9",
+    "merge.onnx": "5451c2f8a591a106ad3108bf5c9671b7c2da50ae141fc5e3499a0fe8913f0bec"
+  },
+  "painted_tails": true
+}

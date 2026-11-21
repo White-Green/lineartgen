@@ -13,6 +13,20 @@ from .sampling import denoise
 
 class LineartModel:
     def __init__(self, model_path=None, num_threads=None, *, provider="auto", device_id=0):
+        self._latent = None
+        latent_path = (
+            Path(model_path)
+            if model_path is not None
+            else Path(__file__).parent / "assets" / "krita-latent.json"
+        )
+        if latent_path.name == "krita-latent.json" and latent_path.is_file():
+            from .latent_session import LatentKritaModel
+
+            self._latent = LatentKritaModel(
+                latent_path, num_threads, provider=provider, device_id=device_id
+            )
+            self.backend, self.device = self._latent.backend, self._latent.device
+            return
         self._spatial = None
         self._curve = None
         self._graph = None
@@ -112,6 +126,10 @@ class LineartModel:
         self._lock = threading.Lock()
 
     def forward(self, image, noise_level, insert):
+        if self._latent is not None:
+            raise ValueError(
+                "Latent diffusion uses a multi-resolution sampler; call infer with BGRA layers"
+            )
         if self._spatial is not None:
             raise ValueError(
                 "Spatial graph models use an image pyramid; call infer for BGRA images"
@@ -130,6 +148,17 @@ class LineartModel:
         )[0]
 
     def infer(self, *, scribble, lineart, width, height, strength, seed, denoise_steps):
+        if self._latent is not None:
+            return self._latent.infer(
+                scribble=scribble,
+                lineart=lineart,
+                width=width,
+                height=height,
+                strength=strength,
+                seed=seed,
+                denoise_steps=denoise_steps,
+            )
+        """Restore BGRA input; one_pass models use one pass for any valid step request."""
         if self._spatial is not None:
             return self._spatial.infer(
                 scribble=scribble,

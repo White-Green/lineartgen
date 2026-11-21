@@ -1,0 +1,34 @@
+{
+  "factor": 8,
+  "has_readout": true,
+  "steps": 6,
+  "time_power": 2.0,
+  "eta": 0.0,
+  "selection_slope": 2.0,
+  "role_offset": 0.3,
+  "local_limit": 5.0,
+  "direct_bridge": false,
+  "core_transitions": true,
+  "free_completion": false,
+  "supported_completion": false,
+  "directional_completion": true,
+  "endpoint_completion": true,
+  "finest_readout": true,
+  "sample_readout": true,
+  "separate_ink": true,
+  "coverage_decision": [
+    0.12,
+    0.48,
+    0.32
+  ],
+  "sources": {
+    "diffusion": "7f82e050e3043319d4bcabbe19614b77d104e68db17891feac7bf12546f1d85b",
+    "vae": "8df604901ead6078ee1958fca687a2dac4b068e1c0d6114dcc28e89b8d343f96",
+    "role_prior": "658cf933821bc47c83d78e5d1c2adc24c579d023cf9381104867dd95f1c381dc",
+    "arc_prior": "130d6518948bac3398bc06fa0c47782601c55bbdb6f70688cff963167ec96875",
+    "coverage": "c87444a1d68edf7e650ef2410d896e809891f686980d1039053be26be7468e31",
+    "core_checkpoint": "b2ed0b95f45f1dbd58a6f897b12c7ca3453ea4b44b1c5d54a339ba57b7ca8919",
+    "fusion": "15abaf907892ffb6cad08cffb90903a01833c468b4f4ef055daf776c82f7c645",
+    "coverage_decision": "14e551c3e8a1d1f5880ee29fe6ede5c772932958c2fb6abaab0a7b69e9f156e4"
+  }
+}
