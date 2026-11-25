@@ -21,7 +21,7 @@ def tip_extent(ink, tip, direction, span):
     return np.log1p(stop[0] if len(stop) else radius) / 4
 
 
-def loop_features(rough, coverage, *, tails=False):
+def loop_features(rough, coverage, *, tails=False, half_resolution=False):
     h, w = rough.shape
     result = np.zeros(((h + 1) // 2, (w + 1) // 2, 7 if tails else 5), np.float32)
     if np.any(coverage > 0.08):
@@ -102,4 +102,4 @@ def loop_features(rough, coverage, *, tails=False):
             prev = result[crop][ry, rx]
             use = np.abs(score) > np.abs(prev[:, 0])
             result[crop][ry[use], rx[use]] = signal[use]
-    return repeat2(result)[:h, :w]
+    return result if half_resolution else repeat2(result)[:h, :w]

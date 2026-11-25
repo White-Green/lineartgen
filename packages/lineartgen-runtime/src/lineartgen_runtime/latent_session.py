@@ -9,6 +9,7 @@ from pathlib import Path
 
 import numpy as np
 
+from .latent_compact_merge import compact_merge
 from .latent_edit import PixelEdit
 from .latent_front import LatentFront
 from .latent_painted_paths import edit_features
@@ -47,6 +48,7 @@ class LatentKritaModel:
             providers.insert(0, ("DmlExecutionProvider", {"device_id": operator.index(device_id)}))
         self.front = LatentFront(folder, options, providers)
         self.merge = release["pixel_merge"]
+        self.compact_merge = release.get("pixel_editor") == "compact_v1"
         self.painted_paths = release.get("painted_paths", False)
         self.painted_loops = release.get("painted_loops", False)
         self.painted_tails = release.get("painted_tails", False)
@@ -74,13 +76,16 @@ class LatentKritaModel:
         with self._lock:
             proposal = self.front.generate(guide, edit.power, seed, depth)
             if self.merge and edit.alpha.any():
-                inputs = edit_features(
-                    edit,
-                    proposal,
-                    paths=self.painted_paths,
-                    loops=self.painted_loops,
-                    tails=self.painted_tails,
-                )
-                (under,) = self.front.run("merge", x=inputs)
-                proposal = under[..., 0]
+                if self.compact_merge:
+                    proposal = compact_merge(edit, proposal, self.front.sessions["merge"])
+                else:
+                    inputs = edit_features(
+                        edit,
+                        proposal,
+                        paths=self.painted_paths,
+                        loops=self.painted_loops,
+                        tails=self.painted_tails,
+                    )
+                    (under,) = self.front.run("merge", x=inputs)
+                    proposal = under[..., 0]
         return edit.render(proposal)

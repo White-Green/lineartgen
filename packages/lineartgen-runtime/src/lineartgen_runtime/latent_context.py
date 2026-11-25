@@ -84,35 +84,66 @@ def path_fields(cells):
     return np.concatenate(result, -1)
 
 
+def _component_ids(mask, diagonal):
+    h, w = mask.shape
+    edges = np.diff(np.pad(mask.astype(np.int8), ((0, 0), (1, 1))), axis=1)
+    ys, left = np.nonzero(edges == 1)
+    _, right = np.nonzero(edges == -1)
+    # Use inclusive span ends. Enumerating starts in row order makes the first
+    # span of a component coincide with the original raster-order root.
+    left = left.tolist()
+    right = (right - 1).tolist()
+    parent = list(range(len(left)))
+    offsets = np.r_[0, np.cumsum(np.bincount(ys, minlength=h))].tolist()
+
+    def root(i):
+        while i != parent[i]:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    margin = int(diagonal)
+    for y in range(1, h):
+        a, b, end = offsets[y - 1 : y + 2]
+        prev_end = b
+        while a < prev_end and b < end:
+            if right[a] + margin < left[b]:
+                a += 1
+            elif right[b] + margin < left[a]:
+                b += 1
+            else:
+                u, v = root(a), root(b)
+                parent[max(u, v)] = min(u, v)
+                if right[a] < right[b]:
+                    a += 1
+                elif right[b] < right[a]:
+                    b += 1
+                else:
+                    a += 1
+                    b += 1
+    owners = np.array([root(i) for i in range(len(left))], np.int32)
+    labels, inverse = np.unique(owners, return_inverse=True)
+    changes = np.zeros((h, w + 1), np.int32)
+    changes[ys, left] = inverse + 1
+    changes[ys, np.asarray(right, dtype=np.int32) + 1] = -inverse - 1
+    ids = np.cumsum(changes[:, :w], axis=1, dtype=np.int32) - 1
+    ids[~mask] = len(labels)
+    raster_roots = np.r_[ys[labels] * w + np.asarray(left, dtype=np.int32)[labels], mask.size]
+    return ids, raster_roots
+
+
 def roots(mask, diagonal):
-    """Minimum raster index for each component. Pixel outside the mask uses mask.size."""
-    n = mask.size
-    indices = np.arange(n + 1, dtype=np.int32)
-    labels = np.where(mask, indices[:-1].reshape(mask.shape), n)
-    while True:
-        p = np.pad(labels, 1, constant_values=n)
-        h, w = labels.shape
-        neighbor = labels.copy()
-        for dy in range(3):
-            for dx in range(3):
-                if diagonal or dx == 1 or dy == 1:
-                    np.minimum(neighbor, p[dy : dy + h, dx : dx + w], out=neighbor)
-        parent = indices.copy()
-        np.minimum.at(parent, labels[mask], neighbor[mask])
-        new = parent[parent[labels]]
-        if np.array_equal(new, labels):
-            return labels
-        labels = new
+    """Return the minimum raster index of each pixel's connected component."""
+    ids, raster_roots = _component_ids(mask, diagonal)
+    return raster_roots[ids].astype(np.int32)
 
 
 class Components:
     def __init__(self, mask, diagonal=True):
-        labels = roots(mask, diagonal)
-        ids, inverse, count = np.unique(labels, return_inverse=True, return_counts=True)
+        self.ids, raster_roots = _component_ids(mask, diagonal)
         self.mask = mask
-        self.ids = inverse.reshape(mask.shape).astype(np.int32)
-        self.count = count.astype(np.float32)
-        self.active = ids < mask.size
+        self.count = np.bincount(self.ids.ravel()).astype(np.float32)
+        self.active = raster_roots[: len(self.count)] < mask.size
 
     def sum(self, values):
         return np.bincount(self.ids.ravel(), weights=values.ravel(), minlength=len(self.count))
